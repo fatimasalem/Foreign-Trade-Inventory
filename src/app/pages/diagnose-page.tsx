@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { MessageSquare, X, ChevronRight, BarChart3 } from "lucide-react";
+import { Bot, LineChart as LineChartIcon, PieChart } from "lucide-react";
+import { SectionIcon } from "../components/section-icon";
 import { useAIAssistant } from "../contexts/ai-assistant-context";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Button } from "../components/ui/button";
@@ -64,6 +65,9 @@ export function DiagnosePage() {
       yoy: "+128.5%",
       riskLevel: "critical" as const,
       riskCause: "Extreme volatility due to global gold price fluctuations and market speculation",
+      partnerMarkets: ["India", "Saudi Arabia", "USA"],
+      transportModes: ["air", "sea"] as const,
+      tradeFlows: ["export", "re-export", "import"] as const,
     },
     {
       hs1: "HS87 - Vehicles, parts",
@@ -75,6 +79,9 @@ export function DiagnosePage() {
       yoy: "-8.2%",
       riskLevel: "critical" as const,
       riskCause: "Declining consumer demand and supply chain disruptions affecting imports",
+      partnerMarkets: ["China", "USA", "Saudi Arabia"],
+      transportModes: ["sea", "land"] as const,
+      tradeFlows: ["import", "export"] as const,
     },
     {
       hs1: "HS30 - Pharmaceutical products",
@@ -86,6 +93,9 @@ export function DiagnosePage() {
       yoy: "+3.5%",
       riskLevel: "warning" as const,
       riskCause: "Red Sea shipping delays impacting pharmaceutical imports",
+      partnerMarkets: ["India", "USA", "China"],
+      transportModes: ["sea", "air"] as const,
+      tradeFlows: ["import"] as const,
     },
     {
       hs1: "HS76 - Aluminum, articles",
@@ -97,6 +107,9 @@ export function DiagnosePage() {
       yoy: "+45.2%",
       riskLevel: "watch" as const,
       riskCause: "High growth rate requires monitoring for sustainability and market saturation",
+      partnerMarkets: ["China", "India", "Saudi Arabia"],
+      transportModes: ["sea"] as const,
+      tradeFlows: ["export", "import"] as const,
     },
     {
       hs1: "HS85 - Electrical machinery",
@@ -108,6 +121,9 @@ export function DiagnosePage() {
       yoy: "+5.8%",
       riskLevel: "warning" as const,
       riskCause: "Short-term decline due to seasonal demand fluctuations",
+      partnerMarkets: ["China", "USA"],
+      transportModes: ["sea", "air"] as const,
+      tradeFlows: ["import", "export"] as const,
     },
     {
       hs1: "HS39 - Plastics, articles",
@@ -119,6 +135,9 @@ export function DiagnosePage() {
       yoy: "+8.5%",
       riskLevel: "stable" as const,
       riskCause: "Steady growth within expected ranges, no immediate concerns",
+      partnerMarkets: ["Saudi Arabia", "India", "China"],
+      transportModes: ["sea", "land"] as const,
+      tradeFlows: ["import", "export", "re-export"] as const,
     },
     {
       hs1: "HS72 - Iron & steel",
@@ -130,6 +149,9 @@ export function DiagnosePage() {
       yoy: "+4.2%",
       riskLevel: "stable" as const,
       riskCause: "Consistent performance supported by construction sector demand",
+      partnerMarkets: ["China", "India"],
+      transportModes: ["sea"] as const,
+      tradeFlows: ["import", "export"] as const,
     },
     {
       hs1: "HS29 - Organic chemicals",
@@ -141,6 +163,9 @@ export function DiagnosePage() {
       yoy: "+2.1%",
       riskLevel: "stable" as const,
       riskCause: "Minor fluctuations within normal market behavior",
+      partnerMarkets: ["USA", "China", "Saudi Arabia"],
+      transportModes: ["sea", "air"] as const,
+      tradeFlows: ["import", "export"] as const,
     },
     {
       hs1: "HS84 - Nuclear reactors, machinery",
@@ -152,6 +177,9 @@ export function DiagnosePage() {
       yoy: "+15.3%",
       riskLevel: "watch" as const,
       riskCause: "Strong growth driven by industrial expansion projects",
+      partnerMarkets: ["China", "USA", "India"],
+      transportModes: ["sea", "air", "land"] as const,
+      tradeFlows: ["import", "export"] as const,
     },
     {
       hs1: "HS27 - Mineral fuels, oils",
@@ -163,11 +191,19 @@ export function DiagnosePage() {
       yoy: "+3.8%",
       riskLevel: "stable" as const,
       riskCause: "Stable commodity with predictable market dynamics",
+      partnerMarkets: ["Saudi Arabia", "India", "USA"],
+      transportModes: ["sea", "land"] as const,
+      tradeFlows: ["export", "import", "re-export"] as const,
     },
   ];
 
-  const generateTrendData = (category: typeof categories[0]) => {
-    return [
+  const monthOrderFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  const generateTrendData = (_category: typeof categories[0]) => {
+    const y = parseInt(year, 10);
+    const mi = monthOrderFull.indexOf(month);
+    const periodScale = 1 + (2026 - y) * 0.035 + Math.max(0, mi) * 0.012;
+    const rows = [
       { month: "Oct", import: 8.2, export: 5.3, reexport: 3.1 },
       { month: "Nov", import: 8.5, export: 5.8, reexport: 3.4 },
       { month: "Dec", import: 9.1, export: 6.2, reexport: 3.8 },
@@ -175,7 +211,30 @@ export function DiagnosePage() {
       { month: "Feb", import: 10.2, export: 7.4, reexport: 4.5 },
       { month: "Mar", import: 12.3, export: 8.2, reexport: 5.1 },
     ];
+    return rows.map((row) => ({
+      ...row,
+      import: Number((row.import * periodScale).toFixed(2)),
+      export: Number((row.export * periodScale).toFixed(2)),
+      reexport: Number((row.reexport * periodScale).toFixed(2)),
+    }));
   };
+
+  const filteredCategories = useMemo(() => {
+    return categories.filter((cat) => {
+      if (foreignTradeType !== "all" && !cat.tradeFlows.includes(foreignTradeType as "import" | "export" | "re-export")) {
+        return false;
+      }
+      if (tradeType !== "all" && !cat.transportModes.includes(tradeType as "land" | "sea" | "air")) {
+        return false;
+      }
+      if (!selectedCountries.includes("All Countries")) {
+        if (!cat.partnerMarkets.some((p) => selectedCountries.includes(p))) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [foreignTradeType, tradeType, selectedCountries]);
 
   const handleRowClick = (category: typeof categories[0]) => {
     setSelectedCategory(category);
@@ -230,7 +289,7 @@ export function DiagnosePage() {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-gray-700" />
+              <SectionIcon icon={PieChart} tone="slate" />
               <div>
                 <h3 className="font-semibold text-lg text-gray-900">Category Analysis</h3>
                 <p className="text-sm text-gray-600 mt-1">
@@ -305,7 +364,7 @@ export function DiagnosePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="all">All modes</SelectItem>
                   <SelectItem value="land">Land</SelectItem>
                   <SelectItem value="sea">Sea</SelectItem>
                   <SelectItem value="air">Air</SelectItem>
@@ -350,46 +409,68 @@ export function DiagnosePage() {
               <TableHead className="w-[12%] text-right">Weight</TableHead>
               <TableHead className="w-[12%] text-right">MoM</TableHead>
               <TableHead className="w-[16%] text-right">YoY</TableHead>
-              <TableHead className="w-[10%]"></TableHead>
+              <TableHead className="w-[10%] text-right">
+                <span className="sr-only">Open trend</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TooltipProvider>
-              {categories.map((category, index) => (
-                <TableRow
-                  key={index}
-                  className="cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => handleRowClick(category)}
-                >
-                  <TableCell className="font-medium">{getCategoryName(category)}</TableCell>
-                  <TableCell>
-                    <UITooltip>
-                      <TooltipTrigger asChild>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getRiskBadgeColor(
-                            category.riskLevel
-                          )}`}
-                        >
-                          {category.risk}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="text-xs">{category.riskCause}</p>
-                      </TooltipContent>
-                    </UITooltip>
-                  </TableCell>
-                  <TableCell className="text-right">{category.weight}</TableCell>
-                  <TableCell className={`text-right font-medium ${getChangeColor(category.mom)}`}>
-                    {category.mom}
-                  </TableCell>
-                  <TableCell className={`text-right font-medium ${getChangeColor(category.yoy)}`}>
-                    {category.yoy}
-                  </TableCell>
-                  <TableCell>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
+              {filteredCategories.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-sm text-gray-500 py-10">
+                    No categories match the selected filters. Try widening country, trade mode, or foreign trade type.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredCategories.map((category, index) => (
+                  <TableRow
+                    key={index}
+                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => handleRowClick(category)}
+                  >
+                    <TableCell className="font-medium">{getCategoryName(category)}</TableCell>
+                    <TableCell>
+                      <UITooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getRiskBadgeColor(
+                              category.riskLevel
+                            )}`}
+                          >
+                            {category.risk}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p className="text-xs">{category.riskCause}</p>
+                        </TooltipContent>
+                      </UITooltip>
+                    </TableCell>
+                    <TableCell className="text-right">{category.weight}</TableCell>
+                    <TableCell className={`text-right font-medium ${getChangeColor(category.mom)}`}>
+                      {category.mom}
+                    </TableCell>
+                    <TableCell className={`text-right font-medium ${getChangeColor(category.yoy)}`}>
+                      {category.yoy}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                        aria-label="Open category trend"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRowClick(category);
+                        }}
+                      >
+                        <LineChartIcon className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TooltipProvider>
           </TableBody>
         </Table>
@@ -397,7 +478,7 @@ export function DiagnosePage() {
 
       {/* Trend Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-[90vw]">
+        <DialogContent className="w-[min(94vw,56rem)] max-w-5xl sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle className="text-xl">
               {selectedCategory && getCategoryName(selectedCategory)}
@@ -432,7 +513,7 @@ export function DiagnosePage() {
                     onClick={handleAskAI}
                     className="gap-2 shrink-0 text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
                   >
-                    <MessageSquare className="h-4 w-4" />
+                    <Bot className="h-4 w-4" />
                     Ask AI
                   </Button>
                 </div>

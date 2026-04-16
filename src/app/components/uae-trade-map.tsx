@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { AlertTriangle, MessageSquare, TrendingUp, MapPin } from "lucide-react";
+import { AlertTriangle, MessageSquare, TrendingUp, Anchor } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { SectionIcon } from "./section-icon";
+import { AbuDhabiTradeLeafletMap } from "./abu-dhabi-trade-leaflet-map";
+
+type TradeFlowKey = "import" | "export" | "re-export";
 
 interface PortTooltipData {
   name: string;
@@ -21,48 +24,14 @@ interface PortTooltipData {
   }[];
 }
 
-// GeoJSON for UAE - accurate representation based on actual borders
-const uaeGeoJson = {
-  type: "FeatureCollection" as const,
-  features: [
-    {
-      type: "Feature",
-      properties: { name: "Abu Dhabi" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          // Western coastline and islands
-          [51.5, 24.3], [51.7, 24.5], [52.0, 24.6], [52.5, 24.5], [53.0, 24.4],
-          [53.5, 24.3], [54.0, 24.2], [54.3, 24.3], [54.6, 24.4], [54.9, 24.35],
-          // Eastern boundary with other emirates
-          [55.0, 24.3], [55.15, 24.5], [55.3, 24.7], [55.4, 24.8],
-          // Northern boundary
-          [55.45, 24.75], [55.4, 24.65], [55.3, 24.55], [55.2, 24.45],
-          [55.0, 24.2], [54.8, 24.0], [54.5, 23.8], [54.0, 23.7],
-          // Southern boundary
-          [53.5, 23.5], [53.0, 23.3], [52.5, 23.2], [52.0, 23.3],
-          [51.5, 23.5], [51.3, 23.8], [51.4, 24.0], [51.5, 24.3]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: { name: "Other Emirates" },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          // Northern emirates - from west to east
-          [55.0, 24.3], [55.15, 24.5], [55.3, 24.7], [55.4, 24.8],
-          [55.5, 25.0], [55.6, 25.3], [55.7, 25.6], [55.85, 25.8],
-          [56.0, 25.95], [56.15, 26.0], [56.3, 25.95], [56.4, 25.85],
-          [56.35, 25.7], [56.25, 25.5], [56.15, 25.3], [56.05, 25.1],
-          [55.95, 24.9], [55.85, 24.7], [55.75, 24.5], [55.65, 24.35],
-          [55.55, 24.25], [55.45, 24.2], [55.3, 24.25], [55.15, 24.3],
-          [55.0, 24.3]
-        ]]
-      }
-    }
-  ]
+type PortDef = {
+  id: string;
+  name: string;
+  /** [longitude, latitude] — Abu Dhabi coastline–aligned positions */
+  coordinates: [number, number];
+  /** Dominant mode for this facility (filters dim or hide when mismatched) */
+  transport: "sea" | "land" | "air";
+  affected: boolean;
 };
 
 export function UAETradeMap() {
@@ -71,7 +40,7 @@ export function UAETradeMap() {
   const [classification, setClassification] = useState("HS");
   const [month, setMonth] = useState("March");
   const [year, setYear] = useState("2026");
-  const [transportType, setTransportType] = useState("sea");
+  const [transportType, setTransportType] = useState("all");
   const [selectedPort, setSelectedPort] = useState("all");
   const [tooltipContent, setTooltipContent] = useState<PortTooltipData | null>(null);
 
@@ -83,17 +52,23 @@ export function UAETradeMap() {
   const isCritical = parseInt(year) > 2026 ||
                      (year === "2026" && currentMonthIndex >= marchIndex);
 
-  const ports = [
-    { name: "Zayed Port", coordinates: [54.5, 24.3], affected: isCritical },
-    { name: "Musaffah Port", coordinates: [54.6, 24.35], affected: isCritical },
-    { name: "Delma Port", coordinates: [52.3, 24.5], affected: isCritical },
-    { name: "Al Sila Port", coordinates: [51.8, 24.2], affected: isCritical },
-    { name: "Al Mirfa Port", coordinates: [52.0, 24.1], affected: isCritical },
-    { name: "Shahama Port", coordinates: [54.3, 24.4], affected: isCritical },
+  const ports: PortDef[] = [
+    { id: "zayed", name: "Zayed Port", coordinates: [54.37, 24.52], transport: "sea", affected: isCritical },
+    { id: "musaffah", name: "Musaffah Port", coordinates: [54.48, 24.36], transport: "sea", affected: isCritical },
+    { id: "delma", name: "Delma Port", coordinates: [52.32, 24.33], transport: "sea", affected: isCritical },
+    { id: "alsila", name: "Al Sila Port", coordinates: [51.72, 24.08], transport: "sea", affected: isCritical },
+    { id: "almirfa", name: "Al Mirfa Port", coordinates: [53.46, 24.1], transport: "sea", affected: isCritical },
+    { id: "shahama", name: "Shahama Port", coordinates: [54.66, 24.41], transport: "sea", affected: isCritical },
+    { id: "auh_cargo", name: "Abu Dhabi Airport Cargo", coordinates: [54.65, 24.43], transport: "air", affected: isCritical },
+    { id: "ghweifat", name: "Al Ghuwaifat Land Border", coordinates: [52.56, 24.09], transport: "land", affected: isCritical },
   ];
 
-  // Port trade data for tooltips
-  const portTradeData: Record<string, PortTooltipData> = {
+  type CatRow = { hs: string; bec: string; sitc: string; value: string };
+
+  const portTradeDataBase: Record<
+    string,
+    Omit<PortTooltipData, "topCategories"> & { topCategories: CatRow[] }
+  > = {
     "Zayed Port": {
       name: "Zayed Port",
       imports: 8.5,
@@ -101,15 +76,15 @@ export function UAETradeMap() {
       reExports: 6.2,
       netTrade: 10.0,
       topCategories: [
-        { name: "HS76 - Aluminum & articles", value: "3.2B AED" },
-        { name: "HS84 - Machinery", value: "2.8B AED" },
-        { name: "HS27 - Mineral fuels", value: "2.1B AED" }
+        { hs: "HS76 - Aluminum & articles", bec: "BEC5 - Capital goods", sitc: "SITC68 - Non-ferrous metals", value: "3.2B AED" },
+        { hs: "HS84 - Machinery", bec: "BEC5 - Capital goods", sitc: "SITC74 - General machinery", value: "2.8B AED" },
+        { hs: "HS27 - Mineral fuels", bec: "BEC2 - Industrial supplies", sitc: "SITC33 - Petroleum products", value: "2.1B AED" },
       ],
       affectedCategories: [
         { name: "HS87 - Vehicles & parts", impact: "-35.2%" },
         { name: "HS84 - Machinery", impact: "-29.8%" },
-        { name: "HS30 - Pharmaceutical products", impact: "-22.5%" }
-      ]
+        { name: "HS30 - Pharmaceutical products", impact: "-22.5%" },
+      ],
     },
     "Musaffah Port": {
       name: "Musaffah Port",
@@ -118,15 +93,15 @@ export function UAETradeMap() {
       reExports: 4.3,
       netTrade: 7.0,
       topCategories: [
-        { name: "HS72 - Iron & steel", value: "2.5B AED" },
-        { name: "HS73 - Articles of iron/steel", value: "2.0B AED" },
-        { name: "HS87 - Vehicles & parts", value: "1.8B AED" }
+        { hs: "HS72 - Iron & steel", bec: "BEC2 - Industrial supplies", sitc: "SITC67 - Iron & steel", value: "2.5B AED" },
+        { hs: "HS73 - Articles of iron/steel", bec: "BEC2 - Industrial supplies", sitc: "SITC69 - Metal manufactures", value: "2.0B AED" },
+        { hs: "HS87 - Vehicles & parts", bec: "BEC4 - Transport equipment", sitc: "SITC78 - Road vehicles", value: "1.8B AED" },
       ],
       affectedCategories: [
         { name: "HS72 - Iron & steel", impact: "-28.3%" },
         { name: "HS87 - Vehicles & parts", impact: "-26.7%" },
-        { name: "HS73 - Articles of iron/steel", impact: "-19.5%" }
-      ]
+        { name: "HS73 - Articles of iron/steel", impact: "-19.5%" },
+      ],
     },
     "Delma Port": {
       name: "Delma Port",
@@ -135,15 +110,15 @@ export function UAETradeMap() {
       reExports: 1.5,
       netTrade: 3.2,
       topCategories: [
-        { name: "HS03 - Fish & seafood", value: "1.2B AED" },
-        { name: "HS27 - Mineral fuels", value: "0.9B AED" },
-        { name: "HS84 - Machinery", value: "0.7B AED" }
+        { hs: "HS03 - Fish & seafood", bec: "BEC6 - Consumer goods", sitc: "SITC03 - Fish", value: "1.2B AED" },
+        { hs: "HS27 - Mineral fuels", bec: "BEC2 - Industrial supplies", sitc: "SITC33 - Petroleum products", value: "0.9B AED" },
+        { hs: "HS84 - Machinery", bec: "BEC5 - Capital goods", sitc: "SITC74 - General machinery", value: "0.7B AED" },
       ],
       affectedCategories: [
         { name: "HS27 - Mineral fuels", impact: "-18.2%" },
         { name: "HS84 - Machinery", impact: "-15.8%" },
-        { name: "HS39 - Plastics", impact: "-12.3%" }
-      ]
+        { name: "HS39 - Plastics", impact: "-12.3%" },
+      ],
     },
     "Al Sila Port": {
       name: "Al Sila Port",
@@ -152,15 +127,15 @@ export function UAETradeMap() {
       reExports: 1.2,
       netTrade: 1.9,
       topCategories: [
-        { name: "HS27 - Mineral fuels", value: "0.8B AED" },
-        { name: "HS84 - Machinery", value: "0.6B AED" },
-        { name: "HS39 - Plastics", value: "0.5B AED" }
+        { hs: "HS27 - Mineral fuels", bec: "BEC2 - Industrial supplies", sitc: "SITC33 - Petroleum products", value: "0.8B AED" },
+        { hs: "HS84 - Machinery", bec: "BEC5 - Capital goods", sitc: "SITC74 - General machinery", value: "0.6B AED" },
+        { hs: "HS39 - Plastics", bec: "BEC2 - Industrial supplies", sitc: "SITC57 - Plastics", value: "0.5B AED" },
       ],
       affectedCategories: [
         { name: "HS27 - Mineral fuels", impact: "-24.5%" },
         { name: "HS84 - Machinery", impact: "-20.1%" },
-        { name: "HS39 - Plastics", impact: "-16.8%" }
-      ]
+        { name: "HS39 - Plastics", impact: "-16.8%" },
+      ],
     },
     "Al Mirfa Port": {
       name: "Al Mirfa Port",
@@ -169,15 +144,15 @@ export function UAETradeMap() {
       reExports: 0.9,
       netTrade: 1.6,
       topCategories: [
-        { name: "HS76 - Aluminum & articles", value: "0.7B AED" },
-        { name: "HS72 - Iron & steel", value: "0.5B AED" },
-        { name: "HS84 - Machinery", value: "0.4B AED" }
+        { hs: "HS76 - Aluminum & articles", bec: "BEC5 - Capital goods", sitc: "SITC68 - Non-ferrous metals", value: "0.7B AED" },
+        { hs: "HS72 - Iron & steel", bec: "BEC2 - Industrial supplies", sitc: "SITC67 - Iron & steel", value: "0.5B AED" },
+        { hs: "HS84 - Machinery", bec: "BEC5 - Capital goods", sitc: "SITC74 - General machinery", value: "0.4B AED" },
       ],
       affectedCategories: [
         { name: "HS76 - Aluminum & articles", impact: "-17.3%" },
         { name: "HS72 - Iron & steel", impact: "-14.6%" },
-        { name: "HS84 - Machinery", impact: "-11.2%" }
-      ]
+        { name: "HS84 - Machinery", impact: "-11.2%" },
+      ],
     },
     "Shahama Port": {
       name: "Shahama Port",
@@ -186,68 +161,226 @@ export function UAETradeMap() {
       reExports: 2.4,
       netTrade: 4.3,
       topCategories: [
-        { name: "HS84 - Machinery", value: "1.5B AED" },
-        { name: "HS85 - Electrical machinery", value: "1.2B AED" },
-        { name: "HS87 - Vehicles & parts", value: "0.9B AED" }
+        { hs: "HS84 - Machinery", bec: "BEC5 - Capital goods", sitc: "SITC74 - General machinery", value: "1.5B AED" },
+        { hs: "HS85 - Electrical machinery", bec: "BEC5 - Capital goods", sitc: "SITC77 - Electrical machinery", value: "1.2B AED" },
+        { hs: "HS87 - Vehicles & parts", bec: "BEC4 - Transport equipment", sitc: "SITC78 - Road vehicles", value: "0.9B AED" },
       ],
       affectedCategories: [
         { name: "HS87 - Vehicles & parts", impact: "-31.8%" },
         { name: "HS84 - Machinery", impact: "-27.5%" },
-        { name: "HS85 - Electrical machinery", impact: "-23.2%" }
-      ]
+        { name: "HS85 - Electrical machinery", impact: "-23.2%" },
+      ],
+    },
+    "Abu Dhabi Airport Cargo": {
+      name: "Abu Dhabi Airport Cargo",
+      imports: 4.1,
+      exports: 3.6,
+      reExports: 5.8,
+      netTrade: 2.1,
+      topCategories: [
+        { hs: "HS71 - Precious stones, metals", bec: "BEC6 - Consumer goods", sitc: "SITC97 - Gold", value: "2.4B AED" },
+        { hs: "HS30 - Pharmaceutical products", bec: "BEC6 - Consumer goods", sitc: "SITC54 - Medicinal products", value: "1.1B AED" },
+        { hs: "HS85 - Electrical machinery", bec: "BEC5 - Capital goods", sitc: "SITC77 - Electrical machinery", value: "0.9B AED" },
+      ],
+      affectedCategories: [
+        { name: "HS30 - Pharmaceutical products", impact: "-14.1%" },
+        { name: "HS85 - Electrical machinery", impact: "-11.4%" },
+        { name: "HS71 - Precious stones, metals", impact: "-9.2%" },
+      ],
+    },
+    "Al Ghuwaifat Land Border": {
+      name: "Al Ghuwaifat Land Border",
+      imports: 3.4,
+      exports: 2.1,
+      reExports: 0.6,
+      netTrade: -0.7,
+      topCategories: [
+        { hs: "HS27 - Mineral fuels", bec: "BEC2 - Industrial supplies", sitc: "SITC33 - Petroleum products", value: "1.4B AED" },
+        { hs: "HS87 - Vehicles & parts", bec: "BEC4 - Transport equipment", sitc: "SITC78 - Road vehicles", value: "0.8B AED" },
+        { hs: "HS39 - Plastics", bec: "BEC2 - Industrial supplies", sitc: "SITC57 - Plastics", value: "0.5B AED" },
+      ],
+      affectedCategories: [
+        { name: "HS27 - Mineral fuels", impact: "-21.0%" },
+        { name: "HS87 - Vehicles & parts", impact: "-16.5%" },
+        { name: "HS39 - Plastics", impact: "-10.8%" },
+      ],
+    },
+  };
+
+  const categoryLabel = (row: CatRow) => {
+    switch (classification) {
+      case "BEC":
+        return row.bec;
+      case "SITC":
+        return row.sitc;
+      default:
+        return row.hs;
     }
   };
 
+  const monthIndex = monthOrder.indexOf(month);
+  const yearFactor = 1 + (2026 - parseInt(year, 10)) * 0.04 + monthIndex * 0.008;
+
+  const applyFlowToTotals = (data: PortTooltipData, flow: string): PortTooltipData => {
+    if (flow === "all") return data;
+    const f = flow as TradeFlowKey;
+    const imports = Number((data.imports * (f === "import" ? 1.06 : 0.94)).toFixed(2));
+    const exports = Number((data.exports * (f === "export" ? 1.06 : 0.94)).toFixed(2));
+    const reExports = Number((data.reExports * (f === "re-export" ? 1.06 : 0.94)).toFixed(2));
+    const netTrade = Number(
+      (data.netTrade * (f === "import" ? 0.94 : f === "export" ? 1.06 : f === "re-export" ? 1.05 : 1)).toFixed(2),
+    );
+    return { ...data, imports, exports, reExports, netTrade };
+  };
+
+  const buildTooltipPayload = (portName: string): PortTooltipData | null => {
+    const base = portTradeDataBase[portName];
+    if (!base) return null;
+    const topCategories = base.topCategories.map((row) => ({
+      name: categoryLabel(row),
+      value: row.value,
+    }));
+    const raw: PortTooltipData = {
+      ...base,
+      topCategories,
+      imports: Number((base.imports * yearFactor).toFixed(2)),
+      exports: Number((base.exports * yearFactor).toFixed(2)),
+      reExports: Number((base.reExports * yearFactor).toFixed(2)),
+      netTrade: Number((base.netTrade * yearFactor).toFixed(2)),
+    };
+    return applyFlowToTotals(raw, foreignTradeType);
+  };
+
+  type SidebarTransport = "Sea" | "Air" | "Land";
+
   const affectedCategories = [
     {
-      category: "HS87 - Vehicles & parts",
-      tradeType: "Import",
-      transportType: "Sea",
+      hs: "HS87 - Vehicles & parts",
+      bec: "BEC4 - Transport equipment",
+      sitc: "SITC78 - Road vehicles",
+      tradeType: "Import" as const,
+      transportType: "Sea" as SidebarTransport,
       impact: "High",
-      value: "-32.5%"
+      value: "-32.5%",
     },
     {
-      category: "HS84 - Machinery",
-      tradeType: "Import",
-      transportType: "Sea",
+      hs: "HS84 - Machinery",
+      bec: "BEC5 - Capital goods",
+      sitc: "SITC74 - General machinery",
+      tradeType: "Import" as const,
+      transportType: "Sea" as SidebarTransport,
       impact: "High",
-      value: "-28.3%"
+      value: "-28.3%",
     },
     {
-      category: "HS30 - Pharmaceutical products",
-      tradeType: "Import",
-      transportType: "Sea",
+      hs: "HS30 - Pharmaceutical products",
+      bec: "BEC6 - Consumer goods",
+      sitc: "SITC54 - Medicinal products",
+      tradeType: "Import" as const,
+      transportType: "Air" as SidebarTransport,
       impact: "Medium",
-      value: "-18.5%"
+      value: "-18.5%",
+    },
+    {
+      hs: "HS27 - Mineral fuels",
+      bec: "BEC2 - Industrial supplies",
+      sitc: "SITC33 - Petroleum products",
+      tradeType: "Import" as const,
+      transportType: "Land" as SidebarTransport,
+      impact: "Medium",
+      value: "-12.1%",
     },
   ];
 
   const topPerformingCategories = [
     {
-      category: "HS76 - Aluminum & articles",
-      tradeType: "Export",
-      transportType: "Sea",
+      hs: "HS76 - Aluminum & articles",
+      bec: "BEC5 - Capital goods",
+      sitc: "SITC68 - Non-ferrous metals",
+      tradeType: "Export" as const,
+      transportType: "Sea" as SidebarTransport,
       performance: "Excellent",
       value: "+45.8%",
-      volume: "8.2B AED"
+      volume: "8.2B AED",
     },
     {
-      category: "HS71 - Precious metals",
-      tradeType: "Export",
-      transportType: "Air",
+      hs: "HS71 - Precious metals",
+      bec: "BEC6 - Consumer goods",
+      sitc: "SITC97 - Gold, non-monetary",
+      tradeType: "Export" as const,
+      transportType: "Air" as SidebarTransport,
       performance: "Excellent",
       value: "+38.2%",
-      volume: "7.5B AED"
+      volume: "7.5B AED",
     },
     {
-      category: "HS27 - Mineral fuels",
-      tradeType: "Export",
-      transportType: "Sea",
+      hs: "HS27 - Mineral fuels",
+      bec: "BEC2 - Industrial supplies",
+      sitc: "SITC33 - Petroleum products",
+      tradeType: "Export" as const,
+      transportType: "Sea" as SidebarTransport,
       performance: "Good",
       value: "+28.5%",
-      volume: "6.8B AED"
+      volume: "6.8B AED",
+    },
+    {
+      hs: "HS39 - Plastics, articles",
+      bec: "BEC2 - Industrial supplies",
+      sitc: "SITC57 - Plastics",
+      tradeType: "Re-Export" as const,
+      transportType: "Land" as SidebarTransport,
+      performance: "Good",
+      value: "+14.2%",
+      volume: "2.1B AED",
     },
   ];
+
+  const sidebarCategoryLabel = (row: { hs: string; bec: string; sitc: string }) => {
+    switch (classification) {
+      case "BEC":
+        return row.bec;
+      case "SITC":
+        return row.sitc;
+      default:
+        return row.hs;
+    }
+  };
+
+  const tradeFlowMatchesFilter = (tradeType: string) => {
+    if (foreignTradeType === "all") return true;
+    const map: Record<string, string> = {
+      import: "Import",
+      export: "Export",
+      "re-export": "Re-Export",
+    };
+    return tradeType === map[foreignTradeType];
+  };
+
+  const transportMatchesFilter = (t: SidebarTransport) => {
+    if (transportType === "all") return true;
+    const cap = transportType === "sea" ? "Sea" : transportType === "air" ? "Air" : "Land";
+    return t === cap;
+  };
+
+  const filteredAffectedCategories = useMemo(
+    () => affectedCategories.filter((item) => tradeFlowMatchesFilter(item.tradeType) && transportMatchesFilter(item.transportType)),
+    [foreignTradeType, transportType],
+  );
+
+  const filteredTopPerformingCategories = useMemo(
+    () => topPerformingCategories.filter((item) => tradeFlowMatchesFilter(item.tradeType) && transportMatchesFilter(item.transportType)),
+    [foreignTradeType, transportType],
+  );
+
+  const visiblePorts = useMemo(
+    () =>
+      ports.filter((p) => {
+        if (selectedPort !== "all" && p.id !== selectedPort) return false;
+        if (transportType !== "all" && p.transport !== transportType) return false;
+        return true;
+      }),
+    [ports, selectedPort, transportType],
+  );
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
@@ -271,10 +404,14 @@ export function UAETradeMap() {
     }
   };
 
-  const handleAskAI = (category: typeof affectedCategories[0] | typeof topPerformingCategories[0], isCritical: boolean) => {
+  const handleAskAI = (
+    category: (typeof affectedCategories)[number] | (typeof topPerformingCategories)[number],
+    isCritical: boolean,
+  ) => {
+    const label = sidebarCategoryLabel(category);
     const question = isCritical
-      ? `What is the impact of the Strait of Hormuz situation on ${category.category} ${category.tradeType} through ${category.transportType} transport?`
-      : `What are the key drivers behind the strong performance of ${category.category} ${category.tradeType} through ${category.transportType} transport?`;
+      ? `What is the impact of the Strait of Hormuz situation on ${label} ${category.tradeType} through ${category.transportType} transport?`
+      : `What are the key drivers behind the strong performance of ${label} ${category.tradeType} through ${category.transportType} transport?`;
     navigate("/trade-ai", { state: { query: question } });
   };
 
@@ -283,7 +420,7 @@ export function UAETradeMap() {
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <MapPin className="h-5 w-5 text-gray-700" />
+            <SectionIcon icon={Anchor} tone="sky" />
             <h3 className="font-semibold text-lg text-gray-900">UAE Trade Distribution - Abu Dhabi Ports</h3>
             {isCritical && (
               <Badge className="bg-red-100 text-red-700 hover:bg-red-100 gap-1">
@@ -340,6 +477,8 @@ export function UAETradeMap() {
               <SelectItem value="alsila">Al Sila Port</SelectItem>
               <SelectItem value="almirfa">Al Mirfa Port</SelectItem>
               <SelectItem value="shahama">Shahama Port</SelectItem>
+              <SelectItem value="auh_cargo">Abu Dhabi Airport Cargo</SelectItem>
+              <SelectItem value="ghweifat">Al Ghuwaifat Land Border</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -350,6 +489,7 @@ export function UAETradeMap() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All modes</SelectItem>
               <SelectItem value="sea">Sea</SelectItem>
               <SelectItem value="land">Land</SelectItem>
               <SelectItem value="air">Air</SelectItem>
@@ -388,75 +528,31 @@ export function UAETradeMap() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map */}
-        <div className="lg:col-span-2 bg-gray-50 rounded-lg p-4 border border-gray-200 relative h-[280px]">
-          <ComposableMap
-            projection="geoMercator"
-            projectionConfig={{
-              scale: 3500,
-              center: [54, 24]
-            }}
-            width={800}
-            height={400}
-            style={{ width: "100%", height: "100%" }}
-          >
-            <Geographies geography={uaeGeoJson}>
-              {({ geographies }) =>
-                geographies.map((geo) => (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    fill={
-                      geo.properties.name === "Abu Dhabi"
-                        ? "#ffffff"
-                        : "#e5e7eb"
-                    }
-                    stroke={
-                      geo.properties.name === "Abu Dhabi"
-                        ? "#3b82f6"
-                        : "#9ca3af"
-                    }
-                    strokeWidth={geo.properties.name === "Abu Dhabi" ? 1.5 : 0.5}
-                    style={{
-                      default: { outline: "none" },
-                      hover: { outline: "none" },
-                      pressed: { outline: "none" }
-                    }}
-                  />
-                ))
+        <div className="lg:col-span-2 bg-slate-100/80 rounded-lg p-3 border border-gray-200 relative min-h-[360px] h-[420px]">
+          <AbuDhabiTradeLeafletMap
+            ports={visiblePorts}
+            isCritical={isCritical}
+            onHoverPort={(port) => {
+              if (!port) {
+                setTooltipContent(null);
+                return;
               }
-            </Geographies>
-            {ports.map((port, index) => (
-              <Marker key={index} coordinates={port.coordinates}>
-                <circle
-                  r={4}
-                  fill={isCritical ? "#ef4444" : "#3b82f6"}
-                  stroke="white"
-                  strokeWidth={1.5}
-                  onMouseEnter={() => {
-                    const portData = portTradeData[port.name];
-                    if (portData) {
-                      setTooltipContent(portData);
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    setTooltipContent(null);
-                  }}
-                  style={{ cursor: "pointer" }}
-                />
-                <text
-                  textAnchor="middle"
-                  y={-8}
-                  style={{ fontFamily: "system-ui", fontSize: 8, fill: "#374151", fontWeight: 500, pointerEvents: "none" }}
-                >
-                  {port.name.split(' ')[0]}
-                </text>
-              </Marker>
-            ))}
-          </ComposableMap>
+              const payload = buildTooltipPayload(port.name);
+              if (payload) setTooltipContent(payload);
+            }}
+          />
+
+          {visiblePorts.length === 0 && (
+            <div className="absolute inset-4 flex items-center justify-center rounded-lg bg-white/90 border border-dashed border-gray-300 z-[1100]">
+              <p className="text-sm text-gray-600 px-4 text-center">
+                No facilities match the current port and transport filters.
+              </p>
+            </div>
+          )}
 
           {/* Port Tooltip */}
           {tooltipContent && (
-            <div className={`absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 border w-64 z-20 ${isCritical ? 'border-red-400' : 'border-gray-300'}`}>
+            <div className={`absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 border w-64 z-[1200] pointer-events-auto ${isCritical ? 'border-red-400' : 'border-gray-300'}`}>
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-semibold text-gray-900">{tooltipContent.name}</h4>
                 {isCritical && (
@@ -480,7 +576,11 @@ export function UAETradeMap() {
                 </div>
                 <div className="flex justify-between pt-2 border-t">
                   <span className="text-gray-600">Net Trade:</span>
-                  <span className="font-semibold text-blue-600">{tooltipContent.netTrade.toFixed(1)}B AED</span>
+                  <span
+                    className={`font-semibold ${tooltipContent.netTrade < 0 ? "text-red-600" : "text-blue-600"}`}
+                  >
+                    {tooltipContent.netTrade.toFixed(1)}B AED
+                  </span>
                 </div>
               </div>
               <div className="mt-4">
@@ -516,14 +616,19 @@ export function UAETradeMap() {
           </h4>
           <div className="space-y-2 max-h-[250px] overflow-y-auto">
             {isCritical ? (
-              affectedCategories.map((item, index) => (
+              filteredAffectedCategories.length === 0 ? (
+                <p className="text-sm text-gray-500 py-4 text-center border border-dashed border-gray-200 rounded-lg">
+                  No categories match the current filters. Adjust trade type or transport.
+                </p>
+              ) : (
+                filteredAffectedCategories.map((item, index) => (
                 <div
                   key={index}
                   className="bg-white rounded-lg p-3 border border-gray-200"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="text-sm font-medium text-gray-900 flex-1">
-                      {item.category}
+                      {sidebarCategoryLabel(item)}
                     </div>
                     <Badge className={`text-xs ${getImpactColor(item.impact)}`}>
                       {item.impact}
@@ -556,15 +661,21 @@ export function UAETradeMap() {
                   </button>
                 </div>
               ))
+              )
             ) : (
-              topPerformingCategories.map((item, index) => (
+              filteredTopPerformingCategories.length === 0 ? (
+                <p className="text-sm text-gray-500 py-4 text-center border border-dashed border-gray-200 rounded-lg">
+                  No categories match the current filters. Adjust trade type or transport.
+                </p>
+              ) : (
+                filteredTopPerformingCategories.map((item, index) => (
                 <div
                   key={index}
                   className="bg-white rounded-lg p-3 border border-gray-200"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="text-sm font-medium text-gray-900 flex-1">
-                      {item.category}
+                      {sidebarCategoryLabel(item)}
                     </div>
                     <Badge className={`text-xs ${getPerformanceColor(item.performance)}`}>
                       <TrendingUp className="h-3 w-3 mr-1" />
@@ -602,6 +713,7 @@ export function UAETradeMap() {
                   </button>
                 </div>
               ))
+              )
             )}
           </div>
         </div>

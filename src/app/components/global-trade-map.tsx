@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ZoomIn, ZoomOut, Globe } from "lucide-react";
+import { ZoomIn, ZoomOut, MapPinned } from "lucide-react";
 import { Button } from "./ui/button";
+import { SectionIcon } from "./section-icon";
 import { Badge } from "./ui/badge";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -584,9 +585,9 @@ export function GlobalTradeMap() {
   return (
     <div className="bg-white rounded-lg p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Globe className="h-5 w-5 text-gray-700" />
-          <h2 className="font-semibold text-lg text-gray-900">Global Trade Distribution</h2>
+        <div className="flex items-center gap-3">
+          <SectionIcon icon={MapPinned} tone="sky" size="md" />
+          <h2 className="font-semibold text-lg text-gray-900 leading-snug m-0">Global Trade Distribution</h2>
         </div>
         <div className="flex gap-3">
           <div>
@@ -759,7 +760,15 @@ export function GlobalTradeMap() {
                   </div>
                   <div className="flex justify-between text-sm border-t pt-2">
                     <span className="text-gray-600 font-medium">Net Trade:</span>
-                    <span className="font-semibold text-blue-600">{tooltipContent.netTrade.toFixed(1)}B AED</span>
+                    <span
+                      className={
+                        tooltipContent.netTrade >= 0
+                          ? "font-semibold text-green-600"
+                          : "font-semibold text-red-600"
+                      }
+                    >
+                      {tooltipContent.netTrade.toFixed(1)}B AED
+                    </span>
                   </div>
                 </div>
                 <div className="border-t pt-3">

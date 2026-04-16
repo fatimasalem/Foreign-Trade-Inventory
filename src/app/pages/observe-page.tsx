@@ -1,6 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Package, Globe, TrendingUp, AlertCircle, Lightbulb, Activity, Calendar, ChevronRight, BarChart3 } from "lucide-react";
+import { Package, Globe, TrendingUp, AlertCircle, Lightbulb, Activity, ChevronRight, BarChart3 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Checkbox } from "../components/ui/checkbox";
 import {
@@ -17,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
+import { SectionIcon } from "../components/section-icon";
 
 interface FlippableCardProps {
   icon: React.ReactNode;
@@ -86,6 +88,7 @@ function FlippableCard({ icon, label, value, change, subtitle, unit, insight }: 
 }
 
 export function ObservePage() {
+  const navigate = useNavigate();
   const [category, setCategory] = useState("All Categories");
   const [month, setMonth] = useState("March");
   const [year, setYear] = useState("2026");
@@ -223,7 +226,7 @@ export function ObservePage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <FlippableCard
-          icon={<Package className="h-5 w-5 text-blue-600" />}
+          icon={<SectionIcon icon={Package} tone="blue" />}
           label="Total Trade Volume"
           value="AED 105.4B"
           change="↑ 4.2% MoM"
@@ -233,7 +236,7 @@ export function ObservePage() {
         />
 
         <FlippableCard
-          icon={<Globe className="h-5 w-5 text-green-600" />}
+          icon={<SectionIcon icon={Globe} tone="green" />}
           label="Trade Partners"
           value="142"
           change="Active countries"
@@ -243,7 +246,7 @@ export function ObservePage() {
         />
 
         <FlippableCard
-          icon={<TrendingUp className="h-5 w-5 text-purple-600" />}
+          icon={<SectionIcon icon={TrendingUp} tone="purple" />}
           label="Export Growth"
           value="+12.3%"
           change="Above target"
@@ -253,7 +256,7 @@ export function ObservePage() {
         />
 
         <FlippableCard
-          icon={<AlertCircle className="h-5 w-5 text-yellow-600" />}
+          icon={<SectionIcon icon={AlertCircle} tone="yellow" />}
           label="Trade Balance"
           value="AED 15.0B"
           change="↑ 18.5% MoM"
@@ -267,7 +270,7 @@ export function ObservePage() {
       <div className="bg-white rounded-lg p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-gray-700" />
+            <SectionIcon icon={Activity} tone="slate" />
             <div>
               <h3 className="font-semibold text-lg text-gray-900">Monthly Trade Trend</h3>
               <p className="text-xs text-gray-500 mt-1">All amounts displayed in billions AED</p>
@@ -382,13 +385,44 @@ export function ObservePage() {
         <div className="bg-white rounded-lg p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
+              <SectionIcon icon={TrendingUp} tone="green" />
               <div>
                 <h3 className="font-semibold text-lg text-gray-900">Top Export Categories</h3>
                 <p className="text-xs text-gray-500 mt-1">All amounts displayed in billions AED</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-end gap-2">
+              <div>
+                <label className="text-xs font-medium text-gray-700 mb-1 block">Country</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-[160px] justify-between text-sm">
+                      {exportSelectedCountries.length === 1
+                        ? exportSelectedCountries[0]
+                        : `${exportSelectedCountries.length} countries selected`}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-3">
+                    <div className="space-y-2">
+                      {countries.map((country) => (
+                        <div key={`export-top-${country}`} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`export-top-${country}`}
+                            checked={exportSelectedCountries.includes(country)}
+                            onCheckedChange={() => handleExportCountryToggle(country)}
+                          />
+                          <label
+                            htmlFor={`export-top-${country}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {country}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <div>
                 <Select value={exportClassification} onValueChange={setExportClassification}>
                   <SelectTrigger className="w-[90px]">
@@ -463,13 +497,44 @@ export function ObservePage() {
         <div className="bg-white rounded-lg p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-red-600" />
+              <SectionIcon icon={Package} tone="red" />
               <div>
                 <h3 className="font-semibold text-lg text-gray-900">Top Import Categories</h3>
                 <p className="text-xs text-gray-500 mt-1">All amounts displayed in billions AED</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-end gap-2">
+              <div>
+                <label className="text-xs font-medium text-gray-700 mb-1 block">Country</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-[160px] justify-between text-sm">
+                      {importSelectedCountries.length === 1
+                        ? importSelectedCountries[0]
+                        : `${importSelectedCountries.length} countries selected`}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-3">
+                    <div className="space-y-2">
+                      {countries.map((country) => (
+                        <div key={`import-top-${country}`} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`import-top-${country}`}
+                            checked={importSelectedCountries.includes(country)}
+                            onCheckedChange={() => handleImportCountryToggle(country)}
+                          />
+                          <label
+                            htmlFor={`import-top-${country}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {country}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <div>
                 <Select value={importClassification} onValueChange={setImportClassification}>
                   <SelectTrigger className="w-[90px]">
@@ -522,13 +587,13 @@ export function ObservePage() {
                   <div className="flex items-center gap-3">
                     <div className="w-32 bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full ${isPositive ? "bg-green-600" : "bg-red-600"}`}
+                        className={`h-2 rounded-full ${isPositive ? "bg-green-600" : "bg-amber-600"}`}
                         style={{ width: `${(item.value / 15) * 100}%` }}
                       />
                     </div>
                     <span
                       className={`text-sm font-medium ${
-                        isPositive ? "text-green-600" : "text-red-600"
+                        isPositive ? "text-green-600" : "text-amber-700"
                       }`}
                     >
                       {item.change}
@@ -546,7 +611,7 @@ export function ObservePage() {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-gray-700" />
+              <SectionIcon icon={BarChart3} tone="slate" />
               <div>
                 <h3 className="font-semibold text-lg text-gray-900">Categories Analysis</h3>
                 <p className="text-xs text-gray-500 mt-1">Detailed breakdown of trade categories</p>
@@ -655,8 +720,23 @@ export function ObservePage() {
             {filteredCategoriesData.map((item, index) => {
               const momPositive = item.mom.startsWith("+");
               const yoyPositive = item.yoy.startsWith("+");
+              const goToCategoryDetail = () => {
+                navigate(`/observe/category/${encodeURIComponent(item.category)}`);
+              };
               return (
-                <TableRow key={index} className="cursor-pointer hover:bg-gray-50">
+                <TableRow
+                  key={index}
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={goToCategoryDetail}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      goToCategoryDetail();
+                    }
+                  }}
+                  role="link"
+                  tabIndex={0}
+                >
                   <TableCell className="font-medium">{item.category}</TableCell>
                   <TableCell className={`text-right font-medium ${momPositive ? "text-green-600" : "text-red-600"}`}>
                     {item.mom}

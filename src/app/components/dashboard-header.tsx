@@ -8,6 +8,7 @@ function pageTitleForPath(pathname: string): string {
   if (pathname === "/observe") return "Observe";
   if (pathname === "/trade-ai") return "Trade AI";
   if (pathname === "/official-statistics") return "Official statistics";
+  if (pathname === "/publications") return "Publications";
   if (pathname.startsWith("/publication/")) return "Publication";
   if (pathname.startsWith("/indicator/")) return "Indicator detail";
   if (pathname === "/compare-indicators") return "Compare indicators";

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { TrendingUp, TrendingDown, Minus, MessageSquare, Globe2, Building2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, MessageSquare, Earth, Factory } from "lucide-react";
 import { Button } from "./ui/button";
+import { SectionIcon } from "./section-icon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useAIAssistant } from "../contexts/ai-assistant-context";
 
@@ -52,9 +53,13 @@ export function DriverSection({ title, drivers }: DriverSectionProps) {
   return (
     <div className="bg-white rounded-lg p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          {isGlobal ? <Globe2 className="h-5 w-5 text-gray-700" /> : <Building2 className="h-5 w-5 text-gray-700" />}
-          <h3 className="font-semibold text-lg text-gray-900">{title}</h3>
+        <div className="flex items-center gap-3">
+          {isGlobal ? (
+            <SectionIcon icon={Earth} tone="blue" size="md" />
+          ) : (
+            <SectionIcon icon={Factory} tone="amber" size="md" />
+          )}
+          <h3 className="font-semibold text-lg text-gray-900 leading-snug m-0">{title}</h3>
         </div>
         <div className="flex gap-2">
           <div>

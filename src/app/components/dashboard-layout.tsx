@@ -26,8 +26,8 @@ function DashboardLayoutContent() {
         <main
           id="main-content"
           tabIndex={-1}
-          className={`flex-1 p-4 transition-[margin] duration-300 ease-out sm:p-6 md:p-8 ${
-            isSidebarCollapsed ? "ml-16" : "ml-64"
+          className={`flex-1 ml-0 px-4 pt-4 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] transition-[margin] duration-300 ease-out sm:px-6 sm:pt-6 md:px-8 md:pt-8 md:pb-8 ${
+            isSidebarCollapsed ? "md:ml-16" : "md:ml-64"
           }`}
         >
           <div className="mx-auto max-w-[1600px]">

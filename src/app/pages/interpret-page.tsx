@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { IndicatorCard } from "../components/indicator-card";
 import { DriverSection } from "../components/driver-section";
 import { EventsSection } from "../components/events-section";
 import { GlobalTradeMap } from "../components/global-trade-map";
 import { FlippableIndicatorCard } from "../components/flippable-indicator-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Package, TrendingUp, TrendingDown, DollarSign, Globe, Activity, Calendar, AlertTriangle, BarChart3, Shield, ArrowUpRight, Plus, Bell, LayoutGrid, BarChart2, Check, Download, Info } from "lucide-react";
+import { SectionIcon } from "../components/section-icon";
+import { BarChart3, Shield, ArrowUpRight, Plus, Bell, Download, Info, ScrollText, LineChart } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -26,8 +26,6 @@ export function InterpretPage() {
   const navigate = useNavigate();
   const [globalMonth, setGlobalMonth] = useState("March");
   const [globalYear, setGlobalYear] = useState("2026");
-  const [tradeType, setTradeType] = useState("all");
-  const [classification, setClassification] = useState("HS");
   const [metricsMonth, setMetricsMonth] = useState("March");
   const [metricsYear, setMetricsYear] = useState("2026");
   const overviewIndicators = [
@@ -71,52 +69,6 @@ export function InterpretPage() {
       changeType: "MoM" as const,
       insight: "The net trade balance improved significantly by 18.5% month-over-month, reaching AED 15.0B. This positive trend is attributed to strong export performance and controlled import levels, indicating healthy trade dynamics.",
       comparisonText: "Increased from AED 12.7B to AED 15.0B, an improvement of <span class='text-green-600 font-semibold'>+AED 2.3B</span> compared to previous month."
-    },
-  ];
-
-  const indicators = [
-    {
-      type: "critical" as const,
-      label: "Critical",
-      count: 9,
-      description: "Categories outside expected range",
-      items: [
-        { name: "Vehicles & parts (HS87)", value: "12.3B", change: "-28.5%", changeType: "MoM" as const },
-        { name: "Pharmaceutical products (HS30)", value: "5.8B", change: "-22.3%", changeType: "YoY" as const },
-        { name: "Electrical machinery (HS85)", value: "9.5B", change: "-18.7%", changeType: "MoM" as const },
-      ]
-    },
-    {
-      type: "warning" as const,
-      label: "Warning",
-      count: 2,
-      description: "Indicators within elevated watch range",
-      items: [
-        { name: "Furniture (HS94)", value: "2.8B", change: "-12.5%", changeType: "MoM" as const },
-        { name: "Optical instruments (HS90)", value: "1.2B", change: "-9.2%", changeType: "YoY" as const }
-      ]
-    },
-    {
-      type: "watch" as const,
-      label: "Watch",
-      count: 5,
-      description: "Indicators to monitor closely",
-      items: [
-        { name: "Precious stones/metals (HS71)", value: "7.5B", change: "+45.2%", changeType: "MoM" as const },
-        { name: "Aluminum & articles (HS76)", value: "8.2B", change: "+32.8%", changeType: "MoM" as const },
-        { name: "Aircraft & parts (HS88)", value: "3.5B", change: "+18.3%", changeType: "MoM" as const },
-      ]
-    },
-    {
-      type: "stable" as const,
-      label: "Stable",
-      count: 8,
-      description: "Indicators within expected range",
-      items: [
-        { name: "Nuclear reactors/machinery (HS84)", value: "10.2B", change: "+8.5%", changeType: "YoY" as const },
-        { name: "Plastics & articles (HS39)", value: "6.5B", change: "+5.1%", changeType: "MoM" as const },
-        { name: "Iron & steel (HS72)", value: "7.2B", change: "+3.5%", changeType: "YoY" as const },
-      ]
     },
   ];
 
@@ -175,7 +127,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="cursor-help">
-                      <BarChart3 className="h-5 w-5 text-gray-700" />
+                      <SectionIcon icon={BarChart3} tone="slate" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -187,7 +139,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="cursor-help">
-                      <Shield className="h-5 w-5 text-blue-600" />
+                      <SectionIcon icon={Shield} tone="blue" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -278,7 +230,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="cursor-help">
-                      <BarChart3 className="h-5 w-5 text-gray-700" />
+                      <SectionIcon icon={BarChart3} tone="slate" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -290,7 +242,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="cursor-help">
-                      <Shield className="h-5 w-5 text-blue-600" />
+                      <SectionIcon icon={Shield} tone="blue" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -381,7 +333,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="cursor-help">
-                      <BarChart3 className="h-5 w-5 text-gray-700" />
+                      <SectionIcon icon={BarChart3} tone="slate" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -393,7 +345,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="cursor-help">
-                      <Shield className="h-5 w-5 text-blue-600" />
+                      <SectionIcon icon={Shield} tone="blue" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -484,7 +436,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="cursor-help">
-                      <BarChart3 className="h-5 w-5 text-gray-700" />
+                      <SectionIcon icon={BarChart3} tone="slate" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -496,7 +448,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="cursor-help">
-                      <Shield className="h-5 w-5 text-blue-600" />
+                      <SectionIcon icon={Shield} tone="blue" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -581,13 +533,13 @@ export function InterpretPage() {
       </div>
 
       {/* Overview Summary */}
-      <div className="mb-2">
-        <div className="flex items-center gap-2 mb-3">
-          <Activity className="h-5 w-5 text-gray-700" />
-          <h2 className="font-semibold text-lg text-gray-900">Overview Summary</h2>
+      <div className="rounded-lg border border-gray-200 bg-white/80 px-4 py-4 sm:px-5">
+        <div className="flex items-center gap-3 mb-3">
+          <SectionIcon icon={ScrollText} tone="primary" size="md" />
+          <h2 className="font-semibold text-lg text-gray-900 leading-snug m-0">Overview Summary</h2>
         </div>
-        <div className="prose max-w-none">
-          <p className="text-gray-700 leading-relaxed">
+        <div className="prose max-w-none prose-p:my-0">
+          <p className="text-gray-700 leading-relaxed text-[15px]">
             For {globalMonth} {globalYear}, Abu Dhabi's non-oil trade shows mixed performance.
             <strong className="text-gray-900"> Imports totaled AED 45.2B</strong> (<span className="text-red-600 font-medium">-5.8% MoM</span>),
             driven by reduced vehicle and pharmaceutical imports.
@@ -599,56 +551,12 @@ export function InterpretPage() {
         </div>
       </div>
 
-      {/* Situational Awareness */}
-      <div className="bg-white rounded-lg p-6 border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-gray-700" />
-            <h2 className="font-semibold text-lg text-gray-900">Situational Awareness</h2>
-          </div>
-          <div className="flex gap-3">
-            <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Foreign Trade Type</label>
-              <Select value={tradeType} onValueChange={setTradeType}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="import">Non-Oil Import</SelectItem>
-                  <SelectItem value="export">Non-Oil Export</SelectItem>
-                  <SelectItem value="re-export">Non-Oil Re-Export</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Classification</label>
-              <Select value={classification} onValueChange={setClassification}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HS">HS</SelectItem>
-                  <SelectItem value="BEC">BEC</SelectItem>
-                  <SelectItem value="SITC">SITC</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {indicators.map((indicator, index) => (
-            <IndicatorCard key={index} {...indicator} tradeType={tradeType} classification={classification} />
-          ))}
-        </div>
-      </div>
-
       {/* Main Trade Metrics */}
       <div className="bg-white rounded-lg p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-gray-700" />
-            <h2 className="font-semibold text-lg text-gray-900">Trade Metrics</h2>
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={LineChart} tone="slate" size="md" />
+            <h2 className="font-semibold text-lg text-gray-900 leading-snug m-0">Trade Metrics</h2>
           </div>
           <div className="flex gap-2">
             <div>

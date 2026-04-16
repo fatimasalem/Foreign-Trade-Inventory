@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { toast, Toaster } from "sonner";
+import { SectionIcon } from "../components/section-icon";
 
 interface StatCardProps {
   title: string;
@@ -90,7 +91,7 @@ function StatCard({ title, value, unit, change, updateDate, isConfidential, isCh
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="cursor-help">
-                    <BarChart3 className="h-5 w-5 text-gray-700" />
+                    <SectionIcon icon={BarChart3} tone="slate" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -102,7 +103,7 @@ function StatCard({ title, value, unit, change, updateDate, isConfidential, isCh
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="cursor-help">
-                    <Shield className="h-5 w-5 text-blue-600" />
+                    <SectionIcon icon={Shield} tone="blue" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>

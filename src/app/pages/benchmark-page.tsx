@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { TrendingUp, ArrowUpRight, Target, Anchor, Globe, Ship } from "lucide-react";
+import { SectionIcon } from "../components/section-icon";
 
 type ComparisonRegion = "gcc" | "global";
 type ComparisonCategory = "imports" | "exports" | "reexports" | "nettrade";
@@ -117,7 +118,7 @@ export function BenchmarkPage() {
       {/* Country/Region Comparison Section */}
       <div className="bg-white rounded-lg p-6 border border-gray-200">
         <div className="flex items-center gap-2 mb-4">
-          <Globe className="h-5 w-5 text-gray-700" />
+          <SectionIcon icon={Globe} tone="slate" />
           <h2 className="font-semibold text-lg text-gray-900">Trade Countries Analysis</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -205,9 +206,7 @@ export function BenchmarkPage() {
               return (
                 <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
                   <div className="flex items-start gap-3">
-                    <div className="bg-blue-50 p-2 rounded-lg">
-                      <Icon className="h-5 w-5 text-blue-600" />
-                    </div>
+                    <SectionIcon icon={Icon} tone="blue" />
                     <div className="flex-1">
                       <div className="text-sm text-gray-600 mb-1">{insight.title}</div>
                       <div className="text-xl font-semibold text-gray-900 mb-1">{insight.value}</div>
@@ -224,7 +223,7 @@ export function BenchmarkPage() {
       {/* UAE Ports Comparison Section */}
       <div className="bg-white rounded-lg p-6 border border-gray-200">
         <div className="flex items-center gap-2 mb-4">
-          <Ship className="h-5 w-5 text-gray-700" />
+          <SectionIcon icon={Ship} tone="slate" />
           <h2 className="font-semibold text-lg text-gray-900">Abu Dhabi Ports Comparison</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -313,9 +312,7 @@ export function BenchmarkPage() {
               return (
                 <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
                   <div className="flex items-start gap-3">
-                    <div className="bg-green-50 p-2 rounded-lg">
-                      <Icon className="h-5 w-5 text-green-600" />
-                    </div>
+                    <SectionIcon icon={Icon} tone="green" />
                     <div className="flex-1">
                       <div className="text-sm text-gray-600 mb-1">{insight.title}</div>
                       <div className="text-xl font-semibold text-gray-900 mb-1">{insight.value}</div>

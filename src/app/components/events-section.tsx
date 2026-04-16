@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Calendar, TrendingUp, TrendingDown, MessageSquare } from "lucide-react";
+import { Calendar, TrendingUp, TrendingDown, MessageSquare, Newspaper } from "lucide-react";
 import { Button } from "./ui/button";
+import { SectionIcon } from "./section-icon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useAIAssistant } from "../contexts/ai-assistant-context";
 
@@ -47,9 +48,9 @@ export function EventsSection() {
   return (
     <div className="bg-white rounded-lg p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-gray-700" />
-          <h3 className="font-semibold text-lg text-gray-900">Events & Impact on Foreign Trade</h3>
+        <div className="flex items-center gap-3">
+          <SectionIcon icon={Newspaper} tone="violet" size="md" />
+          <h3 className="font-semibold text-lg text-gray-900 leading-snug m-0">Events & Impact on Foreign Trade</h3>
         </div>
         <div className="flex gap-2">
           <div>
