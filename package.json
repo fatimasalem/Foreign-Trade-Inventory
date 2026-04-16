@@ -1,8 +1,9 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "Foreign-Trade-Inventory",
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "homepage": "https://github.io",
   "scripts": {
     "build": "vite build",
     "dev": "vite"
