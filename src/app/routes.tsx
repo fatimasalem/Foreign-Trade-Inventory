@@ -23,6 +23,7 @@ export const router = createBrowserRouter([
       { path: "diagnose", Component: DiagnosePage },
       { path: "benchmark", Component: BenchmarkPage },
       { path: "observe", Component: ObservePage },
+      { path: "observe/category/:categorySlug/article/:articleSlug", Component: CategoryTradeDetailPage },
       { path: "observe/category/:categorySlug", Component: CategoryTradeDetailPage },
       { path: "trade-ai", Component: TradeAIPage },
       { path: "official-statistics", Component: OfficialStatisticsPage },

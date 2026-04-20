@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
   LineChart,
   Line,
@@ -28,6 +28,7 @@ import {
   Cpu,
   Atom,
   Pill,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -36,20 +37,15 @@ import { Checkbox } from "../components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { SectionIcon } from "../components/section-icon";
+import {
+  ALL_CATEGORY_ANALYSIS_ROWS,
+  articlesForClassification,
+  findCategoryAnalysisRowByName,
+  parseClassificationParam,
+  type ClassificationKind,
+} from "../data/observe-categories-analysis";
 
 const COUNTRY_OPTIONS = ["All Countries", "China", "India", "USA", "Saudi Arabia", "Japan", "Germany"];
-
-const ALL_KNOWN_CATEGORIES = [
-  "Aluminum & Articles",
-  "Precious Stones/Metals",
-  "Plastics & Articles",
-  "Iron & Steel",
-  "Organic Chemicals",
-  "Vehicles & Parts",
-  "Electrical Machinery",
-  "Nuclear Reactors",
-  "Pharmaceutical Products",
-];
 
 function strSeed(s: string): number {
   let h = 0;
@@ -68,12 +64,29 @@ function mulberry32(a: number) {
   };
 }
 
-function getRelatedCategories(current: string): string[] {
-  return ALL_KNOWN_CATEGORIES.filter((c) => c !== current).slice(0, 4);
-}
-
 function iconForCategoryName(name: string): LucideIcon {
   const n = name.toLowerCase();
+  if (n.includes("section 1:") || n.includes("live animal")) return Package;
+  if (n.includes("section 2:") || n.includes("vegetable product")) return Box;
+  if (n.includes("section 3:") || n.includes("fats and oils")) return Droplets;
+  if (n.includes("section 4:") || n.includes("foodstuff")) return Factory;
+  if (n.includes("section 5:") || n.includes("mineral product")) return Box;
+  if (n.includes("section 6:") || n.includes("chemical")) return FlaskConical;
+  if (n.includes("section 7:") || n.includes("plastic")) return Droplets;
+  if (n.includes("section 8:") || n.includes("leather")) return Package;
+  if (n.includes("section 9:") || n.includes("wood")) return Box;
+  if (n.includes("section 10:") || n.includes("pulp") || n.includes("paper")) return FileText;
+  if (n.includes("section 11:") || n.includes("textile")) return Package;
+  if (n.includes("section 12:") || n.includes("footwear")) return Package;
+  if (n.includes("section 13:") || n.includes("stone") || n.includes("ceramic") || n.includes("glass")) return Gem;
+  if (n.includes("section 14:") || n.includes("pearl") || n.includes("precious")) return Gem;
+  if (n.includes("section 15:") || n.includes("base metal")) return Factory;
+  if (n.includes("section 16:") || n.includes("machinery") || n.includes("electrical")) return Cpu;
+  if (n.includes("section 17:") || n.includes("vehicle") || n.includes("aircraft") || n.includes("vessel")) return Car;
+  if (n.includes("section 18:") || n.includes("optical") || n.includes("medical instrument")) return Atom;
+  if (n.includes("section 19:") || n.includes("arms")) return Package;
+  if (n.includes("section 20:") || n.includes("miscellaneous manufactured")) return Package;
+  if (n.includes("section 21:") || n.includes("works of art")) return Gem;
   if (n.includes("aluminum")) return Box;
   if (n.includes("precious") || n.includes("stone") || n.includes("metal")) return Gem;
   if (n.includes("plastic")) return Droplets;
@@ -84,6 +97,10 @@ function iconForCategoryName(name: string): LucideIcon {
   if (n.includes("nuclear")) return Atom;
   if (n.includes("pharmaceutical")) return Pill;
   return Package;
+}
+
+function getRelatedCategories(current: string): string[] {
+  return ALL_CATEGORY_ANALYSIS_ROWS.map((r) => r.category).filter((c) => c !== current).slice(0, 4);
 }
 
 type TradeKind = "import" | "export" | "reexport";
@@ -111,13 +128,14 @@ function topCountriesForCategory(
 
 function buildTrendPoints(
   categoryName: string,
+  articleLabel: string | undefined,
   month: string,
   year: string,
-  classification: string,
+  cls: ClassificationKind,
   trendCountries: string[],
 ): { month: string; imports: number; exports: number; reexports: number }[] {
   const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr"];
-  const seed = strSeed(`${categoryName}|${month}|${year}|${classification}`);
+  const seed = strSeed(`${categoryName}|${articleLabel ?? ""}|${month}|${year}|${cls}`);
   const rand = mulberry32(seed);
   const hasAll = trendCountries.includes("All Countries") || trendCountries.length === 0;
   const n = hasAll ? 4 : Math.max(1, trendCountries.filter((c) => c !== "All Countries").length);
@@ -127,16 +145,17 @@ function buildTrendPoints(
     const jitter = () => (rand() - 0.5) * 2;
     return {
       month: m,
-      imports: +(42 + rand() * 8 + jitter() + seed % 7 * 0.01).toFixed(1) * partnerFactor,
-      exports: +(24 + rand() * 7 + jitter() + seed % 5 * 0.01).toFixed(1) * partnerFactor,
-      reexports: +(27 + rand() * 6 + jitter() + seed % 6 * 0.01).toFixed(1) * partnerFactor,
+      imports: +(42 + rand() * 8 + jitter() + (seed % 7) * 0.01).toFixed(1) * partnerFactor,
+      exports: +(24 + rand() * 7 + jitter() + (seed % 5) * 0.01).toFixed(1) * partnerFactor,
+      reexports: +(27 + rand() * 6 + jitter() + (seed % 6) * 0.01).toFixed(1) * partnerFactor,
     };
   });
 }
 
 export function CategoryTradeDetailPage() {
   const navigate = useNavigate();
-  const { categorySlug } = useParams();
+  const { categorySlug, articleSlug } = useParams<{ categorySlug: string; articleSlug?: string }>();
+  const [searchParams] = useSearchParams();
 
   const categoryName = useMemo(() => {
     if (!categorySlug) return "Category";
@@ -147,12 +166,28 @@ export function CategoryTradeDetailPage() {
     }
   }, [categorySlug]);
 
+  const articleName = useMemo(() => {
+    if (!articleSlug) return undefined;
+    try {
+      return decodeURIComponent(articleSlug);
+    } catch {
+      return articleSlug;
+    }
+  }, [articleSlug]);
+
+  const cls = parseClassificationParam(searchParams.get("cls"));
+
+  const categoryRow = useMemo(() => findCategoryAnalysisRowByName(categoryName), [categoryName]);
+  const articleOptions = useMemo(
+    () => (categoryRow ? articlesForClassification(categoryRow, cls) : []),
+    [categoryRow, cls],
+  );
+
   const [month, setMonth] = useState("March");
   const [year, setYear] = useState("2026");
-  const [classification, setClassification] = useState("HS");
   const [trendCountries, setTrendCountries] = useState<string[]>(["All Countries"]);
 
-  const filterKey = `${month}|${year}|${classification}`;
+  const filterKey = `${month}|${year}|${cls}|${articleName ?? ""}`;
 
   const topImport = useMemo(
     () => topCountriesForCategory(categoryName, "import", filterKey),
@@ -168,8 +203,8 @@ export function CategoryTradeDetailPage() {
   );
 
   const trendData = useMemo(
-    () => buildTrendPoints(categoryName, month, year, classification, trendCountries),
-    [categoryName, month, year, classification, trendCountries],
+    () => buildTrendPoints(categoryName, articleName, month, year, cls, trendCountries),
+    [categoryName, articleName, month, year, cls, trendCountries],
   );
 
   const related = useMemo(() => getRelatedCategories(categoryName), [categoryName]);
@@ -186,10 +221,18 @@ export function CategoryTradeDetailPage() {
   };
 
   const goToCategory = (name: string) => {
-    navigate(`/observe/category/${encodeURIComponent(name)}`);
+    const qs = new URLSearchParams({ cls });
+    navigate(`/observe/category/${encodeURIComponent(name)}?${qs.toString()}`);
+  };
+
+  const goToArticle = (label: string) => {
+    const qs = new URLSearchParams({ cls });
+    navigate(`/observe/category/${encodeURIComponent(categoryName)}/article/${encodeURIComponent(label)}?${qs.toString()}`);
   };
 
   const TitleIcon = iconForCategoryName(categoryName);
+  const displayTitle = articleName ?? categoryName;
+  const classificationLabel = cls === "HS" ? "Harmonized System" : cls === "BEC" ? "Broad Economic Categories" : "SITC Rev.4";
 
   return (
     <div className="space-y-6">
@@ -202,9 +245,18 @@ export function CategoryTradeDetailPage() {
           <div className="flex gap-3">
             <SectionIcon icon={TitleIcon} tone="violet" size="lg" />
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold text-gray-900">{categoryName}</h1>
+              {articleName ? (
+                <>
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{categoryName}</p>
+                  <h1 className="text-2xl font-semibold text-gray-900">{articleName}</h1>
+                </>
+              ) : (
+                <h1 className="text-2xl font-semibold text-gray-900">{displayTitle}</h1>
+              )}
               <p className="mt-1 text-sm text-gray-500">
-                Non-oil trade partners and trends for this category. Adjust filters to explore classification and period.
+                Non-oil trade partners and trends
+                {articleName ? " for this article" : " for this HS section"}. Article list uses {classificationLabel}{" "}
+                lines ({cls}) from Observe.
               </p>
             </div>
           </div>
@@ -240,20 +292,40 @@ export function CategoryTradeDetailPage() {
             </Select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">Classification</label>
-            <Select value={classification} onValueChange={setClassification}>
-              <SelectTrigger className="w-[90px]">
-                <SelectValue />
+            <label className="mb-1 block text-xs font-medium text-gray-700">Article ({cls})</label>
+            <Select
+              value={articleName ?? "__category__"}
+              onValueChange={(v) => {
+                if (v === "__category__") {
+                  const qs = new URLSearchParams({ cls });
+                  navigate(`/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`);
+                  return;
+                }
+                goToArticle(v);
+              }}
+            >
+              <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                <SelectValue placeholder="Choose article" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="HS">HS</SelectItem>
-                <SelectItem value="BEC">BEC</SelectItem>
-                <SelectItem value="SITC">SITC</SelectItem>
+                <SelectItem value="__category__">Category overview (no article)</SelectItem>
+                {articleOptions.map((a) => (
+                  <SelectItem key={a.label} value={a.label}>
+                    {a.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
       </div>
+
+      {!categoryRow && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          This category name is not in the current Observe HS section list. Open Observe and pick a row from Categories
+          Analysis.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="rounded-lg border border-gray-200 bg-white p-5">
@@ -406,38 +478,38 @@ export function CategoryTradeDetailPage() {
           <SectionIcon icon={LayoutGrid} tone="amber" />
           <h3 className="text-lg font-semibold text-gray-900">Related categories</h3>
         </div>
-        <p className="mb-4 text-sm text-gray-500">Open another category to see the same breakdown.</p>
+        <p className="mb-4 text-sm text-gray-500">Open another HS section to see the same breakdown.</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {related.map((name) => {
             const CardCategoryIcon = iconForCategoryName(name);
             return (
-            <Card
-              key={name}
-              className="cursor-pointer transition-shadow hover:shadow-md"
-              onClick={() => goToCategory(name)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  goToCategory(name);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex gap-3">
-                  <SectionIcon icon={CardCategoryIcon} tone="primary" />
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="text-base leading-snug">{name}</CardTitle>
-                    <CardDescription className="mt-1">View trade partners and trends</CardDescription>
+              <Card
+                key={name}
+                className="cursor-pointer transition-shadow hover:shadow-md"
+                onClick={() => goToCategory(name)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    goToCategory(name);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex gap-3">
+                    <SectionIcon icon={CardCategoryIcon} tone="primary" />
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-base leading-snug">{name}</CardTitle>
+                      <CardDescription className="mt-1">View trade partners and trends</CardDescription>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex items-center justify-between pt-0 text-sm text-primary">
-                <span>Open detail</span>
-                <ChevronRight className="h-4 w-4" />
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between pt-0 text-sm text-primary">
+                  <span>Open detail</span>
+                  <ChevronRight className="h-4 w-4" />
+                </CardContent>
+              </Card>
             );
           })}
         </div>

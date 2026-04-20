@@ -35,6 +35,9 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
     if (path === "/overview" && (location.pathname === "/" || location.pathname === "/overview")) {
       return true;
     }
+    if (path === "/observe" && location.pathname.startsWith("/observe")) {
+      return true;
+    }
     return location.pathname === path;
   };
 
@@ -78,7 +81,7 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
               className={cn(
                 linkBase,
                 "flex min-w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-[10px] font-medium leading-tight",
-                "md:min-w-0 md:flex-row md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal md:font-normal",
+                "md:min-w-0 md:w-full md:flex-row md:items-center md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal md:font-normal",
                 active
                   ? item.color === "purple"
                     ? "bg-purple-50 text-purple-800 shadow-sm md:font-medium"
@@ -119,7 +122,7 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
           className={cn(
             linkBase,
             "flex min-w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-[10px] font-medium leading-tight",
-            "md:min-w-0 md:w-full md:flex-row md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal",
+            "md:min-w-0 md:w-full md:flex-row md:items-center md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal",
             publicationsActive
               ? "bg-primary/8 font-medium text-primary shadow-sm"
               : "text-foreground/90 hover:bg-muted hover:text-foreground",
@@ -142,11 +145,11 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
         </Link>
       </nav>
 
-      <div className="hidden border-t border-border p-2 md:block">
+      <div className="hidden w-full border-t border-border p-2 md:flex md:justify-end">
         <Button
           variant="outline"
           size="icon"
-          className="ml-auto h-9 w-9 border-border bg-background shadow-sm"
+          className="h-9 w-9 shrink-0 border-border bg-background shadow-sm"
           onClick={onToggleCollapse}
           aria-expanded={!isCollapsed}
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
