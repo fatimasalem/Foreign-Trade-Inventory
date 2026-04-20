@@ -31,7 +31,7 @@ export function PublicationPage() {
 
   if (!publication) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12">
+      <div className="w-full py-12">
         <h1 className="text-2xl font-bold">Publication not found</h1>
         <p className="mt-2 text-muted-foreground">
           <Link to="/publications" className="text-primary underline-offset-4 hover:underline">
@@ -46,7 +46,7 @@ export function PublicationPage() {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <article className="w-full py-10">
         <div className="mb-8">
           <Link
             to="/publications"
