@@ -89,22 +89,6 @@ export function PublicationPage() {
           </div>
         </div>
 
-        {/* Markdown-style document body */}
-        <div className="rounded-xl border border-border bg-card px-5 py-8 shadow-sm sm:px-10 sm:py-10">
-          <div
-            className="prose prose-neutral max-w-none font-sans text-[15px] leading-relaxed text-foreground
-              prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-foreground
-              prose-h2:mt-10 prose-h2:mb-3 prose-h2:border-b prose-h2:border-border prose-h2:pb-2 prose-h2:text-xl
-              prose-h3:mt-8 prose-h3:mb-2 prose-h3:text-lg
-              prose-p:text-foreground/90 prose-p:leading-7
-              prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6
-              prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6
-              prose-li:my-1 prose-li:text-foreground/90
-              prose-strong:text-foreground prose-strong:font-semibold"
-            dangerouslySetInnerHTML={{ __html: publication.content }}
-          />
-        </div>
-
         {/* Excel preview — same workbook as download */}
         <section className="mt-10 rounded-xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4 sm:px-6">
