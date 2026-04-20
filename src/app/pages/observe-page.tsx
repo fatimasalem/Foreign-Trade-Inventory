@@ -745,13 +745,11 @@ export function ObservePage() {
               const isExpanded = expandedCategoryKeys.has(rowKey);
               const qs = new URLSearchParams({ cls: tableClassification });
               const goToCategoryDetail = () => {
-                navigate(
-                  `/Foreign-Trade-Inventory/observe/category/${encodeURIComponent(item.category)}?${qs.toString()}`,
-                );
+                navigate(`/observe/category/${encodeURIComponent(item.category)}?${qs.toString()}`);
               };
               const goToArticle = (label: string) => {
                 navigate(
-                  `/Foreign-Trade-Inventory/observe/category/${encodeURIComponent(item.category)}/article/${encodeURIComponent(label)}?${qs.toString()}`,
+                  `/observe/category/${encodeURIComponent(item.category)}/article/${encodeURIComponent(label)}?${qs.toString()}`,
                 );
               };
               const changeClass = (v: string) =>

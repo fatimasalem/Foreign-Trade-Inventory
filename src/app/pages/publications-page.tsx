@@ -54,7 +54,7 @@ export function PublicationsPage() {
             filtered.map((pub) => (
               <Link
                 key={pub.id}
-                to={`/Foreign-Trade-Inventory/publication/${pub.id}`}
+                to={`/publication/${pub.id}`}
                 className="group block rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
               >
                 <div className="flex items-start gap-4">

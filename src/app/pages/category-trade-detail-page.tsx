@@ -222,13 +222,13 @@ export function CategoryTradeDetailPage() {
 
   const goToCategory = (name: string) => {
     const qs = new URLSearchParams({ cls });
-    navigate(`/Foreign-Trade-Inventory/observe/category/${encodeURIComponent(name)}?${qs.toString()}`);
+    navigate(`/observe/category/${encodeURIComponent(name)}?${qs.toString()}`);
   };
 
   const goToArticle = (label: string) => {
     const qs = new URLSearchParams({ cls });
     navigate(
-      `/Foreign-Trade-Inventory/observe/category/${encodeURIComponent(categoryName)}/article/${encodeURIComponent(label)}?${qs.toString()}`,
+      `/observe/category/${encodeURIComponent(categoryName)}/article/${encodeURIComponent(label)}?${qs.toString()}`,
     );
   };
 
@@ -244,7 +244,7 @@ export function CategoryTradeDetailPage() {
             variant="ghost"
             size="sm"
             className="-ml-2 gap-1 text-gray-600"
-            onClick={() => navigate("/Foreign-Trade-Inventory/observe")}
+            onClick={() => navigate("/observe")}
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Observe
@@ -305,9 +305,7 @@ export function CategoryTradeDetailPage() {
               onValueChange={(v) => {
                 if (v === "__category__") {
                   const qs = new URLSearchParams({ cls });
-                  navigate(
-                    `/Foreign-Trade-Inventory/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`,
-                  );
+                  navigate(`/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`);
                   return;
                 }
                 goToArticle(v);

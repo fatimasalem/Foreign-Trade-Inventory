@@ -11,26 +11,32 @@ import { PublicationsPage } from "./pages/publications-page";
 import { OfficialStatisticsPage } from "./pages/official-statistics-page";
 import { IndicatorDetailPage } from "./pages/indicator-detail-page";
 import { CompareIndicatorsPage } from "./pages/compare-indicators-page";
-import { ForecastPage } from "./pages/forecast-page";
+import { routerBasename } from "./router-basename";
 
-export const router = createBrowserRouter([
-  {
-    path: "/Foreign-Trade-Inventory/",
-    Component: DashboardLayout,
-    children: [
-      { index: true, Component: InterpretPage },
-      { path: "/Foreign-Trade-Inventory/overview", Component: InterpretPage },
-      { path: "/Foreign-Trade-Inventory/diagnose", Component: DiagnosePage },
-      { path: "/Foreign-Trade-Inventory/benchmark", Component: BenchmarkPage },
-      { path: "/Foreign-Trade-Inventory/observe", Component: ObservePage },
-      { path: "/Foreign-Trade-Inventory/observe/category/:categorySlug/article/:articleSlug", Component: CategoryTradeDetailPage },
-      { path: "/Foreign-Trade-Inventory/observe/category/:categorySlug", Component: CategoryTradeDetailPage },
-      { path: "/Foreign-Trade-Inventory/trade-ai", Component: TradeAIPage },
-      { path: "/Foreign-Trade-Inventory/official-statistics", Component: OfficialStatisticsPage },
-      { path: "/Foreign-Trade-Inventory/indicator/:id", Component: IndicatorDetailPage },
-      { path: "/Foreign-Trade-Inventory/compare-indicators", Component: CompareIndicatorsPage },
-      { path: "/Foreign-Trade-Inventory/publications", Component: PublicationsPage },
-      { path: "/Foreign-Trade-Inventory/publication/:id", Component: PublicationPage },
-    ],
-  },
-]);
+export const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      Component: DashboardLayout,
+      children: [
+        { index: true, Component: InterpretPage },
+        { path: "overview", Component: InterpretPage },
+        { path: "diagnose", Component: DiagnosePage },
+        { path: "benchmark", Component: BenchmarkPage },
+        { path: "observe", Component: ObservePage },
+        {
+          path: "observe/category/:categorySlug/article/:articleSlug",
+          Component: CategoryTradeDetailPage,
+        },
+        { path: "observe/category/:categorySlug", Component: CategoryTradeDetailPage },
+        { path: "trade-ai", Component: TradeAIPage },
+        { path: "official-statistics", Component: OfficialStatisticsPage },
+        { path: "indicator/:id", Component: IndicatorDetailPage },
+        { path: "compare-indicators", Component: CompareIndicatorsPage },
+        { path: "publications", Component: PublicationsPage },
+        { path: "publication/:id", Component: PublicationPage },
+      ],
+    },
+  ],
+  routerBasename !== undefined ? { basename: routerBasename } : {},
+);

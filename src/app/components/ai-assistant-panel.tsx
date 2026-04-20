@@ -161,7 +161,7 @@ For more detailed analysis specific to your query, please consult with the trade
               className="flex-1 bg-purple-600 text-white hover:bg-purple-700"
               onClick={() => {
                 onClose();
-                navigate("/Foreign-Trade-Inventory/trade-ai");
+                navigate("/trade-ai");
               }}
             >
               Open full analysis

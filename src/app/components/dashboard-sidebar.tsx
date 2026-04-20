@@ -23,29 +23,26 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
   const location = useLocation();
 
   const navItems = [
-    { path: "/Foreign-Trade-Inventory/trade-ai", label: "Trade AI", icon: Bot, color: "purple" as const },
-    { path: "/Foreign-Trade-Inventory/overview", label: "Overview", icon: FileSearch, color: "blue" as const },
-    { path: "/Foreign-Trade-Inventory/diagnose", label: "Diagnose", icon: Stethoscope, color: "blue" as const },
-    { path: "/Foreign-Trade-Inventory/benchmark", label: "Benchmark", icon: BarChart3, color: "blue" as const },
-    { path: "/Foreign-Trade-Inventory/observe", label: "Observe", icon: Eye, color: "blue" as const },
-    { path: "/Foreign-Trade-Inventory/official-statistics", label: "Official Statistics", icon: FileBarChart, color: "blue" as const },
+    { path: "/trade-ai", label: "Trade AI", icon: Bot, color: "purple" as const },
+    { path: "/overview", label: "Overview", icon: FileSearch, color: "blue" as const },
+    { path: "/diagnose", label: "Diagnose", icon: Stethoscope, color: "blue" as const },
+    { path: "/benchmark", label: "Benchmark", icon: BarChart3, color: "blue" as const },
+    { path: "/observe", label: "Observe", icon: Eye, color: "blue" as const },
+    { path: "/official-statistics", label: "Official Statistics", icon: FileBarChart, color: "blue" as const },
   ];
 
   const isActive = (path: string) => {
-    if (
-      path === "/Foreign-Trade-Inventory/overview" &&
-      (location.pathname === "/Foreign-Trade-Inventory/" || location.pathname === "/Foreign-Trade-Inventory/overview")
-    ) {
+    if (path === "/overview" && (location.pathname === "/" || location.pathname === "/overview")) {
       return true;
     }
-    if (path === "/Foreign-Trade-Inventory/observe" && location.pathname.startsWith("/Foreign-Trade-Inventory/observe")) {
+    if (path === "/observe" && location.pathname.startsWith("/observe")) {
       return true;
     }
     return location.pathname === path;
   };
 
   const publicationsActive =
-    location.pathname === "/Foreign-Trade-Inventory/publications" || location.pathname.startsWith("/Foreign-Trade-Inventory/publication/");
+    location.pathname === "/publications" || location.pathname.startsWith("/publication/");
 
   const linkBase =
     "touch-manipulation transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card";
@@ -119,7 +116,7 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
         })}
 
         <Link
-          to="/Foreign-Trade-Inventory/publications"
+          to="/publications"
           aria-current={publicationsActive ? "page" : undefined}
           title={isCollapsed ? "Publications" : undefined}
           className={cn(
