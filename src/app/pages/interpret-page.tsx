@@ -177,7 +177,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => navigate("/official-statistics")}
+                      onClick={() => navigate("/Foreign-Trade-Inventory/official-statistics")}
                       className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
                     >
                       <ArrowUpRight className="h-4 w-4 text-gray-600" />
@@ -280,7 +280,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => navigate("/official-statistics")}
+                      onClick={() => navigate("/Foreign-Trade-Inventory/official-statistics")}
                       className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
                     >
                       <ArrowUpRight className="h-4 w-4 text-gray-600" />
@@ -383,7 +383,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => navigate("/official-statistics")}
+                      onClick={() => navigate("/Foreign-Trade-Inventory/official-statistics")}
                       className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
                     >
                       <ArrowUpRight className="h-4 w-4 text-gray-600" />
@@ -486,7 +486,7 @@ export function InterpretPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => navigate("/official-statistics")}
+                      onClick={() => navigate("/Foreign-Trade-Inventory/official-statistics")}
                       className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
                     >
                       <ArrowUpRight className="h-4 w-4 text-gray-600" />

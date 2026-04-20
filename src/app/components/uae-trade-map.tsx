@@ -412,7 +412,7 @@ export function UAETradeMap() {
     const question = isCritical
       ? `What is the impact of the Strait of Hormuz situation on ${label} ${category.tradeType} through ${category.transportType} transport?`
       : `What are the key drivers behind the strong performance of ${label} ${category.tradeType} through ${category.transportType} transport?`;
-    navigate("/trade-ai", { state: { query: question } });
+    navigate("/Foreign-Trade-Inventory/trade-ai", { state: { query: question } });
   };
 
   return (

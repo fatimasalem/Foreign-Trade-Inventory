@@ -222,12 +222,14 @@ export function CategoryTradeDetailPage() {
 
   const goToCategory = (name: string) => {
     const qs = new URLSearchParams({ cls });
-    navigate(`/observe/category/${encodeURIComponent(name)}?${qs.toString()}`);
+    navigate(`/Foreign-Trade-Inventory/observe/category/${encodeURIComponent(name)}?${qs.toString()}`);
   };
 
   const goToArticle = (label: string) => {
     const qs = new URLSearchParams({ cls });
-    navigate(`/observe/category/${encodeURIComponent(categoryName)}/article/${encodeURIComponent(label)}?${qs.toString()}`);
+    navigate(
+      `/Foreign-Trade-Inventory/observe/category/${encodeURIComponent(categoryName)}/article/${encodeURIComponent(label)}?${qs.toString()}`,
+    );
   };
 
   const TitleIcon = iconForCategoryName(categoryName);
@@ -238,7 +240,12 @@ export function CategoryTradeDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
-          <Button variant="ghost" size="sm" className="-ml-2 gap-1 text-gray-600" onClick={() => navigate("/observe")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 gap-1 text-gray-600"
+            onClick={() => navigate("/Foreign-Trade-Inventory/observe")}
+          >
             <ArrowLeft className="h-4 w-4" />
             Back to Observe
           </Button>
@@ -298,7 +305,9 @@ export function CategoryTradeDetailPage() {
               onValueChange={(v) => {
                 if (v === "__category__") {
                   const qs = new URLSearchParams({ cls });
-                  navigate(`/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`);
+                  navigate(
+                    `/Foreign-Trade-Inventory/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`,
+                  );
                   return;
                 }
                 goToArticle(v);

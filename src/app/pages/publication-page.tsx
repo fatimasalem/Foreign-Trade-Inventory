@@ -34,7 +34,7 @@ export function PublicationPage() {
       <div className="w-full py-12">
         <h1 className="text-2xl font-bold">Publication not found</h1>
         <p className="mt-2 text-muted-foreground">
-          <Link to="/publications" className="text-primary underline-offset-4 hover:underline">
+          <Link to="/Foreign-Trade-Inventory/publications" className="text-primary underline-offset-4 hover:underline">
             Back to publications
           </Link>
         </p>
@@ -49,7 +49,7 @@ export function PublicationPage() {
       <article className="w-full py-10">
         <div className="mb-8">
           <Link
-            to="/publications"
+            to="/Foreign-Trade-Inventory/publications"
             className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />

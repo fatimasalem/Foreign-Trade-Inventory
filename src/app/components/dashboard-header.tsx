@@ -2,17 +2,18 @@ import { useLocation } from "react-router";
 import bayaanIcon from "../../imports/bayaan-icon-1.svg";
 
 function pageTitleForPath(pathname: string): string {
-  if (pathname === "/" || pathname === "/overview") return "Overview";
-  if (pathname === "/diagnose") return "Diagnose";
-  if (pathname === "/benchmark") return "Benchmark";
-  if (pathname === "/observe" || pathname.startsWith("/observe/")) return "Observe";
-  if (pathname === "/trade-ai") return "Trade AI";
-  if (pathname === "/official-statistics") return "Official statistics";
-  if (pathname === "/publications") return "Publications";
-  if (pathname.startsWith("/publication/")) return "Publication";
-  if (pathname.startsWith("/indicator/")) return "Indicator detail";
-  if (pathname === "/compare-indicators") return "Compare indicators";
-  if (pathname === "/forecast") return "Forecast";
+  if (pathname === "/Foreign-Trade-Inventory/" || pathname === "/Foreign-Trade-Inventory/overview") return "Overview";
+  if (pathname === "/Foreign-Trade-Inventory/diagnose") return "Diagnose";
+  if (pathname === "/Foreign-Trade-Inventory/benchmark") return "Benchmark";
+  if (pathname === "/Foreign-Trade-Inventory/observe" || pathname.startsWith("/Foreign-Trade-Inventory/observe/"))
+    return "Observe";
+  if (pathname === "/Foreign-Trade-Inventory/trade-ai") return "Trade AI";
+  if (pathname === "/Foreign-Trade-Inventory/official-statistics") return "Official statistics";
+  if (pathname === "/Foreign-Trade-Inventory/publications") return "Publications";
+  if (pathname.startsWith("/Foreign-Trade-Inventory/publication/")) return "Publication";
+  if (pathname.startsWith("/Foreign-Trade-Inventory/indicator/")) return "Indicator detail";
+  if (pathname === "/Foreign-Trade-Inventory/compare-indicators") return "Compare indicators";
+  if (pathname === "/Foreign-Trade-Inventory/forecast") return "Forecast";
   return "Dashboard";
 }
 

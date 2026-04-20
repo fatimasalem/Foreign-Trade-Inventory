@@ -41,7 +41,7 @@ function StatCard({ title, value, unit, change, updateDate, isConfidential, isCh
   const [emailSubscribe, setEmailSubscribe] = useState(false);
 
   const handleNavigateToDetail = () => {
-    navigate(`/indicator/${encodeURIComponent(title)}`, {
+    navigate(`/Foreign-Trade-Inventory/indicator/${encodeURIComponent(title)}`, {
       state: { title, value, unit, change, updateDate, isConfidential }
     });
   };
@@ -561,7 +561,7 @@ export function OfficialStatisticsPage() {
 
   const handleCompare = () => {
     const selectedIndicators = Array.from(checkedCards).map(index => statistics[index]);
-    navigate("/compare-indicators", {
+    navigate("/Foreign-Trade-Inventory/compare-indicators", {
       state: { indicators: selectedIndicators }
     });
   };
