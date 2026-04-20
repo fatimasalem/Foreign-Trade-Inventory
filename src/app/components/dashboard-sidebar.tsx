@@ -80,8 +80,8 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
               title={isCollapsed ? item.label : undefined}
               className={cn(
                 linkBase,
-                "flex min-w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-[10px] font-medium leading-tight",
-                "md:min-w-0 md:w-full md:flex-row md:items-center md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal md:font-normal",
+                "flex min-w-[4.25rem] shrink-0 flex-col items-start justify-center gap-1 rounded-lg px-2 py-2 text-[10px] font-medium leading-tight",
+                "md:min-w-0 md:w-full md:flex-row md:items-center md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal md:font-normal",
                 active
                   ? item.color === "purple"
                     ? "bg-purple-50 text-purple-800 shadow-sm md:font-medium"
@@ -105,7 +105,7 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
               />
               <span
                 className={cn(
-                  "line-clamp-2 max-w-[4.5rem] text-center md:max-w-none md:line-clamp-none",
+                  "line-clamp-2 max-w-[4.5rem] text-left md:max-w-none md:line-clamp-none",
                   isCollapsed && "md:hidden",
                 )}
               >
@@ -121,8 +121,8 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
           title={isCollapsed ? "Publications" : undefined}
           className={cn(
             linkBase,
-            "flex min-w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-[10px] font-medium leading-tight",
-            "md:min-w-0 md:w-full md:flex-row md:items-center md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal",
+            "flex min-w-[4.25rem] shrink-0 flex-col items-start justify-center gap-1 rounded-lg px-2 py-2 text-[10px] font-medium leading-tight",
+            "md:min-w-0 md:w-full md:flex-row md:items-center md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal",
             publicationsActive
               ? "bg-primary/8 font-medium text-primary shadow-sm"
               : "text-foreground/90 hover:bg-muted hover:text-foreground",
@@ -136,7 +136,7 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
           />
           <span
             className={cn(
-              "line-clamp-2 max-w-[4.5rem] text-center md:max-w-none md:line-clamp-none md:font-medium",
+              "line-clamp-2 max-w-[4.5rem] text-left md:max-w-none md:line-clamp-none md:font-medium",
               isCollapsed && "md:hidden",
             )}
           >
@@ -145,7 +145,7 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
         </Link>
       </nav>
 
-      <div className="hidden w-full border-t border-border p-2 md:flex md:justify-end">
+      <div className="hidden w-full border-t border-border p-2 md:flex md:justify-start">
         <Button
           variant="outline"
           size="icon"
