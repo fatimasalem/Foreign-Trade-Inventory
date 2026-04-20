@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Package, Globe, TrendingUp, AlertCircle, Lightbulb, Activity, ChevronRight, BarChart3 } from "lucide-react";
-import { useState } from "react";
+import { Package, Globe, TrendingUp, AlertCircle, Lightbulb, Activity, ChevronRight, ChevronDown, BarChart3 } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Checkbox } from "../components/ui/checkbox";
@@ -106,8 +106,24 @@ export function ObservePage() {
   const [tableMonth, setTableMonth] = useState("March");
   const [tableYear, setTableYear] = useState("2026");
   const [tableTradeType, setTableTradeType] = useState("all");
+  const [expandedCategoryKeys, setExpandedCategoryKeys] = useState<Set<string>>(() => new Set());
 
   const countries = ["All Countries", "China", "India", "USA", "Saudi Arabia"];
+
+  const toggleCategoryExpanded = (key: string) => {
+    setExpandedCategoryKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const riskBadgeClass = (risk: string) => {
+    if (risk === "High") return "bg-red-100 text-red-800";
+    if (risk === "Medium") return "bg-yellow-100 text-yellow-800";
+    return "bg-green-100 text-green-800";
+  };
 
   const handleCountryToggle = (country: string) => {
     if (country === "All Countries") {
@@ -186,22 +202,154 @@ export function ObservePage() {
   ];
 
   const allCategoriesData = [
-    { category: "Aluminum & Articles", mom: "+32.8%", yoy: "+45.2%", volume: "8.2B AED", type: "export" },
-    { category: "Precious Stones/Metals", mom: "+45.2%", yoy: "+58.3%", volume: "7.5B AED", type: "export" },
-    { category: "Plastics & Articles", mom: "+2.1%", yoy: "+8.5%", volume: "4.8B AED", type: "export" },
-    { category: "Iron & Steel", mom: "+1.5%", yoy: "+4.2%", volume: "4.2B AED", type: "export" },
-    { category: "Organic Chemicals", mom: "+8.5%", yoy: "+12.1%", volume: "3.9B AED", type: "export" },
-    { category: "Vehicles & Parts", mom: "-18.5%", yoy: "-8.2%", volume: "12.3B AED", type: "import" },
-    { category: "Electrical Machinery", mom: "-12.3%", yoy: "+5.8%", volume: "9.5B AED", type: "import" },
-    { category: "Nuclear Reactors", mom: "+8.5%", yoy: "+15.3%", volume: "8.2B AED", type: "import" },
-    { category: "Pharmaceutical Products", mom: "-12.3%", yoy: "+3.5%", volume: "5.8B AED", type: "import" },
-    { category: "Plastics & Articles", mom: "+2.8%", yoy: "+6.2%", volume: "5.2B AED", type: "import" },
+    {
+      category: "Aluminum & Articles",
+      mom: "+32.8%",
+      yoy: "+45.2%",
+      volume: "8.2B AED",
+      type: "export" as const,
+      risk: "High",
+      weight: "18.5%",
+      hsArticles: [
+        { label: "HS7601 — Unwrought aluminum", risk: "High" as const, weight: "6.1%", mom: "+30.2%", yoy: "+42.0%" },
+        { label: "HS7604 — Aluminum bars, profiles", risk: "Medium" as const, weight: "5.4%", mom: "+35.1%", yoy: "+48.2%" },
+        { label: "HS7616 — Other articles of aluminum", risk: "Medium" as const, weight: "7.0%", mom: "+33.0%", yoy: "+46.0%" },
+      ],
+    },
+    {
+      category: "Precious Stones/Metals",
+      mom: "+45.2%",
+      yoy: "+58.3%",
+      volume: "7.5B AED",
+      type: "export" as const,
+      risk: "High",
+      weight: "16.2%",
+      hsArticles: [
+        { label: "HS7108 — Gold", risk: "High" as const, weight: "8.8%", mom: "+48.0%", yoy: "+62.0%" },
+        { label: "HS7113 — Articles of jewelry", risk: "High" as const, weight: "4.9%", mom: "+42.5%", yoy: "+55.0%" },
+        { label: "HS7118 — Coin", risk: "Medium" as const, weight: "2.5%", mom: "+40.0%", yoy: "+52.0%" },
+      ],
+    },
+    {
+      category: "Plastics & Articles",
+      mom: "+2.1%",
+      yoy: "+8.5%",
+      volume: "4.8B AED",
+      type: "export" as const,
+      risk: "Low",
+      weight: "9.8%",
+      hsArticles: [
+        { label: "HS3901 — Polymers of ethylene", risk: "Low" as const, weight: "3.6%", mom: "+1.8%", yoy: "+7.2%" },
+        { label: "HS3920 — Plates, sheets of plastics", risk: "Low" as const, weight: "3.2%", mom: "+2.5%", yoy: "+9.0%" },
+        { label: "HS3926 — Other articles of plastics", risk: "Low" as const, weight: "3.0%", mom: "+2.0%", yoy: "+9.2%" },
+      ],
+    },
+    {
+      category: "Iron & Steel",
+      mom: "+1.5%",
+      yoy: "+4.2%",
+      volume: "4.2B AED",
+      type: "export" as const,
+      risk: "Low",
+      weight: "8.5%",
+      hsArticles: [
+        { label: "HS7208 — Flat-rolled products", risk: "Low" as const, weight: "3.1%", mom: "+1.2%", yoy: "+3.8%" },
+        { label: "HS7214 — Bars and rods", risk: "Low" as const, weight: "2.7%", mom: "+1.8%", yoy: "+4.5%" },
+        { label: "HS7308 — Structures and parts", risk: "Low" as const, weight: "2.7%", mom: "+1.5%", yoy: "+4.4%" },
+      ],
+    },
+    {
+      category: "Organic Chemicals",
+      mom: "+8.5%",
+      yoy: "+12.1%",
+      volume: "3.9B AED",
+      type: "export" as const,
+      risk: "Medium",
+      weight: "7.9%",
+      hsArticles: [
+        { label: "HS2901 — Acyclic hydrocarbons", risk: "Medium" as const, weight: "2.6%", mom: "+7.0%", yoy: "+11.0%" },
+        { label: "HS2915 — Saturated acyclic monocarboxylic acids", risk: "Medium" as const, weight: "2.5%", mom: "+9.0%", yoy: "+12.5%" },
+        { label: "HS2933 — Heterocyclic compounds", risk: "Medium" as const, weight: "2.8%", mom: "+9.5%", yoy: "+12.8%" },
+      ],
+    },
+    {
+      category: "Vehicles & Parts",
+      mom: "-18.5%",
+      yoy: "-8.2%",
+      volume: "12.3B AED",
+      type: "import" as const,
+      risk: "High",
+      weight: "22.4%",
+      hsArticles: [
+        { label: "HS8703 — Motor cars and vehicles", risk: "High" as const, weight: "10.2%", mom: "-20.0%", yoy: "-10.0%" },
+        { label: "HS8708 — Parts of motor vehicles", risk: "High" as const, weight: "8.1%", mom: "-17.0%", yoy: "-7.5%" },
+        { label: "HS8714 — Parts of cycles", risk: "Medium" as const, weight: "4.1%", mom: "-15.0%", yoy: "-5.0%" },
+      ],
+    },
+    {
+      category: "Electrical Machinery",
+      mom: "-12.3%",
+      yoy: "+5.8%",
+      volume: "9.5B AED",
+      type: "import" as const,
+      risk: "Medium",
+      weight: "17.3%",
+      hsArticles: [
+        { label: "HS8504 — Electrical transformers", risk: "Medium" as const, weight: "5.8%", mom: "-11.0%", yoy: "+4.0%" },
+        { label: "HS8517 — Telephone sets", risk: "Medium" as const, weight: "6.2%", mom: "-13.5%", yoy: "+6.0%" },
+        { label: "HS8544 — Insulated electric conductors", risk: "Medium" as const, weight: "5.3%", mom: "-12.0%", yoy: "+7.0%" },
+      ],
+    },
+    {
+      category: "Nuclear Reactors",
+      mom: "+8.5%",
+      yoy: "+15.3%",
+      volume: "8.2B AED",
+      type: "import" as const,
+      risk: "Medium",
+      weight: "14.9%",
+      hsArticles: [
+        { label: "HS8401 — Nuclear reactors; machinery", risk: "Medium" as const, weight: "5.5%", mom: "+7.0%", yoy: "+14.0%" },
+        { label: "HS8413 — Pumps for liquids", risk: "Medium" as const, weight: "4.7%", mom: "+9.0%", yoy: "+16.0%" },
+        { label: "HS8481 — Taps, cocks, valves", risk: "Low" as const, weight: "4.7%", mom: "+9.5%", yoy: "+16.0%" },
+      ],
+    },
+    {
+      category: "Pharmaceutical Products",
+      mom: "-12.3%",
+      yoy: "+3.5%",
+      volume: "5.8B AED",
+      type: "import" as const,
+      risk: "Medium",
+      weight: "10.5%",
+      hsArticles: [
+        { label: "HS3002 — Human blood; vaccines", risk: "Medium" as const, weight: "3.8%", mom: "-11.0%", yoy: "+2.0%" },
+        { label: "HS3004 — Medicaments", risk: "Medium" as const, weight: "4.2%", mom: "-13.0%", yoy: "+4.0%" },
+        { label: "HS3006 — Pharmaceutical goods", risk: "Low" as const, weight: "2.5%", mom: "-12.5%", yoy: "+4.5%" },
+      ],
+    },
+    {
+      category: "Plastics & Articles",
+      mom: "+2.8%",
+      yoy: "+6.2%",
+      volume: "5.2B AED",
+      type: "import" as const,
+      risk: "Low",
+      weight: "9.4%",
+      hsArticles: [
+        { label: "HS3901 — Polymers of ethylene", risk: "Low" as const, weight: "3.4%", mom: "+2.5%", yoy: "+5.8%" },
+        { label: "HS3907 — Polyacetals, epoxide resins", risk: "Low" as const, weight: "2.9%", mom: "+3.0%", yoy: "+6.5%" },
+        { label: "HS3923 — Articles for conveyance of goods", risk: "Low" as const, weight: "3.1%", mom: "+3.0%", yoy: "+6.2%" },
+      ],
+    },
   ];
 
-  const filteredCategoriesData = allCategoriesData.filter(item => {
-    if (tableTradeType === "all") return true;
-    return item.type === tableTradeType;
-  });
+  const filteredCategoriesData = useMemo(() => {
+    return allCategoriesData.filter((item) => {
+      if (tableTradeType !== "all" && item.type !== tableTradeType) return false;
+      return true;
+    });
+  }, [tableTradeType]);
 
   const tradePartners = [
     { country: "China", value: 22.5, color: "#ef4444" },
@@ -709,46 +857,135 @@ export function ObservePage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40%]">Category</TableHead>
-              <TableHead className="w-[15%] text-right">M/M %</TableHead>
-              <TableHead className="w-[15%] text-right">Y/Y %</TableHead>
-              <TableHead className="w-[20%] text-right">Total Trade Volume</TableHead>
-              <TableHead className="w-[10%]"></TableHead>
+              <TableHead className="w-10 p-2">
+                <span className="sr-only">Expand HS articles</span>
+              </TableHead>
+              <TableHead className="w-[28%]">Category</TableHead>
+              <TableHead className="w-[12%]">Risk</TableHead>
+              <TableHead className="w-[10%] text-right">Weight</TableHead>
+              <TableHead className="w-[10%] text-right">M/M %</TableHead>
+              <TableHead className="w-[10%] text-right">Y/Y %</TableHead>
+              <TableHead className="w-[12%] text-right">Total Trade Volume</TableHead>
+              <TableHead className="w-[8%]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCategoriesData.map((item, index) => {
+              const rowKey = `${item.type}-${item.category}-${index}`;
               const momPositive = item.mom.startsWith("+");
               const yoyPositive = item.yoy.startsWith("+");
+              const showHsExpand = tableClassification === "HS";
+              const isExpanded = showHsExpand && expandedCategoryKeys.has(rowKey);
               const goToCategoryDetail = () => {
                 navigate(`/observe/category/${encodeURIComponent(item.category)}`);
               };
+              const goToHsArticle = (label: string) => {
+                navigate(`/observe/category/${encodeURIComponent(label)}`);
+              };
+              const changeClass = (v: string) =>
+                v.startsWith("+") ? "text-green-600" : v.startsWith("-") ? "text-red-600" : "text-gray-600";
+
               return (
-                <TableRow
-                  key={index}
-                  className="cursor-pointer hover:bg-gray-50"
-                  onClick={goToCategoryDetail}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      goToCategoryDetail();
-                    }
-                  }}
-                  role="link"
-                  tabIndex={0}
-                >
-                  <TableCell className="font-medium">{item.category}</TableCell>
-                  <TableCell className={`text-right font-medium ${momPositive ? "text-green-600" : "text-red-600"}`}>
-                    {item.mom}
-                  </TableCell>
-                  <TableCell className={`text-right font-medium ${yoyPositive ? "text-green-600" : "text-red-600"}`}>
-                    {item.yoy}
-                  </TableCell>
-                  <TableCell className="text-right">{item.volume}</TableCell>
-                  <TableCell>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                  </TableCell>
-                </TableRow>
+                <Fragment key={rowKey}>
+                  <TableRow
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={goToCategoryDetail}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        goToCategoryDetail();
+                      }
+                    }}
+                    role="link"
+                    tabIndex={0}
+                  >
+                    <TableCell
+                      className="w-10 p-1 align-middle"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {showHsExpand ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                          aria-expanded={isExpanded}
+                          aria-label={isExpanded ? "Hide HS articles" : "Show HS articles"}
+                          onClick={() => toggleCategoryExpanded(rowKey)}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </Button>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="font-medium">{item.category}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadgeClass(
+                          item.risk
+                        )}`}
+                      >
+                        {item.risk}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{item.weight}</TableCell>
+                    <TableCell className={`text-right font-medium tabular-nums ${momPositive ? "text-green-600" : "text-red-600"}`}>
+                      {item.mom}
+                    </TableCell>
+                    <TableCell className={`text-right font-medium tabular-nums ${yoyPositive ? "text-green-600" : "text-red-600"}`}>
+                      {item.yoy}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{item.volume}</TableCell>
+                    <TableCell>
+                      <ChevronRight className="h-4 w-4 text-gray-400" />
+                    </TableCell>
+                  </TableRow>
+                  {showHsExpand &&
+                    isExpanded &&
+                    item.hsArticles.map((article) => (
+                      <TableRow
+                        key={article.label}
+                        className="cursor-pointer bg-slate-50/80 hover:bg-slate-100/90"
+                        onClick={() => goToHsArticle(article.label)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            goToHsArticle(article.label);
+                          }
+                        }}
+                        role="link"
+                        tabIndex={0}
+                      >
+                        <TableCell />
+                        <TableCell className="pl-8 text-sm text-gray-800 font-medium">
+                          {article.label}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadgeClass(
+                              article.risk
+                            )}`}
+                          >
+                            {article.risk}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right text-sm tabular-nums">{article.weight}</TableCell>
+                        <TableCell className={`text-right text-sm font-medium tabular-nums ${changeClass(article.mom)}`}>
+                          {article.mom}
+                        </TableCell>
+                        <TableCell className={`text-right text-sm font-medium tabular-nums ${changeClass(article.yoy)}`}>
+                          {article.yoy}
+                        </TableCell>
+                        <TableCell className="text-right text-sm text-gray-500">—</TableCell>
+                        <TableCell>
+                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </Fragment>
               );
             })}
           </TableBody>

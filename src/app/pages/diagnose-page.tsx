@@ -1,7 +1,6 @@
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Bot, ChevronDown, ChevronRight, LineChart as LineChartIcon, PieChart } from "lucide-react";
-import { getHsSectionForChapter, parseHsChapterCode } from "../../lib/hs-sections";
+import { Bot, LineChart as LineChartIcon, PieChart } from "lucide-react";
 import { SectionIcon } from "../components/section-icon";
 import { useAIAssistant } from "../contexts/ai-assistant-context";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -41,7 +40,6 @@ export function DiagnosePage() {
   const [year, setYear] = useState("2026");
   const [selectedCategory, setSelectedCategory] = useState<typeof categories[0] | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [expandedRowKeys, setExpandedRowKeys] = useState<Set<string>>(() => new Set());
 
   const countries = ["All Countries", "China", "India", "USA", "Saudi Arabia"];
 
@@ -243,15 +241,6 @@ export function DiagnosePage() {
     setIsDialogOpen(true);
   };
 
-  const toggleRowExpanded = (rowKey: string) => {
-    setExpandedRowKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(rowKey)) next.delete(rowKey);
-      else next.add(rowKey);
-      return next;
-    });
-  };
-
   const handleAskAI = () => {
     if (selectedCategory) {
       const question = `What are the factors contributing to the ${selectedCategory.risk.toLowerCase()} risk level for ${getCategoryName(selectedCategory)}? The category shows ${selectedCategory.mom} MoM and ${selectedCategory.yoy} YoY changes.`;
@@ -415,9 +404,6 @@ export function DiagnosePage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10 p-2">
-                <span className="sr-only">Expand HS section</span>
-              </TableHead>
               <TableHead className="w-[32%]">Category</TableHead>
               <TableHead className="w-[15%]">Risk</TableHead>
               <TableHead className="w-[12%] text-right">Weight</TableHead>
@@ -432,114 +418,58 @@ export function DiagnosePage() {
             <TooltipProvider>
               {filteredCategories.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-sm text-gray-500 py-10">
+                  <TableCell colSpan={6} className="text-center text-sm text-gray-500 py-10">
                     No categories match the selected filters. Try widening country, trade mode, or foreign trade type.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCategories.map((category) => {
-                  const rowKey = category.hs1;
-                  const isExpanded = expandedRowKeys.has(rowKey);
-                  const hsChapter = parseHsChapterCode(category.hs1);
-                  const hsSection = hsChapter != null ? getHsSectionForChapter(hsChapter) : null;
-
-                  return (
-                    <Fragment key={rowKey}>
-                      <TableRow
-                        className="cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => handleRowClick(category)}
+                filteredCategories.map((category) => (
+                  <TableRow
+                    key={category.hs1}
+                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => handleRowClick(category)}
+                  >
+                    <TableCell className="font-medium">{getCategoryName(category)}</TableCell>
+                    <TableCell>
+                      <UITooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getRiskBadgeColor(
+                              category.riskLevel
+                            )}`}
+                          >
+                            {category.risk}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p className="text-xs">{category.riskCause}</p>
+                        </TooltipContent>
+                      </UITooltip>
+                    </TableCell>
+                    <TableCell className="text-right">{category.weight}</TableCell>
+                    <TableCell className={`text-right font-medium ${getChangeColor(category.mom)}`}>
+                      {category.mom}
+                    </TableCell>
+                    <TableCell className={`text-right font-medium ${getChangeColor(category.yoy)}`}>
+                      {category.yoy}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                        aria-label="Open category trend"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRowClick(category);
+                        }}
                       >
-                        <TableCell className="w-10 p-1 align-middle" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                            aria-expanded={isExpanded}
-                            aria-label={isExpanded ? "Hide HS section details" : "Show HS section details"}
-                            onClick={() => toggleRowExpanded(rowKey)}
-                          >
-                            {isExpanded ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </TableCell>
-                        <TableCell className="font-medium">{getCategoryName(category)}</TableCell>
-                        <TableCell>
-                          <UITooltip>
-                            <TooltipTrigger asChild>
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getRiskBadgeColor(
-                                  category.riskLevel
-                                )}`}
-                              >
-                                {category.risk}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <p className="text-xs">{category.riskCause}</p>
-                            </TooltipContent>
-                          </UITooltip>
-                        </TableCell>
-                        <TableCell className="text-right">{category.weight}</TableCell>
-                        <TableCell className={`text-right font-medium ${getChangeColor(category.mom)}`}>
-                          {category.mom}
-                        </TableCell>
-                        <TableCell className={`text-right font-medium ${getChangeColor(category.yoy)}`}>
-                          {category.yoy}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                            aria-label="Open category trend"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRowClick(category);
-                            }}
-                          >
-                            <LineChartIcon className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                      {isExpanded && (
-                        <TableRow className="bg-slate-50 hover:bg-slate-50">
-                          <TableCell colSpan={7} className="py-3 px-4 border-b border-gray-100">
-                            <div className="pl-2 text-sm text-gray-800">
-                              {hsSection && hsChapter != null ? (
-                                <>
-                                  <p className="font-medium text-gray-900">
-                                    {hsSection.number}. {hsSection.title}
-                                  </p>
-                                  <ul className="mt-2 list-none pl-0 space-y-0.5 text-gray-600 font-mono text-sm tabular-nums">
-                                    {hsSection.chapterCodes.map((code) => (
-                                      <li key={code}>{code}</li>
-                                    ))}
-                                  </ul>
-                                  <p className="text-xs text-gray-500 mt-2">
-                                    This row&apos;s HS chapter{" "}
-                                    <span className="font-mono tabular-nums">
-                                      {String(hsChapter).padStart(2, "0")}
-                                    </span>{" "}
-                                    falls under HS Section {hsSection.number}.
-                                  </p>
-                                </>
-                              ) : (
-                                <p className="text-gray-500 text-sm">
-                                  HS section could not be resolved from this category&apos;s chapter code.
-                                </p>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </Fragment>
-                  );
-                })
+                        <LineChartIcon className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TooltipProvider>
           </TableBody>
