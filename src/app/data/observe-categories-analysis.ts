@@ -93,11 +93,68 @@ function hsChapterDescriptor(chapterCode: string): string {
   return map[n] ?? `Goods classified in chapter ${n}`;
 }
 
+/** 4-digit heading label under a chapter (demo). */
+function hsHeadingLabel(chapterNum: number, headingIdx: number): string {
+  const four = `${String(chapterNum).padStart(2, "0")}${String(headingIdx).padStart(2, "0")}`;
+  return `HS${four} — Heading ${headingIdx} (chapter ${chapterNum})`;
+}
+
+/**
+ * HS: WCO section → chapters → 4-digit headings → 6-digit subheading leaves (metrics).
+ * Leaves are deterministic for a given section so detail views stay aligned.
+ */
+function buildHsSectionArticlesAndTree(sec: HsSection): { articles: ArticleMetric[]; roots: HierarchyTreeNode[] } {
+  const sectionRoot: HierarchyTreeNode = {
+    id: `hs-sec-${sec.number}`,
+    label: `HS Section ${sec.number} — ${sec.title}`,
+    children: [],
+  };
+  const leaves: ArticleMetric[] = [];
+  let leafSeq = 0;
+
+  const sortedCodes = [...sec.chapterCodes].sort(
+    (a, b) => parseHsChapterSortKey(`${a} —`) - parseHsChapterSortKey(`${b} —`),
+  );
+
+  for (const code of sortedCodes) {
+    const chNum = parseInt(code.replace(/^HS/i, ""), 10);
+    const chapterNode: HierarchyTreeNode = {
+      id: `hs-ch-${sec.number}-${code}`,
+      label: `${code} — ${hsChapterDescriptor(code)}`,
+      children: [],
+    };
+
+    const nHeadings = 2;
+    for (let h = 1; h <= nHeadings; h++) {
+      const fourDigit = `${String(chNum).padStart(2, "0")}${String(h).padStart(2, "0")}`;
+      const headingNode: HierarchyTreeNode = {
+        id: `hs-hd-${sec.number}-${fourDigit}`,
+        label: hsHeadingLabel(chNum, h),
+        children: [],
+      };
+      const nSubs = 2;
+      for (let s = 1; s <= nSubs; s++) {
+        const sixDigit = `${fourDigit}${String(s).padStart(2, "0")}`;
+        const subLabel = `HS${sixDigit} — ${hsChapterDescriptor(code)} (subheading ${s})`;
+        const metric = articleMetrics(sec.number, leafSeq++, "HS", subLabel);
+        leaves.push(metric);
+        headingNode.children.push({
+          id: `hs-sub-${sec.number}-${sixDigit}-${s}`,
+          label: subLabel,
+          metric,
+          children: [],
+        });
+      }
+      chapterNode.children.push(headingNode);
+    }
+    sectionRoot.children.push(chapterNode);
+  }
+
+  return { articles: leaves, roots: [sectionRoot] };
+}
+
 function hsArticlesForSection(sec: HsSection): ArticleMetric[] {
-  return sec.chapterCodes.map((code, i) => {
-    const label = `${code} — ${hsChapterDescriptor(code)}`;
-    return articleMetrics(sec.number, i, "HS", label);
-  });
+  return buildHsSectionArticlesAndTree(sec).articles;
 }
 
 /** BEC (Broad Economic Categories) style lines aligned to each HS section theme. */
@@ -403,12 +460,34 @@ function buildBecHierarchy(articles: ArticleMetric[]): HierarchyTreeNode[] {
   return sorted;
 }
 
+/** BEC: nomenclature root → main category → subgroup → product line (leaf). */
+function buildBecHierarchyWrapped(articles: ArticleMetric[]): HierarchyTreeNode[] {
+  const inner = buildBecHierarchy(articles);
+  if (inner.length === 0) return [];
+  return [
+    {
+      id: "bec-nomenclature-root",
+      label: "BEC — Broad Economic Categories (Rev.4)",
+      children: inner,
+    },
+  ];
+}
+
+function sitcGroupCodeFromArticle(div2: string, article: ArticleMetric): string {
+  const d = div2.padStart(2, "0");
+  const extra = (strSeed(article.label) % 7) + 1;
+  return `${d.slice(0, 2)}${extra}`.slice(0, 3);
+}
+
+/** SITC Rev.4: section (1-digit) → division (2-digit) → group (3-digit) → line (leaf). */
 function buildSitcHierarchy(articles: ArticleMetric[]): HierarchyTreeNode[] {
   const bySection = new Map<number, HierarchyTreeNode>();
+  const orphans: ArticleMetric[] = [];
 
   for (const article of articles) {
     const raw = parseSitcDivisionCode(article.label);
     if (!raw) {
+      orphans.push(article);
       continue;
     }
     const div = raw.length === 1 ? `0${raw}` : raw.slice(0, 2);
@@ -422,27 +501,69 @@ function buildSitcHierarchy(articles: ArticleMetric[]): HierarchyTreeNode[] {
       sectionNode = { id: `sitc-sec-${sectionDigit}`, label: sectionLabel, children: [] };
       bySection.set(sectionDigit, sectionNode);
     }
-    sectionNode.children.push({
-      id: `sitc-div-${div}-${strSeed(article.label)}`,
+
+    const divId = `sitc-div-${sectionDigit}-${div}`;
+    let divNode = sectionNode.children.find((c) => c.id === divId);
+    if (!divNode) {
+      divNode = {
+        id: divId,
+        label: `SITC ${div} — Division ${div}`,
+        children: [],
+      };
+      sectionNode.children.push(divNode);
+    }
+
+    const g = sitcGroupCodeFromArticle(div, article);
+    const grpId = `sitc-grp-${sectionDigit}-${div}-${g}`;
+    let grpNode = divNode.children.find((c) => c.id === grpId);
+    if (!grpNode) {
+      grpNode = {
+        id: grpId,
+        label: `SITC ${g} — Product group`,
+        children: [],
+      };
+      divNode.children.push(grpNode);
+    }
+    grpNode.children.push({
+      id: `sitc-leaf-${strSeed(article.label)}`,
       label: article.label,
       metric: article,
       children: [],
     });
   }
 
+  const sortDiv = (a: HierarchyTreeNode, b: HierarchyTreeNode) => {
+    const na = parseSitcDivisionCode(a.label) ?? "";
+    const nb = parseSitcDivisionCode(b.label) ?? "";
+    return na.localeCompare(nb, undefined, { numeric: true });
+  };
+
+  const sortGrp = (a: HierarchyTreeNode, b: HierarchyTreeNode) => {
+    const na = /^SITC\s*(\d{1,3})\b/i.exec(a.label)?.[1] ?? "";
+    const nb = /^SITC\s*(\d{1,3})\b/i.exec(b.label)?.[1] ?? "";
+    return na.localeCompare(nb, undefined, { numeric: true });
+  };
+
+  const sortLeaf = (a: HierarchyTreeNode, b: HierarchyTreeNode) => {
+    const na = parseSitcDivisionCode(a.metric?.label ?? a.label) ?? "";
+    const nb = parseSitcDivisionCode(b.metric?.label ?? b.label) ?? "";
+    return na.localeCompare(nb, undefined, { numeric: true });
+  };
+
   const roots = Array.from(bySection.entries())
     .sort(([a], [b]) => a - b)
     .map(([, node]) => ({
       ...node,
-      children: [...node.children].sort((a, b) => {
-        const na = parseSitcDivisionCode(a.metric?.label ?? a.label) ?? "";
-        const nb = parseSitcDivisionCode(b.metric?.label ?? b.label) ?? "";
-        return na.localeCompare(nb, undefined, { numeric: true });
-      }),
+      children: [...node.children].sort(sortDiv).map((d) => ({
+        ...d,
+        children: [...d.children].sort(sortGrp).map((g) => ({
+          ...g,
+          children: [...g.children].sort(sortLeaf),
+        })),
+      })),
     }));
 
-  for (const article of articles) {
-    if (parseSitcDivisionCode(article.label)) continue;
+  for (const article of orphans) {
     roots.push({
       id: `sitc-orphan-${strSeed(article.label)}`,
       label: article.label,
@@ -468,17 +589,6 @@ function flattenHierarchy(nodes: HierarchyTreeNode[], depth = 0): Classification
   return out;
 }
 
-/** HS: WCO section is the table row; children are 2-digit chapters only (sorted). */
-function buildHsHierarchy(articles: ArticleMetric[]): HierarchyTreeNode[] {
-  const sorted = [...articles].sort((a, b) => parseHsChapterSortKey(a.label) - parseHsChapterSortKey(b.label));
-  return sorted.map((metric, i) => ({
-    id: `hs-ch-${i}-${parseHsChapterSortKey(metric.label)}`,
-    label: metric.label,
-    metric,
-    children: [],
-  }));
-}
-
 /** Ordered display rows reflecting HS / BEC / SITC hierarchy; leaves preserve navigation targets. */
 export function classificationArticleDisplayRows(
   row: CategoryAnalysisRow,
@@ -488,10 +598,12 @@ export function classificationArticleDisplayRows(
   if (articles.length === 0) return [];
 
   if (kind === "HS") {
-    return flattenHierarchy(buildHsHierarchy(articles));
+    const sec = HS_SECTIONS[row.sectionNumber - 1];
+    if (!sec) return [];
+    return flattenHierarchy(buildHsSectionArticlesAndTree(sec).roots);
   }
   if (kind === "BEC") {
-    return flattenHierarchy(buildBecHierarchy(articles));
+    return flattenHierarchy(buildBecHierarchyWrapped(articles));
   }
   return flattenHierarchy(buildSitcHierarchy(articles));
 }

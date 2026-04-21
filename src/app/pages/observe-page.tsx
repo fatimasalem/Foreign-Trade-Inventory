@@ -816,21 +816,37 @@ export function ObservePage() {
                   </TableRow>
                   {isExpanded &&
                     displayRows.map((row: ClassificationDisplayRow, drIdx: number) => {
-                      const depthPad = ["pl-8", "pl-12", "pl-16", "pl-20", "pl-24"] as const;
+                      const depthPad = [
+                        "pl-6",
+                        "pl-10",
+                        "pl-14",
+                        "pl-[4.25rem]",
+                        "pl-20",
+                        "pl-24",
+                      ] as const;
                       const padClass = depthPad[Math.min(row.depth, depthPad.length - 1)];
 
                       if (row.kind === "node") {
                         return (
                           <TableRow
                             key={`${rowKey}-hdr-${drIdx}-${row.label}`}
-                            className="bg-slate-50/50"
+                            className="cursor-pointer bg-slate-50/50 hover:bg-slate-100/80"
+                            onClick={goToCategoryDetail}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                goToCategoryDetail();
+                              }
+                            }}
+                            role="link"
+                            tabIndex={0}
                           >
                             <TableCell />
-                            <TableCell
-                              colSpan={7}
-                              className={`${padClass} py-2 text-sm font-semibold text-slate-700`}
-                            >
-                              {row.label}
+                            <TableCell colSpan={7} className={`${padClass} py-2`}>
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm font-semibold text-slate-700">{row.label}</span>
+                                <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
