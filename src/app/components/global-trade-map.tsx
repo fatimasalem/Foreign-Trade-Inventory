@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
+import { ComposableMap, Geographies, Geography, ZoomableGroup, Line, Marker } from "react-simple-maps";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { ZoomIn, ZoomOut, MapPinned } from "lucide-react";
 import { Button } from "./ui/button";
@@ -7,6 +7,55 @@ import { SectionIcon } from "./section-icon";
 import { Badge } from "./ui/badge";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+
+/** Hub + destination coordinates [longitude, latitude] for flow map (country view). */
+const BAHRAIN_HUB: [number, number] = [50.58, 26.14];
+
+const TRADE_COUNTRY_COORDS: Record<string, [number, number]> = {
+  China: [104.2, 35.9],
+  India: [78.0, 22.0],
+  "United States": [-98.35, 39.5],
+  "Saudi Arabia": [45.0, 24.0],
+  Germany: [10.45, 51.15],
+  "United Kingdom": [-2.5, 54.7],
+  Japan: [138.25, 36.2],
+  "South Korea": [127.77, 35.9],
+  France: [2.21, 46.23],
+  Italy: [12.57, 41.87],
+  Brazil: [-51.93, -14.24],
+  Australia: [133.78, -25.27],
+};
+
+const MAP_ACCENT = "#2b59c3";
+const LAND_FILL = "#e8e9ec";
+const LAND_STROKE = "#ffffff";
+
+function flowArcPoints(from: [number, number], to: [number, number]): [number, number][] {
+  const midLon = (from[0] + to[0]) / 2;
+  const midLat = (from[1] + to[1]) / 2;
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const nx = (-dy / len) * 15;
+  const ny = (dx / len) * 15;
+  return [from, [midLon + nx, midLat + ny], to];
+}
+
+/** Map Natural Earth country names to mock data keys (tooltip + trade volume). */
+function resolveTradeDataKey(geoName: string, trade: Record<string, number>): string | undefined {
+  if (trade[geoName] !== undefined) return geoName;
+  const aliases: Record<string, string> = {
+    "United States of America": "United States",
+    "United States": "United States",
+    "United Kingdom of Great Britain and Northern Ireland": "United Kingdom",
+    "United Kingdom": "United Kingdom",
+    "Korea, Republic of": "South Korea",
+    "Korea, Rep.": "South Korea",
+    Korea: "South Korea",
+  };
+  const mapped = aliases[geoName];
+  return mapped && trade[mapped] !== undefined ? mapped : undefined;
+}
 
 type ViewType = "country" | "continent";
 
@@ -524,16 +573,6 @@ export function GlobalTradeMap() {
     "Oceania": 5.8,
   };
 
-  const getColor = (value: number, maxValue: number) => {
-    if (value === 0) return "#e5e7eb";
-    const intensity = value / maxValue;
-    if (intensity > 0.7) return "#1e40af";
-    if (intensity > 0.5) return "#3b82f6";
-    if (intensity > 0.3) return "#60a5fa";
-    if (intensity > 0.1) return "#93c5fd";
-    return "#dbeafe";
-  };
-
   const handleZoomIn = () => {
     setZoom((prev) => Math.min(prev + 0.5, 4));
   };
@@ -571,9 +610,8 @@ export function GlobalTradeMap() {
     }
   };
 
-  const maxValue = viewType === "country"
-    ? Math.max(...Object.values(countryTradeData))
-    : Math.max(...Object.values(continentTradeData));
+  const maxTradeValue = Math.max(...Object.values(countryTradeData), 1e-6);
+  const maxContinentValue = Math.max(...Object.values(continentTradeData));
 
   const topCountries = Object.entries(countryTradeData)
     .sort(([, a], [, b]) => b - a)
@@ -659,7 +697,7 @@ export function GlobalTradeMap() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Map */}
         <div className="lg:col-span-3">
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative">
+          <div className="bg-white rounded-lg p-4 border border-gray-200 relative">
             {/* Zoom Controls */}
             <div className="absolute top-6 right-6 z-10 flex flex-col gap-2">
               <Button
@@ -691,22 +729,26 @@ export function GlobalTradeMap() {
                 <Geographies geography={geoUrl}>
                   {({ geographies }) =>
                     geographies.map((geo) => {
-                      const countryName = geo.properties.name;
-                      const value = countryTradeData[countryName] || 0;
-                      const continentName = countryToContinent[countryName];
-                      
-                      // Get appropriate data based on view type
-                      const tooltipData = viewType === "country" 
-                        ? countryDetailedData[countryName]
-                        : (continentName ? continentData[continentName] : null);
-                      
+                      const countryName = geo.properties.name as string;
+                      const dataKey = resolveTradeDataKey(countryName, countryTradeData);
+                      const continentName = dataKey ? countryToContinent[dataKey] : undefined;
+
+                      const tooltipData =
+                        viewType === "country"
+                          ? dataKey
+                            ? countryDetailedData[dataKey]
+                            : null
+                          : dataKey && continentName
+                            ? continentData[continentName]
+                            : null;
+
                       return (
                         <Geography
                           key={geo.rsmKey}
                           geography={geo}
-                          fill={getColor(value, maxValue)}
-                          stroke="#374151"
-                          strokeWidth={0.75}
+                          fill={LAND_FILL}
+                          stroke={LAND_STROKE}
+                          strokeWidth={0.35}
                           onMouseEnter={() => {
                             if (tooltipData) {
                               setTooltipContent(tooltipData);
@@ -717,10 +759,10 @@ export function GlobalTradeMap() {
                           }}
                           style={{
                             default: { outline: "none" },
-                            hover: { 
-                              outline: "none", 
-                              fill: tooltipData ? "#1e3a8a" : getColor(value, maxValue),
-                              cursor: tooltipData ? "pointer" : "default"
+                            hover: {
+                              outline: "none",
+                              fill: tooltipData ? "#d8d9dd" : LAND_FILL,
+                              cursor: tooltipData ? "pointer" : "default",
                             },
                             pressed: { outline: "none" },
                           }}
@@ -729,6 +771,57 @@ export function GlobalTradeMap() {
                     })
                   }
                 </Geographies>
+
+                {viewType === "country" &&
+                  Object.entries(countryTradeData).map(([name, amt]) => {
+                    const coords = TRADE_COUNTRY_COORDS[name];
+                    if (!coords || amt <= 0) return null;
+                    return (
+                      <Line
+                        key={`flow-${name}`}
+                        coordinates={flowArcPoints(BAHRAIN_HUB, coords)}
+                        stroke={MAP_ACCENT}
+                        strokeWidth={1}
+                        strokeOpacity={0.42}
+                        fill="transparent"
+                        pointerEvents="none"
+                      />
+                    );
+                  })}
+
+                {viewType === "country" &&
+                  Object.entries(countryTradeData).map(([name, amt]) => {
+                    const coords = TRADE_COUNTRY_COORDS[name];
+                    if (!coords) return null;
+                    const r = 3.5 + Math.sqrt(amt / maxTradeValue) * 14;
+                    return (
+                      <Marker key={`dot-${name}`} coordinates={coords}>
+                        <g pointerEvents="none">
+                          <circle r={r} fill={MAP_ACCENT} fillOpacity={0.95} stroke="#ffffff" strokeWidth={1.25} />
+                          <text
+                            textAnchor="middle"
+                            y={-r - 4}
+                            fontSize={9}
+                            fill="#111827"
+                            className="select-none"
+                          >
+                            {name}
+                          </text>
+                        </g>
+                      </Marker>
+                    );
+                  })}
+
+                {viewType === "country" && (
+                  <Marker coordinates={BAHRAIN_HUB}>
+                    <g pointerEvents="none">
+                      <circle r={10} fill={MAP_ACCENT} stroke="#ffffff" strokeWidth={1.5} />
+                      <text textAnchor="middle" y={-16} fontSize={9} fontWeight={600} fill="#111827" className="select-none">
+                        Kingdom of Bahrain
+                      </text>
+                    </g>
+                  </Marker>
+                )}
               </ZoomableGroup>
             </ComposableMap>
 
@@ -823,22 +916,14 @@ export function GlobalTradeMap() {
           </div>
 
           {/* Legend */}
-          <div className="mt-4 flex items-center justify-center gap-4">
-            <span className="text-xs text-gray-600">Trade Volume (AED Billions)</span>
-            <div className="flex items-center gap-1">
-              <div className="w-6 h-3 bg-gray-200 rounded-sm" />
-              <span className="text-xs text-gray-500">Low</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-6 h-3 bg-blue-200 rounded-sm" />
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-6 h-3 bg-blue-400 rounded-sm" />
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-6 h-3 bg-blue-600 rounded-sm" />
-              <span className="text-xs text-gray-500">High</span>
-            </div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600">
+            <span>Flows from Kingdom of Bahrain · dot size = trade amount (AED billions)</span>
+            <span className="inline-flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#2b59c3]" />
+              <span>Smaller</span>
+              <span className="inline-block h-4 w-4 rounded-full bg-[#2b59c3]" />
+              <span>Larger</span>
+            </span>
           </div>
         </div>
 
@@ -866,7 +951,7 @@ export function GlobalTradeMap() {
                       <div className="w-full bg-gray-200 rounded-full h-1.5">
                         <div
                           className="bg-blue-600 h-1.5 rounded-full"
-                          style={{ width: `${(value / maxValue) * 100}%` }}
+                          style={{ width: `${(value / maxTradeValue) * 100}%` }}
                         />
                       </div>
                     </div>
@@ -889,7 +974,7 @@ export function GlobalTradeMap() {
                       <div className="w-full bg-gray-200 rounded-full h-1.5">
                         <div
                           className="bg-blue-600 h-1.5 rounded-full"
-                          style={{ width: `${(value / maxValue) * 100}%` }}
+                          style={{ width: `${(value / maxContinentValue) * 100}%` }}
                         />
                       </div>
                     </div>

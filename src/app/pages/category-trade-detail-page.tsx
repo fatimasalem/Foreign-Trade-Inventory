@@ -41,9 +41,18 @@ import {
   ALL_CATEGORY_ANALYSIS_ROWS,
   classificationArticleLeavesInOrder,
   findCategoryAnalysisRowByName,
+  hsClassificationChapterOptions,
   parseClassificationParam,
+  shortClassificationOptionLabel,
+  type ArticleMetric,
   type ClassificationKind,
 } from "../data/observe-categories-analysis";
+
+function goodsDescriptionFromLeaf(m: ArticleMetric): string {
+  const parts = m.label.split(" — ");
+  if (parts.length >= 2) return parts.slice(1).join(" — ").trim();
+  return m.label;
+}
 
 const COUNTRY_OPTIONS = ["All Countries", "China", "India", "USA", "Saudi Arabia", "Japan", "Germany"];
 
@@ -184,24 +193,55 @@ export function CategoryTradeDetailPage() {
     [categoryRow, cls],
   );
 
+  const hsChapterOptions = useMemo(
+    () => (categoryRow ? hsClassificationChapterOptions(categoryRow) : []),
+    [categoryRow],
+  );
+
+  const classificationFilterLabel =
+    cls === "HS" ? "HS Classification" : cls === "BEC" ? "BEC Classification" : "SITC Classification";
+
+  const hsSelectValue = useMemo(() => {
+    if (cls !== "HS") return null;
+    if (!articleName) return "__category__";
+    const hit = hsChapterOptions.find((o) => articleName.toUpperCase().startsWith(o.code.toUpperCase()));
+    return hit?.code ?? articleName;
+  }, [cls, articleName, hsChapterOptions]);
+
   const productOptions = useMemo(() => {
-    if (!categoryRow) return ["All products"];
+    if (!categoryRow) return ["All goods in this category"];
     const leaves = classificationArticleLeavesInOrder(categoryRow, cls);
-    if (articleName) {
-      const variants = Array.from({ length: 6 }, (_, i) => {
-        const code = 100000 + (strSeed(`${articleName}|p|${i}|${cls}`) % 899999);
-        return `CN ${String(code)} — Product variant ${i + 1}`;
-      });
-      return ["All products in this article", ...variants];
+
+    if (cls === "HS") {
+      if (articleName) {
+        const baseGoods = articleName.includes(" — ") ? articleName.split(" — ")[1]! : "Goods under this heading";
+        const six = articleName.match(/^HS\d{6}/i)?.[0] ?? "";
+        return [
+          "All goods in this HS code",
+          ...Array.from({ length: 6 }, (_, i) => `${six ? `${six} — ` : ""}${baseGoods} (product line ${i + 1})`),
+        ];
+      }
+      return ["All goods in this category", ...leaves.map(goodsDescriptionFromLeaf).slice(0, 12)];
     }
-    const linked = leaves.slice(0, 12).map((a) => `Linked: ${a.label}`);
-    return ["All products in section", ...linked];
+
+    if (articleName) {
+      const base =
+        articleName.includes(" — ") ? articleName.split(" — ").slice(1).join(" — ").trim() : articleName;
+      return [
+        "All goods in this classification line",
+        ...Array.from({ length: 5 }, (_, i) => `${base} — goods variant ${i + 1}`),
+      ];
+    }
+    return ["All goods in this category", ...leaves.map(goodsDescriptionFromLeaf).slice(0, 12)];
   }, [categoryRow, cls, articleName]);
 
   const defaultProductLabel = useMemo(() => {
-    if (!categoryRow) return "All products";
-    return articleName ? "All products in this article" : "All products in section";
-  }, [categoryRow, articleName]);
+    if (!categoryRow) return "All goods in this category";
+    if (cls === "HS") {
+      return articleName ? "All goods in this HS code" : "All goods in this category";
+    }
+    return articleName ? "All goods in this classification line" : "All goods in this category";
+  }, [categoryRow, cls, articleName]);
 
   const [month, setMonth] = useState("March");
   const [year, setYear] = useState("2026");
@@ -324,33 +364,64 @@ export function CategoryTradeDetailPage() {
             </Select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">Article ({cls})</label>
-            <Select
-              value={articleName ?? "__category__"}
-              onValueChange={(v) => {
-                if (v === "__category__") {
-                  const qs = new URLSearchParams({ cls });
-                  navigate(`/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`);
-                  return;
-                }
-                goToArticle(v);
-              }}
-            >
-              <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
-                <SelectValue placeholder="Choose article" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__category__">Category overview (no article)</SelectItem>
-                {articleOptions.map((a) => (
-                  <SelectItem key={a.label} value={a.label}>
-                    {a.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <label className="mb-1 block text-xs font-medium text-gray-700">{classificationFilterLabel}</label>
+            {cls === "HS" ? (
+              <Select
+                value={hsSelectValue ?? "__category__"}
+                onValueChange={(v) => {
+                  if (v === "__category__") {
+                    const qs = new URLSearchParams({ cls });
+                    navigate(`/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`);
+                    return;
+                  }
+                  const byCode = hsChapterOptions.find((o) => o.code === v);
+                  if (byCode) {
+                    goToArticle(byCode.leafLabel);
+                    return;
+                  }
+                  goToArticle(v);
+                }}
+              >
+                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                  <SelectValue placeholder="Choose HS code" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__category__">Section overview (no HS code)</SelectItem>
+                  {hsChapterOptions.map((o) => (
+                    <SelectItem key={o.code} value={o.code}>
+                      {o.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select
+                value={articleName ?? "__category__"}
+                onValueChange={(v) => {
+                  if (v === "__category__") {
+                    const qs = new URLSearchParams({ cls });
+                    navigate(`/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`);
+                    return;
+                  }
+                  goToArticle(v);
+                }}
+              >
+                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                  <SelectValue placeholder="Choose classification line" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__category__">Section overview (no line)</SelectItem>
+                  {articleOptions.map((a) => (
+                    <SelectItem key={a.label} value={a.label}>
+                      {shortClassificationOptionLabel(cls, a.label)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">Product</label>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Filter by Goods</label>
             <Select
               value={productOptions.includes(selectedProduct) ? selectedProduct : productOptions[0] ?? "All products"}
               onValueChange={setSelectedProduct}

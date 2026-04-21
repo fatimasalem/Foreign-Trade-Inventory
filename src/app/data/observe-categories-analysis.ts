@@ -615,6 +615,35 @@ export function classificationArticleLeavesInOrder(row: CategoryAnalysisRow, kin
     .map((r) => r.metric);
 }
 
+/** HS chapter codes (HS01, HS02, …) with the first leaf label used for routing to the detail view. */
+export function hsClassificationChapterOptions(row: CategoryAnalysisRow): { code: string; leafLabel: string }[] {
+  const sec = HS_SECTIONS[row.sectionNumber - 1];
+  if (!sec) return [];
+  const leaves = row.hsArticles;
+  return sec.chapterCodes.map((code) => {
+    const upper = code.toUpperCase();
+    const leaf = leaves.find((m) => m.label.toUpperCase().startsWith(upper));
+    return { code, leafLabel: leaf?.label ?? code };
+  });
+}
+
+function shortBecCodeLabel(label: string): string {
+  const m = /^BEC\s*(\d+[a-z]?)\b/i.exec(label.trim());
+  return m ? `BEC ${m[1]}` : label.split(" — ")[0] ?? label;
+}
+
+function shortSitcCodeLabel(label: string): string {
+  const m = /^SITC\s*(\d{1,3})\b/i.exec(label.trim());
+  return m ? `SITC ${m[1]}` : label.split(" — ")[0] ?? label;
+}
+
+/** Short dropdown label for BEC/SITC classification lines (full label stays the route value). */
+export function shortClassificationOptionLabel(kind: ClassificationKind, fullLabel: string): string {
+  if (kind === "BEC") return shortBecCodeLabel(fullLabel);
+  if (kind === "SITC") return shortSitcCodeLabel(fullLabel);
+  return fullLabel;
+}
+
 export function parseClassificationParam(v: string | null): ClassificationKind {
   if (v === "BEC" || v === "SITC" || v === "HS") return v;
   return "HS";
