@@ -615,6 +615,62 @@ export function classificationArticleLeavesInOrder(row: CategoryAnalysisRow, kin
     .map((r) => r.metric);
 }
 
+/** HS chapter token (e.g. HS01) from a 6-digit HS leaf label. */
+function hsChapterCodeFromLeafLabel(label: string): string | null {
+  const m = /^(HS\d{2})/i.exec(label.trim());
+  return m ? m[1].toUpperCase() : null;
+}
+
+/** Two-digit SITC division key for matching partner lines. */
+function sitcDivisionKeyFromLabel(label: string): string | null {
+  const raw = parseSitcDivisionCode(label);
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  return digits.length === 1 ? `0${digits}` : digits.slice(0, 2);
+}
+
+/**
+ * Nomenclature leaves that belong with the selected article — same HS chapter, or matching BEC / SITC grouping.
+ * Used for “Filter by Goods” so only real classification lines appear (no synthetic variants).
+ */
+export function goodsLeavesForArticleFilter(
+  row: CategoryAnalysisRow,
+  kind: ClassificationKind,
+  articleLabel: string,
+): ArticleMetric[] {
+  const leaves = classificationArticleLeavesInOrder(row, kind);
+  if (kind === "HS") {
+    const ch = hsChapterCodeFromLeafLabel(articleLabel);
+    if (!ch) {
+      const one = leaves.find((l) => l.label === articleLabel);
+      return one ? [one] : [];
+    }
+    const sub = leaves.filter((l) => l.label.toUpperCase().startsWith(ch));
+    return sub.length > 0 ? sub : leaves.filter((l) => l.label === articleLabel);
+  }
+  if (kind === "BEC") {
+    const digits = parseBecDigits(articleLabel);
+    if (!digits) {
+      const one = leaves.find((l) => l.label === articleLabel);
+      return one ? [one] : [];
+    }
+    const subgroup = digits.length >= 2 ? digits.slice(0, 2) : digits;
+    const sub = leaves.filter((l) => {
+      const ld = parseBecDigits(l.label);
+      return ld !== null && ld.startsWith(subgroup);
+    });
+    return sub.length > 0 ? sub : leaves.filter((l) => l.label === articleLabel);
+  }
+  const divKey = sitcDivisionKeyFromLabel(articleLabel);
+  if (!divKey) {
+    const one = leaves.find((l) => l.label === articleLabel);
+    return one ? [one] : [];
+  }
+  const sub = leaves.filter((l) => sitcDivisionKeyFromLabel(l.label) === divKey);
+  return sub.length > 0 ? sub : leaves.filter((l) => l.label === articleLabel);
+}
+
 /** HS chapter codes (HS01, HS02, …) with the first leaf label used for routing to the detail view. */
 export function hsClassificationChapterOptions(row: CategoryAnalysisRow): { code: string; leafLabel: string }[] {
   const sec = HS_SECTIONS[row.sectionNumber - 1];

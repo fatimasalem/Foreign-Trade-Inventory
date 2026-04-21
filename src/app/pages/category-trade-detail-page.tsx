@@ -41,12 +41,17 @@ import {
   ALL_CATEGORY_ANALYSIS_ROWS,
   classificationArticleLeavesInOrder,
   findCategoryAnalysisRowByName,
+  goodsLeavesForArticleFilter,
   hsClassificationChapterOptions,
   parseClassificationParam,
   shortClassificationOptionLabel,
   type ArticleMetric,
   type ClassificationKind,
 } from "../data/observe-categories-analysis";
+
+const ALL_GOODS_CATEGORY = "All goods in this category";
+const ALL_GOODS_HS_ARTICLE = "All goods in this HS chapter";
+const ALL_GOODS_BEC_SITC_ARTICLE = "All goods in this classification line";
 
 function goodsDescriptionFromLeaf(m: ArticleMetric): string {
   const parts = m.label.split(" — ");
@@ -208,39 +213,33 @@ export function CategoryTradeDetailPage() {
     return hit?.code ?? articleName;
   }, [cls, articleName, hsChapterOptions]);
 
-  const productOptions = useMemo(() => {
-    if (!categoryRow) return ["All goods in this category"];
+  const productChoices = useMemo(() => {
+    if (!categoryRow) return [{ value: ALL_GOODS_CATEGORY, label: ALL_GOODS_CATEGORY }];
     const leaves = classificationArticleLeavesInOrder(categoryRow, cls);
-
-    if (cls === "HS") {
-      if (articleName) {
-        const baseGoods = articleName.includes(" — ") ? articleName.split(" — ")[1]! : "Goods under this heading";
-        const six = articleName.match(/^HS\d{6}/i)?.[0] ?? "";
-        return [
-          "All goods in this HS code",
-          ...Array.from({ length: 6 }, (_, i) => `${six ? `${six} — ` : ""}${baseGoods} (product line ${i + 1})`),
-        ];
-      }
-      return ["All goods in this category", ...leaves.map(goodsDescriptionFromLeaf).slice(0, 12)];
-    }
-
-    if (articleName) {
-      const base =
-        articleName.includes(" — ") ? articleName.split(" — ").slice(1).join(" — ").trim() : articleName;
+    if (!articleName) {
       return [
-        "All goods in this classification line",
-        ...Array.from({ length: 5 }, (_, i) => `${base} — goods variant ${i + 1}`),
+        { value: ALL_GOODS_CATEGORY, label: ALL_GOODS_CATEGORY },
+        ...leaves.map((m) => ({
+          value: m.label,
+          label: goodsDescriptionFromLeaf(m),
+        })),
       ];
     }
-    return ["All goods in this category", ...leaves.map(goodsDescriptionFromLeaf).slice(0, 12)];
+    const goodsLeaves = goodsLeavesForArticleFilter(categoryRow, cls, articleName);
+    const allLabel = cls === "HS" ? ALL_GOODS_HS_ARTICLE : ALL_GOODS_BEC_SITC_ARTICLE;
+    return [
+      { value: allLabel, label: allLabel },
+      ...goodsLeaves.map((m) => ({
+        value: m.label,
+        label: goodsDescriptionFromLeaf(m),
+      })),
+    ];
   }, [categoryRow, cls, articleName]);
 
   const defaultProductLabel = useMemo(() => {
-    if (!categoryRow) return "All goods in this category";
-    if (cls === "HS") {
-      return articleName ? "All goods in this HS code" : "All goods in this category";
-    }
-    return articleName ? "All goods in this classification line" : "All goods in this category";
+    if (!categoryRow) return ALL_GOODS_CATEGORY;
+    if (!articleName) return ALL_GOODS_CATEGORY;
+    return cls === "HS" ? ALL_GOODS_HS_ARTICLE : ALL_GOODS_BEC_SITC_ARTICLE;
   }, [categoryRow, cls, articleName]);
 
   const [month, setMonth] = useState("March");
@@ -423,16 +422,20 @@ export function CategoryTradeDetailPage() {
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700">Filter by Goods</label>
             <Select
-              value={productOptions.includes(selectedProduct) ? selectedProduct : productOptions[0] ?? "All products"}
+              value={
+                productChoices.some((c) => c.value === selectedProduct)
+                  ? selectedProduct
+                  : (productChoices[0]?.value ?? ALL_GOODS_CATEGORY)
+              }
               onValueChange={setSelectedProduct}
             >
               <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
-                <SelectValue placeholder="Choose product" />
+                <SelectValue placeholder="Choose goods" />
               </SelectTrigger>
               <SelectContent>
-                {productOptions.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
+                {productChoices.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
                   </SelectItem>
                 ))}
               </SelectContent>
