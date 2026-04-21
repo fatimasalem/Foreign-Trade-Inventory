@@ -24,18 +24,17 @@ interface StatCardProps {
   title: string;
   value: string;
   unit: string;
-  change: string;
-  /** Absolute year-over-year change amount (shown beside the percentage, same color). */
-  absoluteChange: string;
+  /** Compact Y/Y delta, e.g. "+2.6B (+5.5%)" or "+0.9pp (+3.2%)". */
+  yoyDisplay: string;
   updateDate: string;
   isConfidential: boolean;
   isChecked: boolean;
   onCheckChange: (checked: boolean) => void;
 }
 
-function StatCard({ title, value, unit, change, absoluteChange, updateDate, isConfidential, isChecked, onCheckChange }: StatCardProps) {
+function StatCard({ title, value, unit, yoyDisplay, updateDate, isConfidential, isChecked, onCheckChange }: StatCardProps) {
   const navigate = useNavigate();
-  const isPositive = change.startsWith("+");
+  const isPositive = yoyDisplay.trimStart().startsWith("+");
   const deltaClass = isPositive ? "text-green-600 font-medium" : "text-red-600 font-medium";
   const hasPercentage = title.includes("%") || title.includes("(% ");
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -45,7 +44,7 @@ function StatCard({ title, value, unit, change, absoluteChange, updateDate, isCo
 
   const handleNavigateToDetail = () => {
     navigate(`/indicator/${encodeURIComponent(title)}`, {
-      state: { title, value, unit, change, absoluteChange, updateDate, isConfidential }
+      state: { title, value, unit, yoyDisplay, updateDate, isConfidential }
     });
   };
 
@@ -216,8 +215,7 @@ function StatCard({ title, value, unit, change, absoluteChange, updateDate, isCo
             <div className="text-sm text-gray-600 mb-2">{unit}</div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1">
               {isPositive ? <TrendingUp className="h-4 w-4 shrink-0 text-green-600" /> : <TrendingDown className="h-4 w-4 shrink-0 text-red-600" />}
-              <span className={`text-sm tabular-nums ${deltaClass}`}>{absoluteChange}</span>
-              <span className={`text-sm tabular-nums ${deltaClass}`}>{change}</span>
+              <span className={`text-sm tabular-nums ${deltaClass}`}>{yoyDisplay}</span>
             </div>
             <div className="text-xs text-gray-500">Comparing to Y/Y</div>
           </div>
@@ -452,9 +450,8 @@ function StatCard({ title, value, unit, change, absoluteChange, updateDate, isCo
           )}
         </div>
         <div className="text-sm text-gray-600 mb-1">{unit}</div>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm tabular-nums">
-          <span className={deltaClass}>{absoluteChange}</span>
-          <span className={deltaClass}>{change}</span>
+        <div className="text-sm tabular-nums">
+          <span className={deltaClass}>{yoyDisplay}</span>
         </div>
         <div className="text-xs text-gray-500">Comparing to Y/Y</div>
       </div>
@@ -574,8 +571,7 @@ export function OfficialStatisticsPage() {
       title: "Balance of trade of agricultural goods and food",
       value: "1,223.96",
       unit: "Million Emirati Dirham",
-      change: "+89%",
-      absoluteChange: "1,089.2 million Emirati dirham",
+      yoyDisplay: "+1.1B (+89%)",
       updateDate: "2025-06-20",
       isConfidential: false
     },
@@ -583,8 +579,7 @@ export function OfficialStatisticsPage() {
       title: "Balance of trade of goods",
       value: "45,678.50",
       unit: "Million Emirati Dirham",
-      change: "+12.5%",
-      absoluteChange: "5,087.6 million Emirati dirham",
+      yoyDisplay: "+5.1B (+12.5%)",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -592,8 +587,7 @@ export function OfficialStatisticsPage() {
       title: "Balance of trade of goods (% of GDP)",
       value: "28.5",
       unit: "Percentage",
-      change: "+3.2%",
-      absoluteChange: "0.9 percentage points",
+      yoyDisplay: "+0.9pp (+3.2%)",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -601,8 +595,7 @@ export function OfficialStatisticsPage() {
       title: "Exports of crude oil",
       value: "125,340.75",
       unit: "Million Emirati Dirham",
-      change: "+8.7%",
-      absoluteChange: "10,028.4 million Emirati dirham",
+      yoyDisplay: "+10.0B (+8.7%)",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -610,8 +603,7 @@ export function OfficialStatisticsPage() {
       title: "Exports of goods (% of GDP)",
       value: "42.3",
       unit: "Percentage",
-      change: "+5.1%",
-      absoluteChange: "2.1 percentage points",
+      yoyDisplay: "+2.1pp (+5.1%)",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -619,8 +611,7 @@ export function OfficialStatisticsPage() {
       title: "Exports of goods of the emirates of Abu Dhabi",
       value: "89,542.30",
       unit: "Million Emirati Dirham",
-      change: "+15.8%",
-      absoluteChange: "12,256.4 million Emirati dirham",
+      yoyDisplay: "+12.3B (+15.8%)",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -628,8 +619,7 @@ export function OfficialStatisticsPage() {
       title: "Exports of oil, gas and oil products",
       value: "156,890.25",
       unit: "Million Emirati Dirham",
-      change: "+6.9%",
-      absoluteChange: "10,129.4 million Emirati dirham",
+      yoyDisplay: "+10.1B (+6.9%)",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -637,8 +627,7 @@ export function OfficialStatisticsPage() {
       title: "Exports of oil, gas and oil products (% GDP)",
       value: "52.7",
       unit: "Percentage",
-      change: "+4.3%",
-      absoluteChange: "2.2 percentage points",
+      yoyDisplay: "+2.2pp (+4.3%)",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -646,8 +635,7 @@ export function OfficialStatisticsPage() {
       title: "Exports of oil, gas and oil products (% total exports of goods)",
       value: "68.4",
       unit: "Percentage",
-      change: "+2.8%",
-      absoluteChange: "1.9 percentage points",
+      yoyDisplay: "+1.9pp (+2.8%)",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -655,8 +643,7 @@ export function OfficialStatisticsPage() {
       title: "Exports of refined petroleum products",
       value: "32,456.80",
       unit: "Million Emirati Dirham",
-      change: "+11.2%",
-      absoluteChange: "3,275.2 million Emirati dirham",
+      yoyDisplay: "+3.3B (+11.2%)",
       updateDate: "2025-06-20",
       isConfidential: true
     }

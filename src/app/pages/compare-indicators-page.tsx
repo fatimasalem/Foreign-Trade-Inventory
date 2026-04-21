@@ -11,7 +11,7 @@ interface IndicatorData {
   title: string;
   value: string;
   unit: string;
-  change: string;
+  yoyDisplay: string;
   updateDate: string;
   isConfidential: boolean;
 }
