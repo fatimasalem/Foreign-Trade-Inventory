@@ -13,7 +13,6 @@ import {
 import {
   ArrowLeft,
   Activity,
-  ChevronDown,
   ChevronRight,
   LayoutGrid,
   ArrowDownToLine,
@@ -49,7 +48,6 @@ import {
   type ArticleMetric,
   type ClassificationKind,
 } from "../data/observe-categories-analysis";
-import { HS_SECTIONS } from "../../lib/hs-sections";
 import { formatHsChapterGoodsCheckboxLabel } from "../../lib/hs-chapter-goods-captions";
 
 const ALL_GOODS_CATEGORY = "All goods in this category";
@@ -216,20 +214,6 @@ export function CategoryTradeDetailPage() {
     return hit?.code ?? articleName;
   }, [cls, articleName, hsChapterOptions]);
 
-  /** HS chapter code (e.g. HS03) aligned with HS Classification; drives goods checkboxes. */
-  const hsChapterForGoodsSync = useMemo(() => {
-    if (cls !== "HS" || !articleName) return null;
-    const hit = hsChapterOptions.find((o) => articleName.toUpperCase().startsWith(o.code.toUpperCase()));
-    return hit?.code ?? null;
-  }, [cls, articleName, hsChapterOptions]);
-
-  /** Chapters in the current WCO section — goods correspond to HS Classification chapter codes. */
-  const hsGoodsChapterCodes = useMemo(() => {
-    if (cls !== "HS" || !categoryRow) return [];
-    const sec = HS_SECTIONS[categoryRow.sectionNumber - 1];
-    return sec ? [...sec.chapterCodes] : [];
-  }, [cls, categoryRow]);
-
   const productChoices = useMemo(() => {
     if (!categoryRow || cls === "HS") {
       if (!categoryRow) return [{ value: ALL_GOODS_CATEGORY, label: ALL_GOODS_CATEGORY }];
@@ -265,51 +249,17 @@ export function CategoryTradeDetailPage() {
   const [year, setYear] = useState("2026");
   const [trendCountries, setTrendCountries] = useState<string[]>(["All Countries"]);
   const [selectedProduct, setSelectedProduct] = useState(defaultProductLabel);
-  const [selectedHsGoods, setSelectedHsGoods] = useState<string[]>([HS_GOODS_ALL]);
 
   useEffect(() => {
     setSelectedProduct(defaultProductLabel);
   }, [defaultProductLabel]);
 
-  useEffect(() => {
-    if (cls !== "HS") return;
-    if (hsChapterForGoodsSync) {
-      setSelectedHsGoods([hsChapterForGoodsSync]);
-    } else {
-      setSelectedHsGoods([HS_GOODS_ALL]);
-    }
-  }, [cls, hsChapterForGoodsSync]);
-
   const goodsFilterToken = useMemo(() => {
     if (cls !== "HS") return selectedProduct;
-    if (selectedHsGoods.includes(HS_GOODS_ALL) || selectedHsGoods.length === 0) return HS_GOODS_ALL;
-    return [...selectedHsGoods].sort().join("|");
-  }, [cls, selectedHsGoods, selectedProduct]);
-
-  const hsGoodsFilterTriggerLabel = useMemo(() => {
-    if (selectedHsGoods.includes(HS_GOODS_ALL) || selectedHsGoods.length === 0) {
-      return "All chapters";
-    }
-    if (selectedHsGoods.length === 1) {
-      return formatHsChapterGoodsCheckboxLabel(selectedHsGoods[0]);
-    }
-    return `${selectedHsGoods.length} chapters selected`;
-  }, [selectedHsGoods]);
+    return articleName ?? HS_GOODS_ALL;
+  }, [cls, selectedProduct, articleName]);
 
   const filterKey = `${month}|${year}|${cls}|${articleName ?? ""}|${goodsFilterToken}`;
-
-  const toggleHsGoods = (id: string, checked: boolean) => {
-    if (id === HS_GOODS_ALL) {
-      setSelectedHsGoods(checked ? [HS_GOODS_ALL] : []);
-      return;
-    }
-    setSelectedHsGoods((prev) => {
-      const withoutAll = prev.filter((x) => x !== HS_GOODS_ALL);
-      let next = checked ? [...withoutAll, id] : withoutAll.filter((x) => x !== id);
-      if (next.length === 0) next = [HS_GOODS_ALL];
-      return next;
-    });
-  };
 
   const topImport = useMemo(
     () => topCountriesForCategory(categoryName, "import", filterKey),
@@ -352,6 +302,30 @@ export function CategoryTradeDetailPage() {
     navigate(
       `/observe/category/${encodeURIComponent(categoryName)}/article/${encodeURIComponent(label)}?${qs.toString()}`,
     );
+  };
+
+  const navigateHsChapterSelection = (v: string) => {
+    if (v === "__category__") {
+      const qs = new URLSearchParams({ cls });
+      navigate(`/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`);
+      return;
+    }
+    const byCode = hsChapterOptions.find((o) => o.code === v);
+    if (byCode) goToArticle(byCode.leafLabel);
+    else goToArticle(v);
+  };
+
+  const navigateBecSitcGoodsSelection = (v: string) => {
+    if (v === ALL_GOODS_CATEGORY) {
+      const qs = new URLSearchParams({ cls });
+      navigate(`/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`);
+      return;
+    }
+    if (v === ALL_GOODS_BEC_SITC_ARTICLE) {
+      setSelectedProduct(v);
+      return;
+    }
+    goToArticle(v);
   };
 
   const TitleIcon = iconForCategoryName(categoryName);
@@ -423,22 +397,7 @@ export function CategoryTradeDetailPage() {
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700">{classificationFilterLabel}</label>
             {cls === "HS" ? (
-              <Select
-                value={hsSelectValue ?? "__category__"}
-                onValueChange={(v) => {
-                  if (v === "__category__") {
-                    const qs = new URLSearchParams({ cls });
-                    navigate(`/observe/category/${encodeURIComponent(categoryName)}?${qs.toString()}`);
-                    return;
-                  }
-                  const byCode = hsChapterOptions.find((o) => o.code === v);
-                  if (byCode) {
-                    goToArticle(byCode.leafLabel);
-                    return;
-                  }
-                  goToArticle(v);
-                }}
-              >
+              <Select value={hsSelectValue ?? "__category__"} onValueChange={navigateHsChapterSelection}>
                 <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
                   <SelectValue placeholder="Choose HS code" />
                 </SelectTrigger>
@@ -480,44 +439,19 @@ export function CategoryTradeDetailPage() {
           {cls === "HS" && categoryRow ? (
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700">Filter by Goods</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-10 min-w-[220px] max-w-[min(100vw-2rem,420px)] justify-between gap-2 px-3 font-normal"
-                  >
-                    <span className="truncate text-left text-sm">{hsGoodsFilterTriggerLabel}</span>
-                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[min(100vw-2rem,380px)] p-3" align="start">
-                  <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
-                    <label className="flex cursor-pointer items-start gap-2">
-                      <Checkbox
-                        checked={selectedHsGoods.includes(HS_GOODS_ALL)}
-                        onCheckedChange={(c) => toggleHsGoods(HS_GOODS_ALL, c === true)}
-                        className="mt-0.5"
-                      />
-                      <span className="min-w-0 flex-1 text-xs leading-snug text-gray-900">(All)</span>
-                    </label>
-                    {hsGoodsChapterCodes.map((code) => {
-                      const full = formatHsChapterGoodsCheckboxLabel(code);
-                      return (
-                        <label key={code} className="flex cursor-pointer items-start gap-2">
-                          <Checkbox
-                            checked={!selectedHsGoods.includes(HS_GOODS_ALL) && selectedHsGoods.includes(code)}
-                            onCheckedChange={(c) => toggleHsGoods(code, c === true)}
-                            className="mt-0.5"
-                          />
-                          <span className="min-w-0 flex-1 text-xs leading-snug text-gray-900" title={full}>
-                            {full}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <Select value={hsSelectValue ?? "__category__"} onValueChange={navigateHsChapterSelection}>
+                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                  <SelectValue placeholder="Choose goods" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__category__">Section overview (all goods in section)</SelectItem>
+                  {hsChapterOptions.map((o) => (
+                    <SelectItem key={o.code} value={o.code}>
+                      {formatHsChapterGoodsCheckboxLabel(o.code)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           ) : (
             <div>
@@ -528,7 +462,7 @@ export function CategoryTradeDetailPage() {
                     ? selectedProduct
                     : (productChoices[0]?.value ?? ALL_GOODS_CATEGORY)
                 }
-                onValueChange={setSelectedProduct}
+                onValueChange={navigateBecSitcGoodsSelection}
               >
                 <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
                   <SelectValue placeholder="Choose goods" />
