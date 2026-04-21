@@ -13,6 +13,7 @@ import {
 import {
   ArrowLeft,
   Activity,
+  ChevronDown,
   ChevronRight,
   LayoutGrid,
   ArrowDownToLine,
@@ -285,6 +286,16 @@ export function CategoryTradeDetailPage() {
     return [...selectedHsGoods].sort().join("|");
   }, [cls, selectedHsGoods, selectedProduct]);
 
+  const hsGoodsFilterTriggerLabel = useMemo(() => {
+    if (selectedHsGoods.includes(HS_GOODS_ALL) || selectedHsGoods.length === 0) {
+      return "All chapters";
+    }
+    if (selectedHsGoods.length === 1) {
+      return formatHsChapterGoodsCheckboxLabel(selectedHsGoods[0]);
+    }
+    return `${selectedHsGoods.length} chapters selected`;
+  }, [selectedHsGoods]);
+
   const filterKey = `${month}|${year}|${cls}|${articleName ?? ""}|${goodsFilterToken}`;
 
   const toggleHsGoods = (id: string, checked: boolean) => {
@@ -380,8 +391,7 @@ export function CategoryTradeDetailPage() {
           </div>
         </div>
 
-        <div className="flex w-full flex-col gap-3">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-wrap gap-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700">Month</label>
             <Select value={month} onValueChange={setMonth}>
@@ -467,35 +477,47 @@ export function CategoryTradeDetailPage() {
               </Select>
             )}
           </div>
-          </div>
           {cls === "HS" && categoryRow ? (
-            <div className="w-full max-w-[min(100vw-2rem,320px)]">
+            <div>
               <label className="mb-1 block text-xs font-medium text-gray-700">Filter by Goods</label>
-              <div className="max-h-60 space-y-2 overflow-y-auto rounded-md border border-gray-200 bg-white p-2">
-                <label className="flex cursor-pointer items-start gap-2">
-                  <Checkbox
-                    checked={selectedHsGoods.includes(HS_GOODS_ALL)}
-                    onCheckedChange={(c) => toggleHsGoods(HS_GOODS_ALL, c === true)}
-                    className="mt-0.5"
-                  />
-                  <span className="min-w-0 flex-1 text-xs leading-snug text-gray-900">(All)</span>
-                </label>
-                {hsGoodsChapterCodes.map((code) => {
-                  const full = formatHsChapterGoodsCheckboxLabel(code);
-                  return (
-                    <label key={code} className="flex cursor-pointer items-start gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-10 min-w-[220px] max-w-[min(100vw-2rem,420px)] justify-between gap-2 px-3 font-normal"
+                  >
+                    <span className="truncate text-left text-sm">{hsGoodsFilterTriggerLabel}</span>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[min(100vw-2rem,380px)] p-3" align="start">
+                  <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
+                    <label className="flex cursor-pointer items-start gap-2">
                       <Checkbox
-                        checked={!selectedHsGoods.includes(HS_GOODS_ALL) && selectedHsGoods.includes(code)}
-                        onCheckedChange={(c) => toggleHsGoods(code, c === true)}
+                        checked={selectedHsGoods.includes(HS_GOODS_ALL)}
+                        onCheckedChange={(c) => toggleHsGoods(HS_GOODS_ALL, c === true)}
                         className="mt-0.5"
                       />
-                      <span className="min-w-0 flex-1 truncate text-xs leading-snug text-gray-900" title={full}>
-                        {full}
-                      </span>
+                      <span className="min-w-0 flex-1 text-xs leading-snug text-gray-900">(All)</span>
                     </label>
-                  );
-                })}
-              </div>
+                    {hsGoodsChapterCodes.map((code) => {
+                      const full = formatHsChapterGoodsCheckboxLabel(code);
+                      return (
+                        <label key={code} className="flex cursor-pointer items-start gap-2">
+                          <Checkbox
+                            checked={!selectedHsGoods.includes(HS_GOODS_ALL) && selectedHsGoods.includes(code)}
+                            onCheckedChange={(c) => toggleHsGoods(code, c === true)}
+                            className="mt-0.5"
+                          />
+                          <span className="min-w-0 flex-1 text-xs leading-snug text-gray-900" title={full}>
+                            {full}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           ) : (
             <div>
@@ -521,8 +543,8 @@ export function CategoryTradeDetailPage() {
               </Select>
             </div>
           )}
-          </div>
         </div>
+      </div>
 
       {!categoryRow && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
