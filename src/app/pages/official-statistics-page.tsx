@@ -25,7 +25,7 @@ interface StatCardProps {
   value: string;
   unit: string;
   change: string;
-  /** Absolute year-over-year change amount (shown before the percentage). */
+  /** Absolute year-over-year change amount (shown beside the percentage, same color). */
   absoluteChange: string;
   updateDate: string;
   isConfidential: boolean;
@@ -36,6 +36,7 @@ interface StatCardProps {
 function StatCard({ title, value, unit, change, absoluteChange, updateDate, isConfidential, isChecked, onCheckChange }: StatCardProps) {
   const navigate = useNavigate();
   const isPositive = change.startsWith("+");
+  const deltaClass = isPositive ? "text-green-600 font-medium" : "text-red-600 font-medium";
   const hasPercentage = title.includes("%") || title.includes("(% ");
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(false);
@@ -213,14 +214,10 @@ function StatCard({ title, value, unit, change, absoluteChange, updateDate, isCo
               )}
             </div>
             <div className="text-sm text-gray-600 mb-2">{unit}</div>
-            <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mb-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1">
               {isPositive ? <TrendingUp className="h-4 w-4 shrink-0 text-green-600" /> : <TrendingDown className="h-4 w-4 shrink-0 text-red-600" />}
-              <span className="text-sm text-gray-700">
-                {isPositive ? "Increased by" : "Decreased by"}{" "}
-                <span className="font-medium text-gray-900">{absoluteChange}</span>
-                {", "}
-                <span className={`font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>{change}</span>
-              </span>
+              <span className={`text-sm tabular-nums ${deltaClass}`}>{absoluteChange}</span>
+              <span className={`text-sm tabular-nums ${deltaClass}`}>{change}</span>
             </div>
             <div className="text-xs text-gray-500">Comparing to Y/Y</div>
           </div>
@@ -455,13 +452,9 @@ function StatCard({ title, value, unit, change, absoluteChange, updateDate, isCo
           )}
         </div>
         <div className="text-sm text-gray-600 mb-1">{unit}</div>
-        <div className="text-sm text-gray-600">
-          <span className="text-gray-800">
-            {isPositive ? "Increased by" : "Decreased by"}{" "}
-            <span className="font-medium text-gray-900">{absoluteChange}</span>
-            {", "}
-          </span>
-          <span className={isPositive ? "text-green-600 font-medium" : "text-red-600 font-medium"}>{change}</span>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm tabular-nums">
+          <span className={deltaClass}>{absoluteChange}</span>
+          <span className={deltaClass}>{change}</span>
         </div>
         <div className="text-xs text-gray-500">Comparing to Y/Y</div>
       </div>
