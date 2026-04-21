@@ -25,13 +25,15 @@ interface StatCardProps {
   value: string;
   unit: string;
   change: string;
+  /** Absolute year-over-year change amount (shown before the percentage). */
+  absoluteChange: string;
   updateDate: string;
   isConfidential: boolean;
   isChecked: boolean;
   onCheckChange: (checked: boolean) => void;
 }
 
-function StatCard({ title, value, unit, change, updateDate, isConfidential, isChecked, onCheckChange }: StatCardProps) {
+function StatCard({ title, value, unit, change, absoluteChange, updateDate, isConfidential, isChecked, onCheckChange }: StatCardProps) {
   const navigate = useNavigate();
   const isPositive = change.startsWith("+");
   const hasPercentage = title.includes("%") || title.includes("(% ");
@@ -42,7 +44,7 @@ function StatCard({ title, value, unit, change, updateDate, isConfidential, isCh
 
   const handleNavigateToDetail = () => {
     navigate(`/indicator/${encodeURIComponent(title)}`, {
-      state: { title, value, unit, change, updateDate, isConfidential }
+      state: { title, value, unit, change, absoluteChange, updateDate, isConfidential }
     });
   };
 
@@ -211,10 +213,13 @@ function StatCard({ title, value, unit, change, updateDate, isConfidential, isCh
               )}
             </div>
             <div className="text-sm text-gray-600 mb-2">{unit}</div>
-            <div className="flex items-center gap-1 mb-1">
-              {isPositive ? <TrendingUp className="h-4 w-4 text-green-600" /> : <TrendingDown className="h-4 w-4 text-red-600" />}
-              <span className={`text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                {change} ({change})
+            <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 mb-1">
+              {isPositive ? <TrendingUp className="h-4 w-4 shrink-0 text-green-600" /> : <TrendingDown className="h-4 w-4 shrink-0 text-red-600" />}
+              <span className="text-sm text-gray-700">
+                {isPositive ? "Increased by" : "Decreased by"}{" "}
+                <span className="font-medium text-gray-900">{absoluteChange}</span>
+                {", "}
+                <span className={`font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>{change}</span>
               </span>
             </div>
             <div className="text-xs text-gray-500">Comparing to Y/Y</div>
@@ -451,7 +456,12 @@ function StatCard({ title, value, unit, change, updateDate, isConfidential, isCh
         </div>
         <div className="text-sm text-gray-600 mb-1">{unit}</div>
         <div className="text-sm text-gray-600">
-          <span className={isPositive ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>{change}</span>
+          <span className="text-gray-800">
+            {isPositive ? "Increased by" : "Decreased by"}{" "}
+            <span className="font-medium text-gray-900">{absoluteChange}</span>
+            {", "}
+          </span>
+          <span className={isPositive ? "text-green-600 font-medium" : "text-red-600 font-medium"}>{change}</span>
         </div>
         <div className="text-xs text-gray-500">Comparing to Y/Y</div>
       </div>
@@ -572,6 +582,7 @@ export function OfficialStatisticsPage() {
       value: "1,223.96",
       unit: "Million Emirati Dirham",
       change: "+89%",
+      absoluteChange: "1,089.2 million Emirati dirham",
       updateDate: "2025-06-20",
       isConfidential: false
     },
@@ -580,6 +591,7 @@ export function OfficialStatisticsPage() {
       value: "45,678.50",
       unit: "Million Emirati Dirham",
       change: "+12.5%",
+      absoluteChange: "5,087.6 million Emirati dirham",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -588,6 +600,7 @@ export function OfficialStatisticsPage() {
       value: "28.5",
       unit: "Percentage",
       change: "+3.2%",
+      absoluteChange: "0.9 percentage points",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -596,6 +609,7 @@ export function OfficialStatisticsPage() {
       value: "125,340.75",
       unit: "Million Emirati Dirham",
       change: "+8.7%",
+      absoluteChange: "10,028.4 million Emirati dirham",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -604,6 +618,7 @@ export function OfficialStatisticsPage() {
       value: "42.3",
       unit: "Percentage",
       change: "+5.1%",
+      absoluteChange: "2.1 percentage points",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -612,6 +627,7 @@ export function OfficialStatisticsPage() {
       value: "89,542.30",
       unit: "Million Emirati Dirham",
       change: "+15.8%",
+      absoluteChange: "12,256.4 million Emirati dirham",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -620,6 +636,7 @@ export function OfficialStatisticsPage() {
       value: "156,890.25",
       unit: "Million Emirati Dirham",
       change: "+6.9%",
+      absoluteChange: "10,129.4 million Emirati dirham",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -628,6 +645,7 @@ export function OfficialStatisticsPage() {
       value: "52.7",
       unit: "Percentage",
       change: "+4.3%",
+      absoluteChange: "2.2 percentage points",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -636,6 +654,7 @@ export function OfficialStatisticsPage() {
       value: "68.4",
       unit: "Percentage",
       change: "+2.8%",
+      absoluteChange: "1.9 percentage points",
       updateDate: "2025-06-20",
       isConfidential: true
     },
@@ -644,6 +663,7 @@ export function OfficialStatisticsPage() {
       value: "32,456.80",
       unit: "Million Emirati Dirham",
       change: "+11.2%",
+      absoluteChange: "3,275.2 million Emirati dirham",
       updateDate: "2025-06-20",
       isConfidential: true
     }

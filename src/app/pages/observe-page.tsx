@@ -260,10 +260,10 @@ export function ObservePage() {
   ];
 
   const topImportCategories = [
-    { category: "Vehicles & Parts", value: 12.3, change: "-18.5%" },
-    { category: "Electrical Machinery", value: 9.5, change: "-12.3%" },
+    { category: "Vehicles & Parts", value: 12.3, change: "+18.5%" },
+    { category: "Electrical Machinery", value: 9.5, change: "+12.3%" },
     { category: "Nuclear Reactors", value: 8.2, change: "+8.5%" },
-    { category: "Pharmaceutical Products", value: 5.8, change: "-12.3%" },
+    { category: "Pharmaceutical Products", value: 5.8, change: "+12.3%" },
     { category: "Plastics & Articles", value: 5.2, change: "+2.8%" },
   ];
 
@@ -857,32 +857,23 @@ export function ObservePage() {
             </div>
           </div>
           <div className="space-y-4">
-            {topImportCategories.map((item, index) => {
-              const isPositive = item.change.startsWith("+");
-              return (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900 text-sm">{item.category}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">AED {item.value}B</div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${isPositive ? "bg-green-600" : "bg-amber-600"}`}
-                        style={{ width: `${(item.value / 15) * 100}%` }}
-                      />
-                    </div>
-                    <span
-                      className={`text-sm font-medium ${
-                        isPositive ? "text-green-600" : "text-amber-700"
-                      }`}
-                    >
-                      {item.change}
-                    </span>
-                  </div>
+            {topImportCategories.map((item, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900 text-sm">{item.category}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">AED {item.value}B</div>
                 </div>
-              );
-            })}
+                <div className="flex items-center gap-3">
+                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="h-2 rounded-full bg-green-600"
+                      style={{ width: `${(item.value / 15) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-green-600">{item.change}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
