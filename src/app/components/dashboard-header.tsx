@@ -4,7 +4,6 @@ import bayaanIcon from "../../imports/bayaan-icon-1.svg";
 function pageTitleForPath(pathname: string): string {
   if (pathname === "/" || pathname === "/overview") return "Overview";
   if (pathname === "/diagnose") return "Diagnose";
-  if (pathname === "/benchmark") return "Benchmark";
   if (pathname === "/observe" || pathname.startsWith("/observe/")) return "Observe";
   if (pathname === "/trade-ai") return "Trade AI";
   if (pathname === "/official-statistics") return "Official statistics";

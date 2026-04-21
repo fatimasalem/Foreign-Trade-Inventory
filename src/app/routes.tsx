@@ -2,7 +2,6 @@ import { createBrowserRouter } from "react-router";
 import { DashboardLayout } from "./components/dashboard-layout";
 import { InterpretPage } from "./pages/interpret-page";
 import { DiagnosePage } from "./pages/diagnose-page";
-import { BenchmarkPage } from "./pages/benchmark-page";
 import { ObservePage } from "./pages/observe-page";
 import { CategoryTradeDetailPage } from "./pages/category-trade-detail-page";
 import { TradeAIPage } from "./pages/trade-ai-page";
@@ -22,7 +21,6 @@ export const router = createBrowserRouter(
         { index: true, Component: InterpretPage },
         { path: "overview", Component: InterpretPage },
         { path: "diagnose", Component: DiagnosePage },
-        { path: "benchmark", Component: BenchmarkPage },
         { path: "observe", Component: ObservePage },
         {
           path: "observe/category/:categorySlug/article/:articleSlug",

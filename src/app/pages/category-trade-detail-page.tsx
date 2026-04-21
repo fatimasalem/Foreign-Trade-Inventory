@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
   LineChart,
@@ -133,9 +133,10 @@ function buildTrendPoints(
   year: string,
   cls: ClassificationKind,
   trendCountries: string[],
+  productLabel: string,
 ): { month: string; imports: number; exports: number; reexports: number }[] {
   const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr"];
-  const seed = strSeed(`${categoryName}|${articleLabel ?? ""}|${month}|${year}|${cls}`);
+  const seed = strSeed(`${categoryName}|${articleLabel ?? ""}|${month}|${year}|${cls}|${productLabel}`);
   const rand = mulberry32(seed);
   const hasAll = trendCountries.includes("All Countries") || trendCountries.length === 0;
   const n = hasAll ? 4 : Math.max(1, trendCountries.filter((c) => c !== "All Countries").length);
@@ -183,11 +184,35 @@ export function CategoryTradeDetailPage() {
     [categoryRow, cls],
   );
 
+  const productOptions = useMemo(() => {
+    if (!categoryRow) return ["All products"];
+    const leaves = classificationArticleLeavesInOrder(categoryRow, cls);
+    if (articleName) {
+      const variants = Array.from({ length: 6 }, (_, i) => {
+        const code = 100000 + (strSeed(`${articleName}|p|${i}|${cls}`) % 899999);
+        return `CN ${String(code)} — Product variant ${i + 1}`;
+      });
+      return ["All products in this article", ...variants];
+    }
+    const linked = leaves.slice(0, 12).map((a) => `Linked: ${a.label}`);
+    return ["All products in section", ...linked];
+  }, [categoryRow, cls, articleName]);
+
+  const defaultProductLabel = useMemo(() => {
+    if (!categoryRow) return "All products";
+    return articleName ? "All products in this article" : "All products in section";
+  }, [categoryRow, articleName]);
+
   const [month, setMonth] = useState("March");
   const [year, setYear] = useState("2026");
   const [trendCountries, setTrendCountries] = useState<string[]>(["All Countries"]);
+  const [selectedProduct, setSelectedProduct] = useState(defaultProductLabel);
 
-  const filterKey = `${month}|${year}|${cls}|${articleName ?? ""}`;
+  useEffect(() => {
+    setSelectedProduct(defaultProductLabel);
+  }, [defaultProductLabel]);
+
+  const filterKey = `${month}|${year}|${cls}|${articleName ?? ""}|${selectedProduct}`;
 
   const topImport = useMemo(
     () => topCountriesForCategory(categoryName, "import", filterKey),
@@ -203,8 +228,8 @@ export function CategoryTradeDetailPage() {
   );
 
   const trendData = useMemo(
-    () => buildTrendPoints(categoryName, articleName, month, year, cls, trendCountries),
-    [categoryName, articleName, month, year, cls, trendCountries],
+    () => buildTrendPoints(categoryName, articleName, month, year, cls, trendCountries, selectedProduct),
+    [categoryName, articleName, month, year, cls, trendCountries, selectedProduct],
   );
 
   const related = useMemo(() => getRelatedCategories(categoryName), [categoryName]);
@@ -319,6 +344,24 @@ export function CategoryTradeDetailPage() {
                 {articleOptions.map((a) => (
                   <SelectItem key={a.label} value={a.label}>
                     {a.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Product</label>
+            <Select
+              value={productOptions.includes(selectedProduct) ? selectedProduct : productOptions[0] ?? "All products"}
+              onValueChange={setSelectedProduct}
+            >
+              <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                <SelectValue placeholder="Choose product" />
+              </SelectTrigger>
+              <SelectContent>
+                {productOptions.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
                   </SelectItem>
                 ))}
               </SelectContent>

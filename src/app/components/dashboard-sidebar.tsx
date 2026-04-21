@@ -3,7 +3,6 @@ import {
   Bot,
   FileSearch,
   Stethoscope,
-  BarChart3,
   Eye,
   ChevronLeft,
   ChevronRight,
@@ -26,7 +25,6 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
     { path: "/trade-ai", label: "Trade AI", icon: Bot, color: "purple" as const },
     { path: "/overview", label: "Overview", icon: FileSearch, color: "blue" as const },
     { path: "/diagnose", label: "Diagnose", icon: Stethoscope, color: "blue" as const },
-    { path: "/benchmark", label: "Benchmark", icon: BarChart3, color: "blue" as const },
     { path: "/observe", label: "Observe", icon: Eye, color: "blue" as const },
     { path: "/official-statistics", label: "Official Statistics", icon: FileBarChart, color: "blue" as const },
   ];
