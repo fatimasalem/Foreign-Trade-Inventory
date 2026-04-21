@@ -21,7 +21,8 @@ import {
 import { SectionIcon } from "../components/section-icon";
 import {
   ALL_CATEGORY_ANALYSIS_ROWS,
-  articlesForClassification,
+  classificationArticleDisplayRows,
+  type ClassificationDisplayRow,
   type ClassificationKind,
 } from "../data/observe-categories-analysis";
 
@@ -738,7 +739,7 @@ export function ObservePage() {
           <TableBody>
             {filteredCategoriesData.map((item, index) => {
               const cls = tableClassification as ClassificationKind;
-              const rowArticles = articlesForClassification(item, cls);
+              const displayRows = classificationArticleDisplayRows(item, cls);
               const rowKey = `${cls}-${item.type}-${item.category}-${index}`;
               const momPositive = item.mom.startsWith("+");
               const yoyPositive = item.yoy.startsWith("+");
@@ -773,7 +774,7 @@ export function ObservePage() {
                       className="w-10 p-1 align-middle"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {rowArticles.length > 0 ? (
+                      {displayRows.length > 0 ? (
                         <Button
                           type="button"
                           variant="ghost"
@@ -814,46 +815,69 @@ export function ObservePage() {
                     </TableCell>
                   </TableRow>
                   {isExpanded &&
-                    rowArticles.map((article) => (
-                      <TableRow
-                        key={article.label}
-                        className="cursor-pointer bg-slate-50/80 hover:bg-slate-100/90"
-                        onClick={() => goToArticle(article.label)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            goToArticle(article.label);
-                          }
-                        }}
-                        role="link"
-                        tabIndex={0}
-                      >
-                        <TableCell />
-                        <TableCell className="pl-8 text-sm text-gray-800 font-medium">
-                          {article.label}
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadgeClass(
-                              article.risk
-                            )}`}
+                    displayRows.map((row: ClassificationDisplayRow, drIdx: number) => {
+                      const depthPad = ["pl-8", "pl-12", "pl-16", "pl-20", "pl-24"] as const;
+                      const padClass = depthPad[Math.min(row.depth, depthPad.length - 1)];
+
+                      if (row.kind === "node") {
+                        return (
+                          <TableRow
+                            key={`${rowKey}-hdr-${drIdx}-${row.label}`}
+                            className="bg-slate-50/50"
                           >
-                            {article.risk}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right text-sm tabular-nums">{article.weight}</TableCell>
-                        <TableCell className={`text-right text-sm font-medium tabular-nums ${changeClass(article.mom)}`}>
-                          {article.mom}
-                        </TableCell>
-                        <TableCell className={`text-right text-sm font-medium tabular-nums ${changeClass(article.yoy)}`}>
-                          {article.yoy}
-                        </TableCell>
-                        <TableCell className="text-right text-sm text-gray-500">—</TableCell>
-                        <TableCell>
-                          <ChevronRight className="h-4 w-4 text-gray-400" />
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                            <TableCell />
+                            <TableCell
+                              colSpan={7}
+                              className={`${padClass} py-2 text-sm font-semibold text-slate-700`}
+                            >
+                              {row.label}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+
+                      const article = row.metric;
+                      return (
+                        <TableRow
+                          key={`${rowKey}-${article.label}-${drIdx}`}
+                          className="cursor-pointer bg-slate-50/80 hover:bg-slate-100/90"
+                          onClick={() => goToArticle(article.label)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              goToArticle(article.label);
+                            }
+                          }}
+                          role="link"
+                          tabIndex={0}
+                        >
+                          <TableCell />
+                          <TableCell className={`${padClass} text-sm text-gray-800 font-medium`}>
+                            {article.label}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadgeClass(
+                                article.risk
+                              )}`}
+                            >
+                              {article.risk}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right text-sm tabular-nums">{article.weight}</TableCell>
+                          <TableCell className={`text-right text-sm font-medium tabular-nums ${changeClass(article.mom)}`}>
+                            {article.mom}
+                          </TableCell>
+                          <TableCell className={`text-right text-sm font-medium tabular-nums ${changeClass(article.yoy)}`}>
+                            {article.yoy}
+                          </TableCell>
+                          <TableCell className="text-right text-sm text-gray-500">—</TableCell>
+                          <TableCell>
+                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                 </Fragment>
               );
             })}

@@ -259,10 +259,248 @@ export function buildAllCategoryAnalysisRows(): CategoryAnalysisRow[] {
   });
 }
 
-export function articlesForClassification(row: CategoryAnalysisRow, kind: ClassificationKind): ArticleMetric[] {
+function getArticlesRaw(row: CategoryAnalysisRow, kind: ClassificationKind): ArticleMetric[] {
   if (kind === "HS") return row.hsArticles;
   if (kind === "BEC") return row.becArticles;
   return row.sitcArticles;
+}
+
+export function articlesForClassification(row: CategoryAnalysisRow, kind: ClassificationKind): ArticleMetric[] {
+  return getArticlesRaw(row, kind);
+}
+
+/** Rows under an expanded HS section: hierarchy headers (no metrics) vs leaves (with metrics). */
+export type ClassificationDisplayRow =
+  | { kind: "node"; depth: number; label: string }
+  | { kind: "leaf"; depth: number; metric: ArticleMetric };
+
+type HierarchyTreeNode = {
+  id: string;
+  label: string;
+  metric?: ArticleMetric;
+  children: HierarchyTreeNode[];
+};
+
+const BEC_MAIN_LABEL: Record<string, string> = {
+  "1": "BEC 1 — Food, beverages and tobacco",
+  "2": "BEC 2 — Industrial supplies not elsewhere specified",
+  "3": "BEC 3 — Fuels and lubricants",
+  "4": "BEC 4 — Capital goods (except transport equipment)",
+  "5": "BEC 5 — Transport equipment",
+  "6": "BEC 6 — Consumer goods",
+};
+
+/** BEC 2-digit subgroup titles (UN BEC structure). */
+const BEC_SUBGROUP_LABEL: Record<string, string> = {
+  "11": "BEC 11 — Primary food and beverages, mainly for industry",
+  "12": "BEC 12 — Processed food and beverages, mainly for industry",
+  "21": "BEC 21 — Primary industrial supplies n.e.s.",
+  "22": "BEC 22 — Processed industrial supplies n.e.s.",
+  "31": "BEC 31 — Primary fuels and lubricants",
+  "32": "BEC 32 — Processed fuels and lubricants",
+  "41": "BEC 41 — Capital goods (except transport equipment)",
+  "42": "BEC 42 — Parts and accessories of capital goods",
+  "51": "BEC 51 — Transport equipment",
+  "52": "BEC 52 — Parts and accessories of transport equipment",
+  "61": "BEC 61 — Durable consumer goods",
+  "62": "BEC 62 — Semi-durable consumer goods",
+  "63": "BEC 63 — Non-durable consumer goods",
+};
+
+const SITC_SECTION_TITLE: Record<number, string> = {
+  0: "Food and live animals",
+  1: "Beverages and tobacco",
+  2: "Crude materials, inedible, except fuels",
+  3: "Mineral fuels, lubricants and related materials",
+  4: "Animal and vegetable oils, fats and waxes",
+  5: "Chemicals and related products n.e.s.",
+  6: "Manufactured goods classified chiefly by material",
+  7: "Machinery and transport equipment",
+  8: "Miscellaneous manufactured articles",
+  9: "Commodities and transactions not classified elsewhere",
+};
+
+function parseBecDigits(label: string): string | null {
+  const m = /^BEC\s*(\d{2,3})\b/i.exec(label.trim());
+  return m ? m[1] : null;
+}
+
+function parseSitcDivisionCode(label: string): string | null {
+  const m = /^SITC\s*(\d{1,3})\b/i.exec(label.trim());
+  return m ? m[1] : null;
+}
+
+function parseHsChapterSortKey(label: string): number {
+  const m = /^HS(\d{2})\b/i.exec(label.trim());
+  return m ? parseInt(m[1], 10) : 999;
+}
+
+function ensureChild(nodes: HierarchyTreeNode[], id: string, label: string): HierarchyTreeNode {
+  let n = nodes.find((c) => c.id === id);
+  if (!n) {
+    n = { id, label, children: [] };
+    nodes.push(n);
+  }
+  return n;
+}
+
+function sortBecTree(nodes: HierarchyTreeNode[]): HierarchyTreeNode[] {
+  const key = (id: string) => {
+    const m = /(\d+)$/.exec(id);
+    return m ? parseInt(m[1], 10) : 0;
+  };
+  return [...nodes]
+    .sort((a, b) => key(a.id) - key(b.id))
+    .map((n) => ({
+      ...n,
+      children: sortBecTree(n.children),
+    }));
+}
+
+function buildBecHierarchy(articles: ArticleMetric[]): HierarchyTreeNode[] {
+  const roots: HierarchyTreeNode[] = [];
+  const orphans: ArticleMetric[] = [];
+
+  for (const article of articles) {
+    const digits = parseBecDigits(article.label);
+    if (!digits) {
+      orphans.push(article);
+      continue;
+    }
+    const d1 = digits[0];
+    const mainLabel = BEC_MAIN_LABEL[d1] ?? `BEC ${d1} — BEC category`;
+    const root = ensureChild(roots, `bec-${d1}`, mainLabel);
+
+    if (digits.length === 2) {
+      root.children.push({
+        id: `bec-${digits}-leaf-${strSeed(article.label)}`,
+        label: article.label,
+        metric: article,
+        children: [],
+      });
+    } else {
+      const d2 = digits.slice(0, 2);
+      const midLabel = BEC_SUBGROUP_LABEL[d2] ?? `BEC ${d2} — BEC subgroup`;
+      const mid = ensureChild(root.children, `bec-${d1}-${d2}`, midLabel);
+      mid.children.push({
+        id: `bec-${digits}-leaf-${strSeed(article.label)}`,
+        label: article.label,
+        metric: article,
+        children: [],
+      });
+    }
+  }
+
+  const sorted = sortBecTree(roots);
+  for (const a of orphans) {
+    sorted.push({
+      id: `bec-orphan-${strSeed(a.label)}`,
+      label: a.label,
+      metric: a,
+      children: [],
+    });
+  }
+  return sorted;
+}
+
+function buildSitcHierarchy(articles: ArticleMetric[]): HierarchyTreeNode[] {
+  const bySection = new Map<number, HierarchyTreeNode>();
+
+  for (const article of articles) {
+    const raw = parseSitcDivisionCode(article.label);
+    if (!raw) {
+      continue;
+    }
+    const div = raw.length === 1 ? `0${raw}` : raw.slice(0, 2);
+    const sectionDigit = parseInt(div[0], 10);
+    if (Number.isNaN(sectionDigit)) continue;
+
+    const secTitle = SITC_SECTION_TITLE[sectionDigit] ?? `SITC section ${sectionDigit}`;
+    const sectionLabel = `SITC ${sectionDigit} — ${secTitle}`;
+    let sectionNode = bySection.get(sectionDigit);
+    if (!sectionNode) {
+      sectionNode = { id: `sitc-sec-${sectionDigit}`, label: sectionLabel, children: [] };
+      bySection.set(sectionDigit, sectionNode);
+    }
+    sectionNode.children.push({
+      id: `sitc-div-${div}-${strSeed(article.label)}`,
+      label: article.label,
+      metric: article,
+      children: [],
+    });
+  }
+
+  const roots = Array.from(bySection.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([, node]) => ({
+      ...node,
+      children: [...node.children].sort((a, b) => {
+        const na = parseSitcDivisionCode(a.metric?.label ?? a.label) ?? "";
+        const nb = parseSitcDivisionCode(b.metric?.label ?? b.label) ?? "";
+        return na.localeCompare(nb, undefined, { numeric: true });
+      }),
+    }));
+
+  for (const article of articles) {
+    if (parseSitcDivisionCode(article.label)) continue;
+    roots.push({
+      id: `sitc-orphan-${strSeed(article.label)}`,
+      label: article.label,
+      metric: article,
+      children: [],
+    });
+  }
+  return roots;
+}
+
+function flattenHierarchy(nodes: HierarchyTreeNode[], depth = 0): ClassificationDisplayRow[] {
+  const out: ClassificationDisplayRow[] = [];
+  for (const n of nodes) {
+    if (n.metric !== undefined && n.children.length === 0) {
+      out.push({ kind: "leaf", depth, metric: n.metric });
+      continue;
+    }
+    if (n.children.length > 0) {
+      out.push({ kind: "node", depth, label: n.label });
+      out.push(...flattenHierarchy(n.children, depth + 1));
+    }
+  }
+  return out;
+}
+
+/** HS: WCO section is the table row; children are 2-digit chapters only (sorted). */
+function buildHsHierarchy(articles: ArticleMetric[]): HierarchyTreeNode[] {
+  const sorted = [...articles].sort((a, b) => parseHsChapterSortKey(a.label) - parseHsChapterSortKey(b.label));
+  return sorted.map((metric, i) => ({
+    id: `hs-ch-${i}-${parseHsChapterSortKey(metric.label)}`,
+    label: metric.label,
+    metric,
+    children: [],
+  }));
+}
+
+/** Ordered display rows reflecting HS / BEC / SITC hierarchy; leaves preserve navigation targets. */
+export function classificationArticleDisplayRows(
+  row: CategoryAnalysisRow,
+  kind: ClassificationKind,
+): ClassificationDisplayRow[] {
+  const articles = getArticlesRaw(row, kind);
+  if (articles.length === 0) return [];
+
+  if (kind === "HS") {
+    return flattenHierarchy(buildHsHierarchy(articles));
+  }
+  if (kind === "BEC") {
+    return flattenHierarchy(buildBecHierarchy(articles));
+  }
+  return flattenHierarchy(buildSitcHierarchy(articles));
+}
+
+/** Leaf articles in hierarchy order (for dropdowns and counts). */
+export function classificationArticleLeavesInOrder(row: CategoryAnalysisRow, kind: ClassificationKind): ArticleMetric[] {
+  return classificationArticleDisplayRows(row, kind)
+    .filter((r): r is Extract<ClassificationDisplayRow, { kind: "leaf" }> => r.kind === "leaf")
+    .map((r) => r.metric);
 }
 
 export function parseClassificationParam(v: string | null): ClassificationKind {

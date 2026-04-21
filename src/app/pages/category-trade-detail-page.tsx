@@ -39,7 +39,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { SectionIcon } from "../components/section-icon";
 import {
   ALL_CATEGORY_ANALYSIS_ROWS,
-  articlesForClassification,
+  classificationArticleLeavesInOrder,
   findCategoryAnalysisRowByName,
   parseClassificationParam,
   type ClassificationKind,
@@ -179,7 +179,7 @@ export function CategoryTradeDetailPage() {
 
   const categoryRow = useMemo(() => findCategoryAnalysisRowByName(categoryName), [categoryName]);
   const articleOptions = useMemo(
-    () => (categoryRow ? articlesForClassification(categoryRow, cls) : []),
+    () => (categoryRow ? classificationArticleLeavesInOrder(categoryRow, cls) : []),
     [categoryRow, cls],
   );
 
