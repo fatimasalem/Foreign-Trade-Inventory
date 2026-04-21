@@ -201,11 +201,6 @@ export function ObservePage() {
     });
   };
 
-  const resetCategoryTableExpansion = () => {
-    setExpandedCategoryKeys(new Set());
-    setCollapsedNestedKeys(new Set());
-  };
-
   const riskBadgeClass = (risk: string) => {
     if (risk === "High") return "bg-red-100 text-red-800";
     if (risk === "Medium") return "bg-yellow-100 text-yellow-800";
@@ -294,6 +289,19 @@ export function ObservePage() {
       return true;
     });
   }, [tableTradeType]);
+
+  const expandAllCategoryRows = () => {
+    const keys = new Set<string>();
+    const cls = tableClassification as ClassificationKind;
+    filteredCategoriesData.forEach((item, index) => {
+      const displayRows = classificationArticleDisplayRows(item, cls);
+      if (displayRows.length > 0) {
+        keys.add(`${cls}-${item.type}-${item.category}-${index}`);
+      }
+    });
+    setExpandedCategoryKeys(keys);
+    setCollapsedNestedKeys(new Set());
+  };
 
   const tradePartners = [
     { country: "China", value: 22.5, color: "#ef4444" },
@@ -997,9 +1005,9 @@ export function ObservePage() {
                   variant="outline"
                   size="sm"
                   className="h-8 text-xs shrink-0"
-                  onClick={resetCategoryTableExpansion}
+                  onClick={expandAllCategoryRows}
                 >
-                  Collapse all
+                  Expand all
                 </Button>
               </TableHead>
             </TableRow>
