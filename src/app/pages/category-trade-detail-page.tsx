@@ -48,10 +48,12 @@ import {
   type ArticleMetric,
   type ClassificationKind,
 } from "../data/observe-categories-analysis";
+import { HS_SECTIONS } from "../../lib/hs-sections";
+import { formatHsChapterGoodsCheckboxLabel } from "../../lib/hs-chapter-goods-captions";
 
 const ALL_GOODS_CATEGORY = "All goods in this category";
-const ALL_GOODS_HS_ARTICLE = "All goods in this HS chapter";
 const ALL_GOODS_BEC_SITC_ARTICLE = "All goods in this classification line";
+const HS_GOODS_ALL = "__all__";
 
 function goodsDescriptionFromLeaf(m: ArticleMetric): string {
   const parts = m.label.split(" — ");
@@ -213,8 +215,25 @@ export function CategoryTradeDetailPage() {
     return hit?.code ?? articleName;
   }, [cls, articleName, hsChapterOptions]);
 
+  /** HS chapter code (e.g. HS03) aligned with HS Classification; drives goods checkboxes. */
+  const hsChapterForGoodsSync = useMemo(() => {
+    if (cls !== "HS" || !articleName) return null;
+    const hit = hsChapterOptions.find((o) => articleName.toUpperCase().startsWith(o.code.toUpperCase()));
+    return hit?.code ?? null;
+  }, [cls, articleName, hsChapterOptions]);
+
+  /** Chapters in the current WCO section — goods correspond to HS Classification chapter codes. */
+  const hsGoodsChapterCodes = useMemo(() => {
+    if (cls !== "HS" || !categoryRow) return [];
+    const sec = HS_SECTIONS[categoryRow.sectionNumber - 1];
+    return sec ? [...sec.chapterCodes] : [];
+  }, [cls, categoryRow]);
+
   const productChoices = useMemo(() => {
-    if (!categoryRow) return [{ value: ALL_GOODS_CATEGORY, label: ALL_GOODS_CATEGORY }];
+    if (!categoryRow || cls === "HS") {
+      if (!categoryRow) return [{ value: ALL_GOODS_CATEGORY, label: ALL_GOODS_CATEGORY }];
+      return [];
+    }
     const leaves = classificationArticleLeavesInOrder(categoryRow, cls);
     if (!articleName) {
       return [
@@ -226,9 +245,8 @@ export function CategoryTradeDetailPage() {
       ];
     }
     const goodsLeaves = goodsLeavesForArticleFilter(categoryRow, cls, articleName);
-    const allLabel = cls === "HS" ? ALL_GOODS_HS_ARTICLE : ALL_GOODS_BEC_SITC_ARTICLE;
     return [
-      { value: allLabel, label: allLabel },
+      { value: ALL_GOODS_BEC_SITC_ARTICLE, label: ALL_GOODS_BEC_SITC_ARTICLE },
       ...goodsLeaves.map((m) => ({
         value: m.label,
         label: goodsDescriptionFromLeaf(m),
@@ -239,19 +257,48 @@ export function CategoryTradeDetailPage() {
   const defaultProductLabel = useMemo(() => {
     if (!categoryRow) return ALL_GOODS_CATEGORY;
     if (!articleName) return ALL_GOODS_CATEGORY;
-    return cls === "HS" ? ALL_GOODS_HS_ARTICLE : ALL_GOODS_BEC_SITC_ARTICLE;
-  }, [categoryRow, cls, articleName]);
+    return ALL_GOODS_BEC_SITC_ARTICLE;
+  }, [categoryRow, articleName]);
 
   const [month, setMonth] = useState("March");
   const [year, setYear] = useState("2026");
   const [trendCountries, setTrendCountries] = useState<string[]>(["All Countries"]);
   const [selectedProduct, setSelectedProduct] = useState(defaultProductLabel);
+  const [selectedHsGoods, setSelectedHsGoods] = useState<string[]>([HS_GOODS_ALL]);
 
   useEffect(() => {
     setSelectedProduct(defaultProductLabel);
   }, [defaultProductLabel]);
 
-  const filterKey = `${month}|${year}|${cls}|${articleName ?? ""}|${selectedProduct}`;
+  useEffect(() => {
+    if (cls !== "HS") return;
+    if (hsChapterForGoodsSync) {
+      setSelectedHsGoods([hsChapterForGoodsSync]);
+    } else {
+      setSelectedHsGoods([HS_GOODS_ALL]);
+    }
+  }, [cls, hsChapterForGoodsSync]);
+
+  const goodsFilterToken = useMemo(() => {
+    if (cls !== "HS") return selectedProduct;
+    if (selectedHsGoods.includes(HS_GOODS_ALL) || selectedHsGoods.length === 0) return HS_GOODS_ALL;
+    return [...selectedHsGoods].sort().join("|");
+  }, [cls, selectedHsGoods, selectedProduct]);
+
+  const filterKey = `${month}|${year}|${cls}|${articleName ?? ""}|${goodsFilterToken}`;
+
+  const toggleHsGoods = (id: string, checked: boolean) => {
+    if (id === HS_GOODS_ALL) {
+      setSelectedHsGoods(checked ? [HS_GOODS_ALL] : []);
+      return;
+    }
+    setSelectedHsGoods((prev) => {
+      const withoutAll = prev.filter((x) => x !== HS_GOODS_ALL);
+      let next = checked ? [...withoutAll, id] : withoutAll.filter((x) => x !== id);
+      if (next.length === 0) next = [HS_GOODS_ALL];
+      return next;
+    });
+  };
 
   const topImport = useMemo(
     () => topCountriesForCategory(categoryName, "import", filterKey),
@@ -267,8 +314,8 @@ export function CategoryTradeDetailPage() {
   );
 
   const trendData = useMemo(
-    () => buildTrendPoints(categoryName, articleName, month, year, cls, trendCountries, selectedProduct),
-    [categoryName, articleName, month, year, cls, trendCountries, selectedProduct],
+    () => buildTrendPoints(categoryName, articleName, month, year, cls, trendCountries, goodsFilterToken),
+    [categoryName, articleName, month, year, cls, trendCountries, goodsFilterToken],
   );
 
   const related = useMemo(() => getRelatedCategories(categoryName), [categoryName]);
@@ -333,7 +380,8 @@ export function CategoryTradeDetailPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700">Month</label>
             <Select value={month} onValueChange={setMonth}>
@@ -419,27 +467,60 @@ export function CategoryTradeDetailPage() {
               </Select>
             )}
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">Filter by Goods</label>
-            <Select
-              value={
-                productChoices.some((c) => c.value === selectedProduct)
-                  ? selectedProduct
-                  : (productChoices[0]?.value ?? ALL_GOODS_CATEGORY)
-              }
-              onValueChange={setSelectedProduct}
-            >
-              <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
-                <SelectValue placeholder="Choose goods" />
-              </SelectTrigger>
-              <SelectContent>
-                {productChoices.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          </div>
+          {cls === "HS" && categoryRow ? (
+            <div className="w-full max-w-[min(100vw-2rem,320px)]">
+              <label className="mb-1 block text-xs font-medium text-gray-700">Filter by Goods</label>
+              <div className="max-h-60 space-y-2 overflow-y-auto rounded-md border border-gray-200 bg-white p-2">
+                <label className="flex cursor-pointer items-start gap-2">
+                  <Checkbox
+                    checked={selectedHsGoods.includes(HS_GOODS_ALL)}
+                    onCheckedChange={(c) => toggleHsGoods(HS_GOODS_ALL, c === true)}
+                    className="mt-0.5"
+                  />
+                  <span className="min-w-0 flex-1 text-xs leading-snug text-gray-900">(All)</span>
+                </label>
+                {hsGoodsChapterCodes.map((code) => {
+                  const full = formatHsChapterGoodsCheckboxLabel(code);
+                  return (
+                    <label key={code} className="flex cursor-pointer items-start gap-2">
+                      <Checkbox
+                        checked={!selectedHsGoods.includes(HS_GOODS_ALL) && selectedHsGoods.includes(code)}
+                        onCheckedChange={(c) => toggleHsGoods(code, c === true)}
+                        className="mt-0.5"
+                      />
+                      <span className="min-w-0 flex-1 truncate text-xs leading-snug text-gray-900" title={full}>
+                        {full}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-700">Filter by Goods</label>
+              <Select
+                value={
+                  productChoices.some((c) => c.value === selectedProduct)
+                    ? selectedProduct
+                    : (productChoices[0]?.value ?? ALL_GOODS_CATEGORY)
+                }
+                onValueChange={setSelectedProduct}
+              >
+                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                  <SelectValue placeholder="Choose goods" />
+                </SelectTrigger>
+                <SelectContent>
+                  {productChoices.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           </div>
         </div>
       </div>
