@@ -227,7 +227,9 @@ export function CategoryTradeDetailPage() {
 
   const goToArticle = (label: string) => {
     const qs = new URLSearchParams({ cls });
-    navigate(`/observe/category/${encodeURIComponent(categoryName)}/article/${encodeURIComponent(label)}?${qs.toString()}`);
+    navigate(
+      `/observe/category/${encodeURIComponent(categoryName)}/article/${encodeURIComponent(label)}?${qs.toString()}`,
+    );
   };
 
   const TitleIcon = iconForCategoryName(categoryName);
@@ -238,7 +240,12 @@ export function CategoryTradeDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
-          <Button variant="ghost" size="sm" className="-ml-2 gap-1 text-gray-600" onClick={() => navigate("/observe")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 gap-1 text-gray-600"
+            onClick={() => navigate("/observe")}
+          >
             <ArrowLeft className="h-4 w-4" />
             Back to Observe
           </Button>
