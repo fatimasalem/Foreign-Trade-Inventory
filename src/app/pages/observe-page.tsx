@@ -290,17 +290,28 @@ export function ObservePage() {
     });
   }, [tableTradeType]);
 
-  const expandAllCategoryRows = () => {
-    const keys = new Set<string>();
+  const categoryTableExpandableKeys = useMemo(() => {
+    const keys: string[] = [];
     const cls = tableClassification as ClassificationKind;
     filteredCategoriesData.forEach((item, index) => {
-      const displayRows = classificationArticleDisplayRows(item, cls);
-      if (displayRows.length > 0) {
-        keys.add(`${cls}-${item.type}-${item.category}-${index}`);
+      if (classificationArticleDisplayRows(item, cls).length > 0) {
+        keys.push(`${cls}-${item.type}-${item.category}-${index}`);
       }
     });
-    setExpandedCategoryKeys(keys);
-    setCollapsedNestedKeys(new Set());
+    return keys;
+  }, [filteredCategoriesData, tableClassification]);
+
+  const allCategoryTableRowsExpanded =
+    categoryTableExpandableKeys.length > 0 &&
+    categoryTableExpandableKeys.every((k) => expandedCategoryKeys.has(k));
+
+  const expandOrCollapseAllCategoryRows = () => {
+    if (allCategoryTableRowsExpanded) {
+      setExpandedCategoryKeys(new Set());
+    } else {
+      setExpandedCategoryKeys(new Set(categoryTableExpandableKeys));
+      setCollapsedNestedKeys(new Set());
+    }
   };
 
   const tradePartners = [
@@ -996,9 +1007,9 @@ export function ObservePage() {
                   variant="outline"
                   size="sm"
                   className="h-8 text-xs shrink-0"
-                  onClick={expandAllCategoryRows}
+                  onClick={expandOrCollapseAllCategoryRows}
                 >
-                  Expand all
+                  {allCategoryTableRowsExpanded ? "Collapse all" : "Expand all"}
                 </Button>
               </TableHead>
             </TableRow>
@@ -1106,41 +1117,29 @@ export function ObservePage() {
                           <TableRow
                             key={`${rowKey}-hdr-${nestedKey}`}
                             className="cursor-pointer bg-slate-50/50 hover:bg-slate-100/80"
-                            onClick={goToCategoryDetail}
+                            onClick={() => toggleNestedCollapsed(nestedKey)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
                                 e.preventDefault();
-                                goToCategoryDetail();
+                                toggleNestedCollapsed(nestedKey);
                               }
                             }}
-                            role="link"
+                            role="button"
                             tabIndex={0}
+                            aria-expanded={!nestedCollapsed}
+                            aria-label={nestedCollapsed ? "Expand nested rows" : "Collapse nested rows"}
                           >
-                            <TableCell
-                              className="w-10 p-1 align-middle"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                                aria-expanded={!nestedCollapsed}
-                                aria-label={nestedCollapsed ? "Expand chapter" : "Collapse chapter"}
-                                onClick={() => toggleNestedCollapsed(nestedKey)}
-                              >
+                            <TableCell className="w-10 p-1 align-middle" aria-hidden>
+                              <div className="inline-flex h-8 w-8 items-center justify-center text-slate-600">
                                 {nestedCollapsed ? (
                                   <ChevronRight className="h-4 w-4" />
                                 ) : (
                                   <ChevronDown className="h-4 w-4" />
                                 )}
-                              </Button>
+                              </div>
                             </TableCell>
                             <TableCell colSpan={7} className={`${padClass} py-2`}>
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-sm font-semibold text-slate-700">{row.label}</span>
-                                <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
-                              </div>
+                              <span className="text-sm font-semibold text-slate-700">{row.label}</span>
                             </TableCell>
                           </TableRow>
                         );

@@ -90,13 +90,12 @@ function hsChapterDescriptor(chapterCode: string): string {
     84: "Nuclear reactors, boilers, machinery",
     87: "Vehicles other than railway or tramway",
   };
-  return map[n] ?? `Goods classified in chapter ${n}`;
+  return map[n] ?? `HS group ${String(n).padStart(2, "0")}`;
 }
 
-/** 4-digit heading label under a chapter (demo). */
-function hsHeadingLabel(chapterNum: number, headingIdx: number): string {
-  const four = `${String(chapterNum).padStart(2, "0")}${String(headingIdx).padStart(2, "0")}`;
-  return `HS${four} — Heading ${headingIdx} (chapter ${chapterNum})`;
+/** 4-digit heading: HS code + product name only. */
+function hsHeadingLabel(fourDigit: string, code: string): string {
+  return `HS${fourDigit} — ${hsChapterDescriptor(code)}`;
 }
 
 /**
@@ -104,11 +103,7 @@ function hsHeadingLabel(chapterNum: number, headingIdx: number): string {
  * Leaves are deterministic for a given section so detail views stay aligned.
  */
 function buildHsSectionArticlesAndTree(sec: HsSection): { articles: ArticleMetric[]; roots: HierarchyTreeNode[] } {
-  const sectionRoot: HierarchyTreeNode = {
-    id: `hs-sec-${sec.number}`,
-    label: `HS Section ${sec.number} — ${sec.title}`,
-    children: [],
-  };
+  const sectionRoot: HierarchyTreeNode = { id: `hs-sec-${sec.number}`, label: "", children: [] };
   const leaves: ArticleMetric[] = [];
   let leafSeq = 0;
 
@@ -129,13 +124,13 @@ function buildHsSectionArticlesAndTree(sec: HsSection): { articles: ArticleMetri
       const fourDigit = `${String(chNum).padStart(2, "0")}${String(h).padStart(2, "0")}`;
       const headingNode: HierarchyTreeNode = {
         id: `hs-hd-${sec.number}-${fourDigit}`,
-        label: hsHeadingLabel(chNum, h),
+        label: hsHeadingLabel(fourDigit, code),
         children: [],
       };
       const nSubs = 2;
       for (let s = 1; s <= nSubs; s++) {
         const sixDigit = `${fourDigit}${String(s).padStart(2, "0")}`;
-        const subLabel = `HS${sixDigit} — ${hsChapterDescriptor(code)} (subheading ${s})`;
+        const subLabel = `HS${sixDigit} — ${hsChapterDescriptor(code)}`;
         const metric = articleMetrics(sec.number, leafSeq++, "HS", subLabel);
         leaves.push(metric);
         headingNode.children.push({
@@ -150,7 +145,8 @@ function buildHsSectionArticlesAndTree(sec: HsSection): { articles: ArticleMetri
     sectionRoot.children.push(chapterNode);
   }
 
-  return { articles: leaves, roots: [sectionRoot] };
+  /** One root row per chapter (skips a duplicate WCO / “HS section” line already shown in the main category cell). */
+  return { articles: leaves, roots: sectionRoot.children };
 }
 
 function hsArticlesForSection(sec: HsSection): ArticleMetric[] {
@@ -298,7 +294,7 @@ function categoryAggregateMetrics(sectionNum: number, title: string): {
 export function buildAllCategoryAnalysisRows(): CategoryAnalysisRow[] {
   return HS_SECTIONS.map((sec, idx) => {
     const { mom, yoy, volume, risk, weight } = categoryAggregateMetrics(sec.number, sec.title);
-    const category = `Section ${sec.number}: ${sec.title}`;
+    const category = `${sec.number} — ${sec.title}`;
     const type: "export" | "import" = idx % 2 === 0 ? "export" : "import";
     return {
       sectionNumber: sec.number,
