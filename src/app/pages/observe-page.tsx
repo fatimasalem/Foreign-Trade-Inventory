@@ -18,6 +18,7 @@ import {
   ChevronRight,
   ChevronDown,
   BarChart3,
+  Search,
 } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
@@ -29,6 +30,7 @@ import {
   PopoverTrigger,
 } from "../components/ui/popover";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import {
   Table,
   TableBody,
@@ -175,12 +177,13 @@ export function ObservePage() {
   const [tableMonth, setTableMonth] = useState("March");
   const [tableYear, setTableYear] = useState("2026");
   const [tableTradeType, setTableTradeType] = useState("all");
+  const [categoryAnalysisSearch, setCategoryAnalysisSearch] = useState("");
   const [expandedCategoryKeys, setExpandedCategoryKeys] = useState<Set<string>>(() => new Set());
   const [collapsedNestedKeys, setCollapsedNestedKeys] = useState<Set<string>>(() => new Set());
   useEffect(() => {
     setExpandedCategoryKeys(new Set());
     setCollapsedNestedKeys(new Set());
-  }, [tableClassification]);
+  }, [tableClassification, categoryAnalysisSearch]);
 
   const countries = ["All Countries", "China", "India", "USA", "Saudi Arabia"];
 
@@ -301,11 +304,13 @@ export function ObservePage() {
   ];
 
   const filteredCategoriesData = useMemo(() => {
+    const q = categoryAnalysisSearch.trim().toLowerCase();
     return ALL_CATEGORY_ANALYSIS_ROWS.filter((item) => {
       if (tableTradeType !== "all" && item.type !== tableTradeType) return false;
+      if (q && !item.category.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [tableTradeType]);
+  }, [tableTradeType, categoryAnalysisSearch]);
 
   const collapseAllCategoryRows = () => {
     setExpandedCategoryKeys(new Set());
@@ -719,7 +724,27 @@ export function ObservePage() {
                 <p className="text-xs text-gray-500 mt-1">Detailed breakdown of trade categories</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="w-full min-w-0 sm:w-56 sm:min-w-[14rem]">
+                <label className="text-xs font-medium text-gray-700 mb-1 block" htmlFor="category-analysis-search">
+                  Search
+                </label>
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                    aria-hidden
+                  />
+                  <Input
+                    id="category-analysis-search"
+                    type="search"
+                    placeholder="Filter by category name…"
+                    value={categoryAnalysisSearch}
+                    onChange={(e) => setCategoryAnalysisSearch(e.target.value)}
+                    className="h-9 pl-8 text-sm"
+                    aria-label="Search categories in the analysis table"
+                  />
+                </div>
+              </div>
               <div>
                 <label className="text-xs font-medium text-gray-700 mb-1 block">Trade Type</label>
                 <Select value={tableTradeType} onValueChange={setTableTradeType}>
@@ -836,6 +861,16 @@ export function ObservePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {filteredCategoriesData.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="h-24 text-center text-sm text-gray-500"
+                >
+                  No categories match your search. Try a different term or clear the search.
+                </TableCell>
+              </TableRow>
+            ) : null}
             {filteredCategoriesData.map((item, index) => {
               const cls = tableClassification as ClassificationKind;
               const displayRows = classificationArticleDisplayRows(item, cls);
