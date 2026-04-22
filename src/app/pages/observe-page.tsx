@@ -19,6 +19,8 @@ import {
   Activity,
   ChevronRight,
   ChevronDown,
+  ChevronsDown,
+  ChevronsUp,
   BarChart3,
   Target,
   ArrowUpRight,
@@ -45,6 +47,7 @@ import { SectionIcon } from "../components/section-icon";
 import {
   ALL_CATEGORY_ANALYSIS_ROWS,
   classificationArticleDisplayRows,
+  type CategoryAnalysisRow,
   type ClassificationDisplayRow,
   type ClassificationKind,
 } from "../data/observe-categories-analysis";
@@ -81,6 +84,19 @@ function getVisibleNestedClassificationRows(
     i++;
   }
   return out;
+}
+
+/** Keys for all hierarchy "node" rows (collapsed by default so only the expand control opens detail). */
+function collectNestedNodeKeysForRow(
+  item: CategoryAnalysisRow,
+  cls: ClassificationKind,
+  rowKey: string,
+): string[] {
+  const displayRows = classificationArticleDisplayRows(item, cls);
+  return displayRows.reduce<string[]>((acc, r, i) => {
+    if (r.kind === "node") acc.push(`${rowKey}::${i}`);
+    return acc;
+  }, []);
 }
 
 interface FlippableCardProps {
@@ -183,13 +199,29 @@ export function ObservePage() {
 
   const countries = ["All Countries", "China", "India", "USA", "Saudi Arabia"];
 
-  const toggleCategoryExpanded = (key: string) => {
-    setExpandedCategoryKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+  const toggleCategoryExpanded = (rowKey: string, item: CategoryAnalysisRow) => {
+    const cls = tableClassification as ClassificationKind;
+    if (expandedCategoryKeys.has(rowKey)) {
+      setExpandedCategoryKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(rowKey);
+        return next;
+      });
+      setCollapsedNestedKeys((prev) => {
+        const next = new Set(prev);
+        for (const k of prev) {
+          if (k.startsWith(`${rowKey}::`)) next.delete(k);
+        }
+        return next;
+      });
+    } else {
+      setExpandedCategoryKeys((prev) => new Set(prev).add(rowKey));
+      setCollapsedNestedKeys((prev) => {
+        const next = new Set(prev);
+        for (const nk of collectNestedNodeKeysForRow(item, cls, rowKey)) next.add(nk);
+        return next;
+      });
+    }
   };
 
   const toggleNestedCollapsed = (nestedKey: string) => {
@@ -309,8 +341,16 @@ export function ObservePage() {
     if (allCategoryTableRowsExpanded) {
       setExpandedCategoryKeys(new Set());
     } else {
+      const cls = tableClassification as ClassificationKind;
+      const allNested = new Set<string>();
+      const expandable = new Set(categoryTableExpandableKeys);
+      filteredCategoriesData.forEach((item, index) => {
+        const rk = `${cls}-${item.type}-${item.category}-${index}`;
+        if (!expandable.has(rk)) return;
+        for (const nk of collectNestedNodeKeysForRow(item, cls, rk)) allNested.add(nk);
+      });
       setExpandedCategoryKeys(new Set(categoryTableExpandableKeys));
-      setCollapsedNestedKeys(new Set());
+      setCollapsedNestedKeys(allNested);
     }
   };
 
@@ -1006,10 +1046,22 @@ export function ObservePage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs shrink-0"
+                  className="h-8 gap-1.5 text-xs shrink-0 px-2.5"
                   onClick={expandOrCollapseAllCategoryRows}
+                  aria-pressed={allCategoryTableRowsExpanded}
+                  aria-label={allCategoryTableRowsExpanded ? "Collapse all category rows" : "Expand all category rows"}
                 >
-                  {allCategoryTableRowsExpanded ? "Collapse all" : "Expand all"}
+                  {allCategoryTableRowsExpanded ? (
+                    <>
+                      <ChevronsUp className="h-3.5 w-3.5 shrink-0" />
+                      <span>Collapse all</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronsDown className="h-3.5 w-3.5 shrink-0" />
+                      <span>Expand all</span>
+                    </>
+                  )}
                 </Button>
               </TableHead>
             </TableRow>
@@ -1041,22 +1093,8 @@ export function ObservePage() {
 
               return (
                 <Fragment key={rowKey}>
-                  <TableRow
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={goToCategoryDetail}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        goToCategoryDetail();
-                      }
-                    }}
-                    role="link"
-                    tabIndex={0}
-                  >
-                    <TableCell
-                      className="w-10 p-1 align-middle"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                  <TableRow className="hover:bg-gray-50/80">
+                    <TableCell className="w-10 p-1 align-middle">
                       {displayRows.length > 0 ? (
                         <Button
                           type="button"
@@ -1064,8 +1102,8 @@ export function ObservePage() {
                           size="icon"
                           className="h-8 w-8 shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                           aria-expanded={isExpanded}
-                          aria-label={isExpanded ? "Hide articles" : "Show articles"}
-                          onClick={() => toggleCategoryExpanded(rowKey)}
+                          aria-label={isExpanded ? "Hide classification details" : "Show classification details"}
+                          onClick={() => toggleCategoryExpanded(rowKey, item)}
                         >
                           {isExpanded ? (
                             <ChevronDown className="h-4 w-4" />
@@ -1075,7 +1113,7 @@ export function ObservePage() {
                         </Button>
                       ) : null}
                     </TableCell>
-                    <TableCell className="font-medium">{item.category}</TableCell>
+                    <TableCell className="font-medium text-gray-900">{item.category}</TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadgeClass(
@@ -1093,8 +1131,17 @@ export function ObservePage() {
                       {item.yoy}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{item.volume}</TableCell>
-                    <TableCell>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
+                    <TableCell className="p-2 w-[8%] text-right align-middle">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 ml-auto text-gray-400 hover:text-slate-800 hover:bg-slate-100"
+                        onClick={goToCategoryDetail}
+                        aria-label={`Open details for ${item.category}`}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                   {isExpanded &&

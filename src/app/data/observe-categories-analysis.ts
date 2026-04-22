@@ -294,7 +294,7 @@ function categoryAggregateMetrics(sectionNum: number, title: string): {
 export function buildAllCategoryAnalysisRows(): CategoryAnalysisRow[] {
   return HS_SECTIONS.map((sec, idx) => {
     const { mom, yoy, volume, risk, weight } = categoryAggregateMetrics(sec.number, sec.title);
-    const category = `${sec.number} — ${sec.title}`;
+    const category = sec.title;
     const type: "export" | "import" = idx % 2 === 0 ? "export" : "import";
     return {
       sectionNumber: sec.number,
