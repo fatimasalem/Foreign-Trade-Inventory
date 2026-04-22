@@ -27,6 +27,7 @@ import {
   PopoverTrigger,
 } from "../components/ui/popover";
 import { UAETradeMap } from "../components/uae-trade-map";
+import { TradeCountriesAnalysisCard } from "../components/trade-countries-analysis-card";
 
 type Classification = "HS1" | "BEC" | "SITC";
 
@@ -281,6 +282,8 @@ export function DiagnosePage() {
 
   return (
     <div className="space-y-6">
+      <TradeCountriesAnalysisCard />
+
       {/* UAE Trade Distribution Map */}
       <UAETradeMap />
 
