@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup, Line, Marker } from "react-simple-maps";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ZoomIn, ZoomOut, MapPinned, TrendingUp, Target, ArrowUpRight } from "lucide-react";
+import { ZoomIn, ZoomOut, MapPinned } from "lucide-react";
 import { Button } from "./ui/button";
 import { SectionIcon } from "./section-icon";
 import { Badge } from "./ui/badge";
@@ -95,65 +95,6 @@ interface ContinentTooltipData {
   topCategories: CategoryData;
 }
 
-const GCC_COMPARISON_MULT: Record<GccComparisonCategory, number> = {
-  imports: 0.92,
-  exports: 1,
-  reexports: 0.88,
-  nettrade: 0.95,
-};
-
-const PRODUCT_CATEGORY_MULT: Record<ProductCategoryId, number> = {
-  all: 1,
-  precious: 0.92,
-  vehicles: 1.08,
-  aluminum: 1.05,
-  machinery: 1.02,
-  plastics: 0.96,
-  pharma: 0.9,
-  mineral: 1.04,
-};
-
-const GCC_BAR_DATA_BASE = [
-  { country: "Saudi Arabia", value: 44.2 },
-  { country: "Abu Dhabi", value: 28.7 },
-  { country: "Qatar", value: 26.5 },
-  { country: "Kuwait", value: 19.2 },
-  { country: "Oman", value: 13.1 },
-  { country: "Bahrain", value: 8.7 },
-];
-
-/** Map Natural Earth country `name` to a row in `gccBarData` (`Abu Dhabi` = UAE in this mock). */
-const GCC_GEO_NAME_TO_ROW_COUNTRY: Record<string, string> = {
-  "Saudi Arabia": "Saudi Arabia",
-  "United Arab Emirates": "Abu Dhabi",
-  "Qatar": "Qatar",
-  "Kuwait": "Kuwait",
-  "Oman": "Oman",
-  "Bahrain": "Bahrain",
-};
-
-type GccRow = { country: string; value: number };
-
-function findGccRow(geoName: string, rows: GccRow[]): GccRow | null {
-  const c = GCC_GEO_NAME_TO_ROW_COUNTRY[geoName];
-  if (!c) return null;
-  return rows.find((r) => r.country === c) ?? null;
-}
-
-function gccChoroplethFill(value: number, min: number, max: number, hoverDarker = 0): string {
-  if (!Number.isFinite(value) || max <= min) {
-    return MAP_ACCENT;
-  }
-  const t0 = (value - min) / (max - min);
-  const t = Math.max(0, Math.min(1, t0 + hoverDarker));
-  const c0 = { r: 0xe8, g: 0xe9, b: 0xec };
-  const c1 = { r: 0x2b, g: 0x59, b: 0xc3 };
-  const r = Math.round(c0.r + (c1.r - c0.r) * t);
-  const g = Math.round(c0.g + (c1.g - c0.g) * t);
-  const b = Math.round(c0.b + (c1.b - c0.b) * t);
-  return `rgb(${r},${g},${b})`;
-}
-
 export function GlobalTradeMap() {
   const [viewType, setViewType] = useState<ViewType>("country");
   const [tradeType, setTradeType] = useState("all");
@@ -163,25 +104,17 @@ export function GlobalTradeMap() {
   const [month, setMonth] = useState("March");
   const [year, setYear] = useState("2026");
   const [tooltipContent, setTooltipContent] = useState<CountryTooltipData | ContinentTooltipData | null>(null);
-  const [gccHover, setGccHover] = useState<{ name: string; value: number } | null>(null);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([0, 20]);
   const [zoom, setZoom] = useState(1);
+  const previousViewType = useRef<ViewType>(viewType);
 
   useEffect(() => {
-    if (viewType === "gcc") {
-      setMapCenter([49, 24.5]);
-      setZoom(2.8);
-    } else {
-      setMapCenter([0, 20]);
+    setTooltipContent(null);
+    const prev = previousViewType.current;
+    if (prev === "continent" !== (viewType === "continent")) {
       setZoom(1);
     }
-    setGccHover(null);
-    setTooltipContent(null);
+    previousViewType.current = viewType;
   }, [viewType]);
-
-  useEffect(() => {
-    setGccHover(null);
-  }, [productCategory, gccComparison, mapClassification]);
 
   // Mock trade data by country (in billions AED)
   const countryTradeData: Record<string, number> = {
@@ -702,52 +635,6 @@ export function GlobalTradeMap() {
     }
   };
 
-  const gccBarData = useMemo(() => {
-    const m = PRODUCT_CATEGORY_MULT[productCategory] * GCC_COMPARISON_MULT[gccComparison];
-    return GCC_BAR_DATA_BASE.map((row) => ({
-      ...row,
-      value: Number((row.value * m).toFixed(1)),
-    }));
-  }, [productCategory, gccComparison]);
-
-  const gccValueRange = useMemo(() => {
-    const vals = gccBarData.map((r) => r.value);
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    return { min, max };
-  }, [gccBarData]);
-
-  const gccInsights = useMemo(
-    () => [
-      {
-        title: "Top trade partner",
-        value: "Saudi Arabia",
-        description: "Leading trade partner with Abu Dhabi Emirate in the GCC region",
-        icon: Target,
-      },
-      {
-        title: "Growth rate",
-        value: "+12.3%",
-        description: "Outpacing GCC average growth in the selected period",
-        icon: TrendingUp,
-      },
-      {
-        title: "Market share",
-        value: "18.2%",
-        description: "Abu Dhabi's share of total GCC non-oil trade in this view",
-        icon: ArrowUpRight,
-      },
-    ],
-    [],
-  );
-
-  const gccComparisonLabel = {
-    imports: "Non-Oil Imports",
-    exports: "Non-Oil Exports",
-    reexports: "Non-Oil Re-Exports",
-    nettrade: "Net trade",
-  }[gccComparison];
-
   const maxTradeValue = Math.max(...Object.values(countryTradeData), 1e-6);
   const maxContinentValue = Math.max(...Object.values(continentTradeData));
 
@@ -757,6 +644,8 @@ export function GlobalTradeMap() {
 
   const topContinents = Object.entries(continentTradeData)
     .sort(([, a], [, b]) => b - a);
+
+  const isCountryLike = viewType === "country" || viewType === "gcc";
 
   return (
     <div className="bg-white rounded-lg p-6 border border-gray-200">
@@ -882,31 +771,6 @@ export function GlobalTradeMap() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
-          {viewType === "gcc" && (
-            <h3 className="font-medium text-gray-900 mb-4">
-              {gccComparisonLabel} · {mapClassification}
-              {productCategory !== "all" && (
-                <span className="text-gray-600">
-                  {" "}
-                  (
-                  {productCategory === "precious"
-                    ? "Precious stones, metals"
-                    : productCategory === "vehicles"
-                      ? "Vehicles, parts"
-                      : productCategory === "aluminum"
-                        ? "Aluminum, articles"
-                        : productCategory === "machinery"
-                          ? "Machinery"
-                          : productCategory === "plastics"
-                            ? "Plastics"
-                            : productCategory === "pharma"
-                              ? "Pharmaceutical products"
-                              : "Mineral fuels, oils"}
-                  )
-                </span>
-              )}
-            </h3>
-          )}
           <div className="bg-white rounded-lg p-4 border border-gray-200 relative">
             {/* Zoom Controls */}
             <div className="absolute top-6 right-6 z-10 flex flex-col gap-2">
@@ -933,67 +797,24 @@ export function GlobalTradeMap() {
               projectionConfig={{
                 scale: 120,
               }}
-              style={{ width: "100%", height: viewType === "gcc" ? "400px" : "320px" }}
+              style={{ width: "100%", height: "320px" }}
             >
-              <ZoomableGroup zoom={zoom} center={mapCenter}>
+              <ZoomableGroup zoom={zoom} center={[0, 20]}>
                 <Geographies geography={geoUrl}>
                   {({ geographies }) =>
                     geographies.map((geo) => {
                       const countryName = geo.properties.name as string;
 
-                      if (viewType === "gcc") {
-                        const row = findGccRow(countryName, gccBarData);
-                        const v = row?.value;
-                        const hasData = row != null && v !== undefined;
-                        const baseFill = hasData
-                          ? gccChoroplethFill(v, gccValueRange.min, gccValueRange.max)
-                          : LAND_FILL;
-                        return (
-                          <Geography
-                            key={geo.rsmKey}
-                            geography={geo}
-                            fill={baseFill}
-                            stroke={LAND_STROKE}
-                            strokeWidth={0.35}
-                            onMouseEnter={() => {
-                              if (row) {
-                                setGccHover({ name: row.country, value: row.value });
-                              }
-                            }}
-                            onMouseLeave={() => {
-                              setGccHover(null);
-                            }}
-                            style={{
-                              default: { outline: "none" },
-                              hover: {
-                                outline: "none",
-                                fill: hasData
-                                  ? gccChoroplethFill(
-                                      v,
-                                      gccValueRange.min,
-                                      gccValueRange.max,
-                                      0.1,
-                                    )
-                                  : LAND_FILL,
-                                cursor: hasData ? "pointer" : "default",
-                              },
-                              pressed: { outline: "none" },
-                            }}
-                          />
-                        );
-                      }
-
                       const dataKey = resolveTradeDataKey(countryName, countryTradeData);
                       const continentName = dataKey ? countryToContinent[dataKey] : undefined;
 
-                      const tooltipData =
-                        viewType === "country"
-                          ? dataKey
-                            ? countryDetailedData[dataKey]
-                            : null
-                          : dataKey && continentName
-                            ? continentData[continentName]
-                            : null;
+                      const tooltipData = isCountryLike
+                        ? dataKey
+                          ? countryDetailedData[dataKey]
+                          : null
+                        : dataKey && continentName
+                          ? continentData[continentName]
+                          : null;
 
                       return (
                         <Geography
@@ -1025,7 +846,7 @@ export function GlobalTradeMap() {
                   }
                 </Geographies>
 
-                {viewType === "country" &&
+                {isCountryLike &&
                   Object.entries(countryTradeData).map(([name, amt]) => {
                     const coords = TRADE_COUNTRY_COORDS[name];
                     if (!coords || amt <= 0) return null;
@@ -1042,7 +863,7 @@ export function GlobalTradeMap() {
                     );
                   })}
 
-                {viewType === "country" &&
+                {isCountryLike &&
                   Object.entries(countryTradeData).map(([name, amt]) => {
                     const coords = TRADE_COUNTRY_COORDS[name];
                     if (!coords) return null;
@@ -1065,7 +886,7 @@ export function GlobalTradeMap() {
                     );
                   })}
 
-                {viewType === "country" && (
+                {isCountryLike && (
                   <Marker coordinates={BAHRAIN_HUB}>
                     <g pointerEvents="none">
                       <circle r={10} fill={MAP_ACCENT} stroke="#ffffff" strokeWidth={1.5} />
@@ -1078,8 +899,8 @@ export function GlobalTradeMap() {
               </ZoomableGroup>
             </ComposableMap>
 
-            {/* Custom Tooltip (world / continent views) */}
-            {tooltipContent && viewType !== "gcc" && (
+            {/* Custom Tooltip (country / GCC / continent views) */}
+            {tooltipContent && (
               <div className="absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 p-4 pointer-events-none"
                 style={{
                   left: "50%",
@@ -1134,132 +955,73 @@ export function GlobalTradeMap() {
                 </div>
               </div>
             )}
-
-            {gccHover && viewType === "gcc" && (
-              <div
-                className="absolute z-50 max-w-sm rounded-lg border border-gray-200 bg-white p-4 shadow-lg pointer-events-none"
-                style={{
-                  left: "50%",
-                  top: "50%",
-                  transform: "translate(-50%, -50%)",
-                }}
-              >
-                <h4 className="font-semibold text-gray-900 mb-1">
-                  {gccHover.name}
-                  {gccHover.name === "Abu Dhabi" && (
-                    <span className="ml-1 text-xs font-normal text-gray-500">(Abu Dhabi emirate, UAE)</span>
-                  )}
-                </h4>
-                <p className="text-xs text-gray-600 mb-2">
-                  {gccComparisonLabel} · {mapClassification}
-                </p>
-                <p className="text-lg font-semibold text-gray-900">{gccHover.value.toFixed(1)}B AED</p>
-                <p className="mt-1 text-xs text-gray-500">Darker map shading = higher value in this view (mock).</p>
-              </div>
-            )}
           </div>
 
-          {viewType === "gcc" ? (
-            <div className="mt-4 flex flex-col items-center justify-center gap-2 text-xs text-gray-600 sm:flex-row sm:gap-6">
-              <span>Choropleth: {gccComparisonLabel} (AED billions) · {mapClassification}</span>
-              <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-10 rounded-sm" style={{ background: LAND_FILL }} />
-                <span className="text-gray-500">lower</span>
-                <span className="h-0.5 w-6 bg-gray-300" aria-hidden />
-                <span className="h-2 w-10 rounded-sm" style={{ background: MAP_ACCENT }} />
-                <span className="text-gray-500">higher</span>
-              </span>
-            </div>
-          ) : (
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600">
-              <span>Flows from Kingdom of Bahrain · dot size = trade amount (AED billions)</span>
-              <span className="inline-flex items-center gap-2">
-                <span className="inline-block h-2 w-2 rounded-full bg-[#2b59c3]" />
-                <span>Smaller</span>
-                <span className="inline-block h-4 w-4 rounded-full bg-[#2b59c3]" />
-                <span>Larger</span>
-              </span>
-            </div>
-          )}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600">
+            <span>Flows from Kingdom of Bahrain · dot size = trade amount (AED billions)</span>
+            <span className="inline-flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#2b59c3]" />
+              <span>Smaller</span>
+              <span className="inline-block h-4 w-4 rounded-full bg-[#2b59c3]" />
+              <span>Larger</span>
+            </span>
+          </div>
         </div>
 
-        {viewType === "gcc" ? (
-          <div className="flex h-full flex-col">
-            <h3 className="mb-3 font-semibold text-lg text-gray-900">Key insights</h3>
-            <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1">
-              {gccInsights.map((insight, index) => {
-                const Icon = insight.icon;
-                return (
-                  <div key={index} className="rounded-lg border border-gray-200 bg-white p-4">
-                    <div className="flex items-start gap-3">
-                      <SectionIcon icon={Icon} tone="blue" />
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 text-sm text-gray-600">{insight.title}</div>
-                        <div className="mb-1 text-xl font-semibold text-gray-900">{insight.value}</div>
-                        <div className="text-xs leading-snug text-gray-600">{insight.description}</div>
+        <div className="flex h-full flex-col">
+          <h3 className="mb-3 font-medium text-gray-900">
+            {isCountryLike ? "Top Countries" : "By Continent"}
+          </h3>
+          <div className="max-h-[400px] space-y-2 overflow-y-auto pr-2">
+            {isCountryLike
+              ? topCountries.map(([country, value], index) => {
+                  const tradeTypeInfo = getTradeTypeInfo();
+                  return (
+                    <div key={country} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <span className="flex-1 text-sm font-medium text-gray-900">
+                          {index + 1}. {country}
+                        </span>
+                        <Badge className={`h-5 shrink-0 px-1.5 py-0.5 text-[10px] ${tradeTypeInfo.className}`}>
+                          {tradeTypeInfo.label}
+                        </Badge>
+                      </div>
+                      <div className="mb-0.5 text-xs text-gray-500">{tradeTypeInfo.description}</div>
+                      <div className="mb-2 text-sm font-semibold text-gray-900">{value.toFixed(1)}B AED</div>
+                      <div className="h-1.5 w-full rounded-full bg-gray-200">
+                        <div
+                          className="h-1.5 rounded-full bg-blue-600"
+                          style={{ width: `${(value / maxTradeValue) * 100}%` }}
+                        />
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="flex h-full flex-col">
-            <h3 className="mb-3 font-medium text-gray-900">
-              {viewType === "country" ? "Top Countries" : "By Continent"}
-            </h3>
-            <div className="max-h-[400px] space-y-2 overflow-y-auto pr-2">
-              {viewType === "country"
-                ? topCountries.map(([country, value], index) => {
-                    const tradeTypeInfo = getTradeTypeInfo();
-                    return (
-                      <div key={country} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-                        <div className="mb-2 flex items-start justify-between gap-2">
-                          <span className="flex-1 text-sm font-medium text-gray-900">
-                            {index + 1}. {country}
-                          </span>
-                          <Badge className={`h-5 shrink-0 px-1.5 py-0.5 text-[10px] ${tradeTypeInfo.className}`}>
-                            {tradeTypeInfo.label}
-                          </Badge>
-                        </div>
-                        <div className="mb-0.5 text-xs text-gray-500">{tradeTypeInfo.description}</div>
-                        <div className="mb-2 text-sm font-semibold text-gray-900">{value.toFixed(1)}B AED</div>
-                        <div className="h-1.5 w-full rounded-full bg-gray-200">
-                          <div
-                            className="h-1.5 rounded-full bg-blue-600"
-                            style={{ width: `${(value / maxTradeValue) * 100}%` }}
-                          />
-                        </div>
+                  );
+                })
+              : topContinents.map(([continent, value], index) => {
+                  const tradeTypeInfo = getTradeTypeInfo();
+                  return (
+                    <div key={continent} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <span className="flex-1 text-sm font-medium text-gray-900">
+                          {index + 1}. {continent}
+                        </span>
+                        <Badge className={`h-5 shrink-0 px-1.5 py-0.5 text-[10px] ${tradeTypeInfo.className}`}>
+                          {tradeTypeInfo.label}
+                        </Badge>
                       </div>
-                    );
-                  })
-                : topContinents.map(([continent, value], index) => {
-                    const tradeTypeInfo = getTradeTypeInfo();
-                    return (
-                      <div key={continent} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-                        <div className="mb-2 flex items-start justify-between gap-2">
-                          <span className="flex-1 text-sm font-medium text-gray-900">
-                            {index + 1}. {continent}
-                          </span>
-                          <Badge className={`h-5 shrink-0 px-1.5 py-0.5 text-[10px] ${tradeTypeInfo.className}`}>
-                            {tradeTypeInfo.label}
-                          </Badge>
-                        </div>
-                        <div className="mb-0.5 text-xs text-gray-500">{tradeTypeInfo.description}</div>
-                        <div className="mb-2 text-sm font-semibold text-gray-900">{value.toFixed(1)}B AED</div>
-                        <div className="h-1.5 w-full rounded-full bg-gray-200">
-                          <div
-                            className="h-1.5 rounded-full bg-blue-600"
-                            style={{ width: `${(value / maxContinentValue) * 100}%` }}
-                          />
-                        </div>
+                      <div className="mb-0.5 text-xs text-gray-500">{tradeTypeInfo.description}</div>
+                      <div className="mb-2 text-sm font-semibold text-gray-900">{value.toFixed(1)}B AED</div>
+                      <div className="h-1.5 w-full rounded-full bg-gray-200">
+                        <div
+                          className="h-1.5 rounded-full bg-blue-600"
+                          style={{ width: `${(value / maxContinentValue) * 100}%` }}
+                        />
                       </div>
-                    );
-                  })}
-            </div>
+                    </div>
+                  );
+                })}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
