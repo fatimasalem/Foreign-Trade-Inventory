@@ -13,7 +13,10 @@ export type ArticleMetric = {
 
 export type CategoryAnalysisRow = {
   sectionNumber: number;
+  /** Top-level “Category” cell: `HS1_CODE — HS1_Desc` from the HS list, when loaded. */
   category: string;
+  /** `HS1_CODE` (e.g. `01` … `21`); use with `category` to avoid parsing the display string. */
+  hs1Code: string;
   mom: string;
   yoy: string;
   volume: string;
@@ -24,6 +27,10 @@ export type CategoryAnalysisRow = {
   becArticles: ArticleMetric[];
   sitcArticles: ArticleMetric[];
 };
+
+function sectionThemeText(sec: HsSection): string {
+  return getHsNomenclatureForSectionNumber(sec.number)?.hs1Desc ?? sec.title;
+}
 
 function strSeed(s: string): number {
   let h = 0;
@@ -77,8 +84,9 @@ function articleMetrics(
 }
 
 /**
- * HS: from nomenclature (HS1 → HS2 → HS4 → HS6) with national HS8 lines as leaves (demo metrics).
- * Re-run `node scripts/build-hs-nomenclature.mjs` when HS List.xlsx is updated. BEC/SITC are unchanged.
+ * HS: Excel hierarchy as nested table rows (HS2 → HS4 → HS6) with HS8 as metric leaves.
+ * Labels use the same `CODE — Description` pattern as the sheet (codes without an `HS` prefix, except
+ * 2-digit chapters are zero-padded to match HS2). Re-run `npm run build:hs` when HS List.xlsx changes.
  */
 function buildHsSectionArticlesAndTree(sec: HsSection): { articles: ArticleMetric[]; roots: HierarchyTreeNode[] } {
   const data = getHsNomenclatureForSectionNumber(sec.number);
@@ -93,22 +101,22 @@ function buildHsSectionArticlesAndTree(sec: HsSection): { articles: ArticleMetri
   for (const h2 of data.hs2) {
     const h2code = h2.code.padStart(2, "0");
     const chapterNode: HierarchyTreeNode = {
-      id: `hs-ch-${sec.number}-HS${h2code}`,
-      label: `HS${h2code} — ${h2.desc}`,
+      id: `hs-ch-${sec.number}-${h2code}`,
+      label: `${h2code} — ${h2.desc}`,
       children: [],
     };
 
     for (const h4 of h2.hs4) {
       const headingNode: HierarchyTreeNode = {
         id: `hs-h4-${sec.number}-${h4.code}`,
-        label: `HS${h4.code} — ${h4.desc}`,
+        label: `${h4.code} — ${h4.desc}`,
         children: [],
       };
 
       for (const h6 of h4.hs6) {
         const subNode: HierarchyTreeNode = {
           id: `hs-h6-${sec.number}-${h6.code}`,
-          label: `HS${h6.code} — ${h6.desc}`,
+          label: `${h6.code} — ${h6.desc}`,
           children: [],
         };
 
@@ -143,9 +151,9 @@ function hsArticlesForSection(sec: HsSection): ArticleMetric[] {
   return buildHsSectionArticlesAndTree(sec).articles;
 }
 
-/** BEC (Broad Economic Categories) style lines aligned to each HS section theme. */
+/** BEC (Broad Economic Categories) style lines aligned to each HS1 theme from the HS list. */
 function becLabelsForSection(sec: HsSection): string[] {
-  const t = sec.title.toLowerCase();
+  const t = sectionThemeText(sec).toLowerCase();
   const n = sec.number;
   const lines: string[] = [];
   if (t.includes("live animal") || t.includes("vegetable product") || t.includes("foodstuff")) {
@@ -200,10 +208,10 @@ function becLabelsForSection(sec: HsSection): string[] {
   return lines.slice(0, Math.min(6, Math.max(4, sec.chapterCodes.length)));
 }
 
-/** SITC Rev.4 style lines per HS section. */
+/** SITC Rev.4 style lines per HS1 section (theme from HS list HS1_Desc). */
 function sitcLabelsForSection(sec: HsSection): string[] {
   const n = sec.number;
-  const t = sec.title.toLowerCase();
+  const t = sectionThemeText(sec).toLowerCase();
   const lines: string[] = [];
   if (t.includes("live animal") || t.includes("vegetable") || t.includes("food")) {
     lines.push(
@@ -284,15 +292,17 @@ function categoryAggregateMetrics(sectionNum: number, title: string): {
 export function buildAllCategoryAnalysisRows(): CategoryAnalysisRow[] {
   return HS_SECTIONS.map((sec, idx) => {
     const nom = getHsNomenclatureForSectionNumber(sec.number);
+    const hs1Code = (nom?.hs1 ?? String(sec.number).padStart(2, "0")).trim();
     const { mom, yoy, volume, risk, weight } = categoryAggregateMetrics(
       sec.number,
       nom?.hs1Desc ?? sec.title,
     );
-    const category = nom?.hs1Desc ?? sec.title;
+    const category = nom ? `${hs1Code} — ${nom.hs1Desc}` : sec.title;
     const type: "export" | "import" = idx % 2 === 0 ? "export" : "import";
     return {
       sectionNumber: sec.number,
       category,
+      hs1Code,
       mom,
       yoy,
       volume,
