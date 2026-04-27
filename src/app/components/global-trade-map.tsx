@@ -25,7 +25,32 @@ const TRADE_COUNTRY_COORDS: Record<string, [number, number]> = {
   Italy: [12.57, 41.87],
   Brazil: [-51.93, -14.24],
   Australia: [133.78, -25.27],
+  /** Used when View = GCC (and for Bahrain hub; same coords as `BAHRAIN_HUB`) */
+  "United Arab Emirates": [54.37, 24.12],
+  Qatar: [51.2, 25.35],
+  Kuwait: [47.98, 29.31],
+  Oman: [57.0, 23.61],
+  Bahrain: [50.58, 26.14],
 };
+
+/** Mock volumes (AED B) and tooltips for GCC view only; hub is Bahrain. */
+const GCC_COUNTRY_TRADE: Record<string, number> = {
+  "Saudi Arabia": 44.2,
+  "United Arab Emirates": 28.7,
+  Qatar: 26.5,
+  Kuwait: 19.2,
+  Oman: 13.1,
+  Bahrain: 8.7,
+};
+
+const GCC_TRADE_COUNTRY_LIST = [
+  "Saudi Arabia",
+  "United Arab Emirates",
+  "Qatar",
+  "Kuwait",
+  "Oman",
+  "Bahrain",
+] as const;
 
 const MAP_ACCENT = "#2b59c3";
 const LAND_FILL = "#e8e9ec";
@@ -424,6 +449,99 @@ export function GlobalTradeMap() {
     },
   };
 
+  const gccTopThree = (hs: [string, string, string], bec: [string, string, string], sitc: [string, string, string]): CategoryData => ({
+    HS: [
+      { name: hs[0], value: "1.0B" },
+      { name: hs[1], value: "0.8B" },
+      { name: hs[2], value: "0.6B" },
+    ],
+    BEC: [
+      { name: bec[0], value: "1.0B" },
+      { name: bec[1], value: "0.7B" },
+      { name: bec[2], value: "0.6B" },
+    ],
+    SITC: [
+      { name: sitc[0], value: "0.9B" },
+      { name: sitc[1], value: "0.7B" },
+      { name: sitc[2], value: "0.5B" },
+    ],
+  });
+
+  const gccCountryDetailedData: Record<string, CountryTooltipData> = {
+    "Saudi Arabia": {
+      name: "Saudi Arabia",
+      imports: 16.0,
+      exports: 16.2,
+      reExports: 12.0,
+      netTrade: 4.0,
+      topCategories: gccTopThree(
+        ["HS72 - Iron & steel", "HS27 - Mineral fuels", "HS84 - Machinery"],
+        ["BEC21 - Processed materials", "BEC31 - Primary fuels", "BEC42 - Capital goods"],
+        ["SITC67 - Iron & steel", "SITC33 - Petroleum", "SITC71 - Machinery"],
+      ),
+    },
+    "United Arab Emirates": {
+      name: "United Arab Emirates",
+      imports: 9.1,
+      exports: 10.2,
+      reExports: 9.4,
+      netTrade: 0.1,
+      topCategories: gccTopThree(
+        ["HS71 - Precious metals", "HS27 - Mineral fuels", "HS84 - Machinery"],
+        ["BEC6 - Consumer goods", "BEC2 - Industrial supplies", "BEC5 - Capital goods"],
+        ["SITC68 - Non-ferrous metals", "SITC33 - Petroleum", "SITC77 - Electrical machinery"],
+      ),
+    },
+    Qatar: {
+      name: "Qatar",
+      imports: 7.1,
+      exports: 8.0,
+      reExports: 11.4,
+      netTrade: -0.1,
+      topCategories: gccTopThree(
+        ["HS27 - Mineral fuels", "HS29 - Organic chemicals", "HS84 - Machinery"],
+        ["BEC31 - Primary fuels", "BEC42 - Capital goods", "BEC2 - Industrial supplies"],
+        ["SITC33 - Petroleum", "SITC59 - Chemical materials", "SITC74 - General machinery"],
+      ),
+    },
+    Kuwait: {
+      name: "Kuwait",
+      imports: 4.0,
+      exports: 3.0,
+      reExports: 12.2,
+      netTrade: -0.1,
+      topCategories: gccTopThree(
+        ["HS27 - Mineral fuels", "HS39 - Plastics", "HS84 - Machinery"],
+        ["BEC31 - Primary fuels", "BEC2 - Industrial supplies", "BEC42 - Capital goods"],
+        ["SITC33 - Petroleum", "SITC57 - Plastics", "SITC71 - Machinery"],
+      ),
+    },
+    Oman: {
+      name: "Oman",
+      imports: 2.0,
+      exports: 1.0,
+      reExports: 10.1,
+      netTrade: -0.1,
+      topCategories: gccTopThree(
+        ["HS27 - Mineral fuels", "HS25 - Salt & stone", "HS84 - Machinery"],
+        ["BEC31 - Primary fuels", "BEC21 - Processed materials", "BEC5 - Capital goods"],
+        ["SITC27 - Ores", "SITC33 - Petroleum", "SITC71 - Machinery"],
+      ),
+    },
+    Bahrain: {
+      name: "Bahrain",
+      imports: 0.0,
+      exports: 0.0,
+      reExports: 8.7,
+      netTrade: -0.0,
+      topCategories: gccTopThree(
+        ["HS84 - Machinery", "HS85 - Electrical equipment", "HS30 - Pharmaceutical products"],
+        ["BEC5 - Capital goods", "BEC6 - Consumer goods", "BEC42 - Processed products"],
+        ["SITC74 - General machinery", "SITC54 - Medicaments", "SITC77 - Electrical machinery"],
+      ),
+    },
+  };
+
   // Mock continent data
   const continentData: Record<string, ContinentTooltipData> = {
     "Asia": {
@@ -579,6 +697,11 @@ export function GlobalTradeMap() {
     "Japan": "Asia",
     "South Korea": "Asia",
     "Saudi Arabia": "Asia",
+    "United Arab Emirates": "Asia",
+    Qatar: "Asia",
+    Kuwait: "Asia",
+    Oman: "Asia",
+    Bahrain: "Asia",
     "United States": "North America",
     "Germany": "Europe",
     "United Kingdom": "Europe",
@@ -636,16 +759,34 @@ export function GlobalTradeMap() {
   };
 
   const maxTradeValue = Math.max(...Object.values(countryTradeData), 1e-6);
+  const maxGccTradeValue = Math.max(...Object.values(GCC_COUNTRY_TRADE), 1e-6);
   const maxContinentValue = Math.max(...Object.values(continentTradeData));
 
-  const topCountries = Object.entries(countryTradeData)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5);
+  const topCountries =
+    viewType === "gcc"
+      ? (Object.entries(GCC_COUNTRY_TRADE) as [string, number][]).sort(([, a], [, b]) => b - a)
+      : Object.entries(countryTradeData)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5);
+
+  const maxTradeValueForList = viewType === "gcc" ? maxGccTradeValue : maxTradeValue;
 
   const topContinents = Object.entries(continentTradeData)
     .sort(([, a], [, b]) => b - a);
 
   const isCountryLike = viewType === "country" || viewType === "gcc";
+
+  const mapFlowEntries: [string, number][] =
+    viewType === "gcc"
+      ? GCC_TRADE_COUNTRY_LIST.filter((k) => k !== "Bahrain").map((k) => [k, GCC_COUNTRY_TRADE[k]!])
+      : Object.entries(countryTradeData);
+
+  const mapMarkerEntries: [string, number][] =
+    viewType === "gcc"
+      ? GCC_TRADE_COUNTRY_LIST.filter((k) => k !== "Bahrain").map((k) => [k, GCC_COUNTRY_TRADE[k]!])
+      : Object.entries(countryTradeData);
+
+  const maxMapTradeValue = viewType === "gcc" ? maxGccTradeValue : maxTradeValue;
 
   return (
     <div className="bg-white rounded-lg p-6 border border-gray-200">
@@ -805,15 +946,22 @@ export function GlobalTradeMap() {
                     geographies.map((geo) => {
                       const countryName = geo.properties.name as string;
 
-                      const dataKey = resolveTradeDataKey(countryName, countryTradeData);
+                      const tradeLookup = viewType === "gcc" ? GCC_COUNTRY_TRADE : countryTradeData;
+                      const dataKey = resolveTradeDataKey(countryName, tradeLookup);
                       const continentName = dataKey ? countryToContinent[dataKey] : undefined;
 
-                      const tooltipData = isCountryLike
+                      const countryTooltip: CountryTooltipData | null = isCountryLike
                         ? dataKey
-                          ? countryDetailedData[dataKey]
+                          ? viewType === "gcc"
+                            ? (gccCountryDetailedData[dataKey] ?? null)
+                            : countryDetailedData[dataKey] ?? null
                           : null
+                        : null;
+
+                      const tooltipData: CountryTooltipData | ContinentTooltipData | null = isCountryLike
+                        ? countryTooltip
                         : dataKey && continentName
-                          ? continentData[continentName]
+                          ? continentData[continentName] ?? null
                           : null;
 
                       return (
@@ -847,7 +995,7 @@ export function GlobalTradeMap() {
                 </Geographies>
 
                 {isCountryLike &&
-                  Object.entries(countryTradeData).map(([name, amt]) => {
+                  mapFlowEntries.map(([name, amt]) => {
                     const coords = TRADE_COUNTRY_COORDS[name];
                     if (!coords || amt <= 0) return null;
                     return (
@@ -864,10 +1012,10 @@ export function GlobalTradeMap() {
                   })}
 
                 {isCountryLike &&
-                  Object.entries(countryTradeData).map(([name, amt]) => {
+                  mapMarkerEntries.map(([name, amt]) => {
                     const coords = TRADE_COUNTRY_COORDS[name];
                     if (!coords) return null;
-                    const r = 3.5 + Math.sqrt(amt / maxTradeValue) * 14;
+                    const r = 3.5 + Math.sqrt(amt / maxMapTradeValue) * 14;
                     return (
                       <Marker key={`dot-${name}`} coordinates={coords}>
                         <g pointerEvents="none">
@@ -958,7 +1106,9 @@ export function GlobalTradeMap() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600">
-            <span>Flows from Kingdom of Bahrain · dot size = trade amount (AED billions)</span>
+            <span>
+              {viewType === "gcc" ? "GCC — " : ""}Flows from Kingdom of Bahrain · dot size = trade amount (AED billions)
+            </span>
             <span className="inline-flex items-center gap-2">
               <span className="inline-block h-2 w-2 rounded-full bg-[#2b59c3]" />
               <span>Smaller</span>
@@ -970,7 +1120,7 @@ export function GlobalTradeMap() {
 
         <div className="flex h-full flex-col">
           <h3 className="mb-3 font-medium text-gray-900">
-            {isCountryLike ? "Top Countries" : "By Continent"}
+            {viewType === "gcc" ? "GCC countries" : isCountryLike ? "Top Countries" : "By Continent"}
           </h3>
           <div className="max-h-[400px] space-y-2 overflow-y-auto pr-2">
             {isCountryLike
@@ -991,7 +1141,7 @@ export function GlobalTradeMap() {
                       <div className="h-1.5 w-full rounded-full bg-gray-200">
                         <div
                           className="h-1.5 rounded-full bg-blue-600"
-                          style={{ width: `${(value / maxTradeValue) * 100}%` }}
+                          style={{ width: `${(value / maxTradeValueForList) * 100}%` }}
                         />
                       </div>
                     </div>
