@@ -108,9 +108,10 @@ export function AbuDhabiTradeLeafletMap({ ports, isCritical, onHoverPort, onPort
               radius={radius}
               pathOptions={{
                 fillColor: fill,
-                color: selected ? "#1d4ed8" : "#ffffff",
-                weight: selected ? 4 : 2,
-                fillOpacity: 0.92,
+                color: selected ? "#1e3a8a" : "#ffffff",
+                weight: selected ? 3.5 : 2,
+                opacity: 1,
+                fillOpacity: selected ? 0.98 : 0.92,
               }}
               eventHandlers={{
                 mouseover: () => onHoverPort(port),

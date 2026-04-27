@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { AlertTriangle, MessageSquare, Anchor } from "lucide-react";
@@ -45,6 +45,7 @@ export function UAETradeMap() {
   const [selectedPort, setSelectedPort] = useState("all");
   const [mapSelectedPortId, setMapSelectedPortId] = useState<string | null>(null);
   const [tooltipContent, setTooltipContent] = useState<PortTooltipData | null>(null);
+  const portCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Check if it's from March 2026 and onwards for critical alert
   const monthOrder = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -262,6 +263,13 @@ export function UAETradeMap() {
       }),
     [ports, selectedPort, transportType],
   );
+
+  useLayoutEffect(() => {
+    if (!mapSelectedPortId) return;
+    const el = portCardRefs.current[mapSelectedPortId];
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  }, [mapSelectedPortId, visiblePorts]);
 
   const handleAskAIPort = (portName: string, critical: boolean) => {
     const question = critical
@@ -485,7 +493,7 @@ export function UAETradeMap() {
             )}
           </div>
           <p className="text-xs text-gray-500 -mt-1">Click a port on the map or a card to highlight the matching port.</p>
-          <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+          <div className="max-h-[420px] space-y-2 overflow-y-auto scroll-smooth py-1 pl-1 pr-2">
             {visiblePorts.length === 0 ? (
               <p className="text-sm text-gray-500 py-4 text-center border border-dashed border-gray-200 rounded-lg">
                 No facilities match the current port and transport filters.
@@ -498,10 +506,13 @@ export function UAETradeMap() {
                 return (
                   <div
                     key={port.id}
-                    className={`rounded-lg p-3 border transition-shadow ${
+                    ref={(el) => {
+                      portCardRefs.current[port.id] = el;
+                    }}
+                    className={`scroll-mt-1 rounded-lg border-2 p-3 transition-[box-shadow,background-color] ${
                       active
-                        ? "ring-2 ring-blue-500 border-blue-400 bg-blue-50/60"
-                        : "border-gray-200 bg-white"
+                        ? "border-blue-600 bg-sky-50/95 shadow-md"
+                        : "border-gray-200 bg-white shadow-sm"
                     }`}
                   >
                     <button
