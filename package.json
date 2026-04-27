@@ -6,7 +6,8 @@
   "homepage": "https://fatimasalem.github.io/Foreign-Trade-Inventory/",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "build:hs": "node scripts/build-hs-nomenclature.mjs"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

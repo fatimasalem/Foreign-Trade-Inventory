@@ -1,4 +1,5 @@
 import { HS_SECTIONS, type HsSection } from "../../lib/hs-sections";
+import { getHsNomenclatureForSectionNumber } from "./hs-nomenclature-data";
 
 export type ClassificationKind = "HS" | "BEC" | "SITC";
 
@@ -75,78 +76,67 @@ function articleMetrics(
   };
 }
 
-/** Short HS chapter descriptor for table rows (demo labels). */
-function hsChapterDescriptor(chapterCode: string): string {
-  const n = parseInt(chapterCode.replace(/^HS/i, ""), 10);
-  const map: Record<number, string> = {
-    1: "Live animals",
-    2: "Meat and edible meat offal",
-    3: "Fish, crustaceans, molluscs",
-    4: "Dairy produce; birds' eggs; honey",
-    5: "Products of animal origin n.e.s.",
-    15: "Animal or vegetable fats and oils",
-    39: "Plastics and articles thereof",
-    71: "Natural or cultured pearls, precious stones and metals",
-    84: "Nuclear reactors, boilers, machinery",
-    87: "Vehicles other than railway or tramway",
-  };
-  return map[n] ?? `HS group ${String(n).padStart(2, "0")}`;
-}
-
-/** 4-digit heading: HS code + product name only. */
-function hsHeadingLabel(fourDigit: string, code: string): string {
-  return `HS${fourDigit} — ${hsChapterDescriptor(code)}`;
-}
-
 /**
- * HS: WCO section → chapters → 4-digit headings → 6-digit subheading leaves (metrics).
- * Leaves are deterministic for a given section so detail views stay aligned.
+ * HS: from nomenclature (HS1 → HS2 → HS4 → HS6) with national HS8 lines as leaves (demo metrics).
+ * Re-run `node scripts/build-hs-nomenclature.mjs` when HS List.xlsx is updated. BEC/SITC are unchanged.
  */
 function buildHsSectionArticlesAndTree(sec: HsSection): { articles: ArticleMetric[]; roots: HierarchyTreeNode[] } {
-  const sectionRoot: HierarchyTreeNode = { id: `hs-sec-${sec.number}`, label: "", children: [] };
+  const data = getHsNomenclatureForSectionNumber(sec.number);
   const leaves: ArticleMetric[] = [];
+  if (!data || data.hs2.length === 0) {
+    return { articles: leaves, roots: [] };
+  }
+
+  const roots: HierarchyTreeNode[] = [];
   let leafSeq = 0;
 
-  const sortedCodes = [...sec.chapterCodes].sort(
-    (a, b) => parseHsChapterSortKey(`${a} —`) - parseHsChapterSortKey(`${b} —`),
-  );
-
-  for (const code of sortedCodes) {
-    const chNum = parseInt(code.replace(/^HS/i, ""), 10);
+  for (const h2 of data.hs2) {
+    const h2code = h2.code.padStart(2, "0");
     const chapterNode: HierarchyTreeNode = {
-      id: `hs-ch-${sec.number}-${code}`,
-      label: `${code} — ${hsChapterDescriptor(code)}`,
+      id: `hs-ch-${sec.number}-HS${h2code}`,
+      label: `HS${h2code} — ${h2.desc}`,
       children: [],
     };
 
-    const nHeadings = 2;
-    for (let h = 1; h <= nHeadings; h++) {
-      const fourDigit = `${String(chNum).padStart(2, "0")}${String(h).padStart(2, "0")}`;
+    for (const h4 of h2.hs4) {
       const headingNode: HierarchyTreeNode = {
-        id: `hs-hd-${sec.number}-${fourDigit}`,
-        label: hsHeadingLabel(fourDigit, code),
+        id: `hs-h4-${sec.number}-${h4.code}`,
+        label: `HS${h4.code} — ${h4.desc}`,
         children: [],
       };
-      const nSubs = 2;
-      for (let s = 1; s <= nSubs; s++) {
-        const sixDigit = `${fourDigit}${String(s).padStart(2, "0")}`;
-        const subLabel = `HS${sixDigit} — ${hsChapterDescriptor(code)}`;
-        const metric = articleMetrics(sec.number, leafSeq++, "HS", subLabel);
-        leaves.push(metric);
-        headingNode.children.push({
-          id: `hs-sub-${sec.number}-${sixDigit}-${s}`,
-          label: subLabel,
-          metric,
+
+      for (const h6 of h4.hs6) {
+        const subNode: HierarchyTreeNode = {
+          id: `hs-h6-${sec.number}-${h6.code}`,
+          label: `HS${h6.code} — ${h6.desc}`,
           children: [],
-        });
+        };
+
+        for (const h8 of h6.leaves) {
+          const subLabel = `${h8.code} — ${h8.desc}`;
+          const metric = articleMetrics(sec.number, leafSeq++, "HS", subLabel);
+          leaves.push(metric);
+          subNode.children.push({
+            id: `hs-h8-${sec.number}-${h8.code}-${strSeed(subLabel)}`,
+            label: subLabel,
+            metric,
+            children: [],
+          });
+        }
+        if (subNode.children.length > 0) {
+          headingNode.children.push(subNode);
+        }
       }
-      chapterNode.children.push(headingNode);
+      if (headingNode.children.length > 0) {
+        chapterNode.children.push(headingNode);
+      }
     }
-    sectionRoot.children.push(chapterNode);
+    if (chapterNode.children.length > 0) {
+      roots.push(chapterNode);
+    }
   }
 
-  /** One root row per chapter (skips a duplicate WCO / “HS section” line already shown in the main category cell). */
-  return { articles: leaves, roots: sectionRoot.children };
+  return { articles: leaves, roots };
 }
 
 function hsArticlesForSection(sec: HsSection): ArticleMetric[] {
@@ -293,8 +283,12 @@ function categoryAggregateMetrics(sectionNum: number, title: string): {
 
 export function buildAllCategoryAnalysisRows(): CategoryAnalysisRow[] {
   return HS_SECTIONS.map((sec, idx) => {
-    const { mom, yoy, volume, risk, weight } = categoryAggregateMetrics(sec.number, sec.title);
-    const category = sec.title;
+    const nom = getHsNomenclatureForSectionNumber(sec.number);
+    const { mom, yoy, volume, risk, weight } = categoryAggregateMetrics(
+      sec.number,
+      nom?.hs1Desc ?? sec.title,
+    );
+    const category = nom?.hs1Desc ?? sec.title;
     const type: "export" | "import" = idx % 2 === 0 ? "export" : "import";
     return {
       sectionNumber: sec.number,
@@ -383,9 +377,19 @@ function parseSitcDivisionCode(label: string): string | null {
   return m ? m[1] : null;
 }
 
-function parseHsChapterSortKey(label: string): number {
-  const m = /^HS(\d{2})\b/i.exec(label.trim());
-  return m ? parseInt(m[1], 10) : 999;
+/**
+ * Two-digit chapter (e.g. HS01) from labels like "HS01 — …", "HS0101 — …" (6/4-digit codes
+ * after HS use the first two as chapter), or "010121100000 — …" (national / HS8 line).
+ */
+function chapterKeyFromHsLabel(label: string): string | null {
+  const t = label.trim();
+  const mHs = /^HS(\d{2,})/i.exec(t);
+  if (mHs) {
+    return `HS${mHs[1].slice(0, 2)}`.toUpperCase();
+  }
+  const m2 = /^(\d{2})/.exec(t);
+  if (m2) return `HS${m2[1]}`;
+  return null;
 }
 
 function ensureChild(nodes: HierarchyTreeNode[], id: string, label: string): HierarchyTreeNode {
@@ -630,12 +634,6 @@ export function categoryAnalysisRowMatchesSearch(
   return hay.some((s) => s.toLowerCase().includes(t));
 }
 
-/** HS chapter token (e.g. HS01) from a 6-digit HS leaf label. */
-function hsChapterCodeFromLeafLabel(label: string): string | null {
-  const m = /^(HS\d{2})/i.exec(label.trim());
-  return m ? m[1].toUpperCase() : null;
-}
-
 /** Two-digit SITC division key for matching partner lines. */
 function sitcDivisionKeyFromLabel(label: string): string | null {
   const raw = parseSitcDivisionCode(label);
@@ -656,12 +654,12 @@ export function goodsLeavesForArticleFilter(
 ): ArticleMetric[] {
   const leaves = classificationArticleLeavesInOrder(row, kind);
   if (kind === "HS") {
-    const ch = hsChapterCodeFromLeafLabel(articleLabel);
+    const ch = chapterKeyFromHsLabel(articleLabel);
     if (!ch) {
       const one = leaves.find((l) => l.label === articleLabel);
       return one ? [one] : [];
     }
-    const sub = leaves.filter((l) => l.label.toUpperCase().startsWith(ch));
+    const sub = leaves.filter((l) => chapterKeyFromHsLabel(l.label) === ch);
     return sub.length > 0 ? sub : leaves.filter((l) => l.label === articleLabel);
   }
   if (kind === "BEC") {
@@ -693,7 +691,7 @@ export function hsClassificationChapterOptions(row: CategoryAnalysisRow): { code
   const leaves = row.hsArticles;
   return sec.chapterCodes.map((code) => {
     const upper = code.toUpperCase();
-    const leaf = leaves.find((m) => m.label.toUpperCase().startsWith(upper));
+    const leaf = leaves.find((m) => chapterKeyFromHsLabel(m.label) === upper);
     return { code, leafLabel: leaf?.label ?? code };
   });
 }
