@@ -26,8 +26,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../components/ui/popover";
-import { UAETradeMap } from "../components/uae-trade-map";
-import { TradeCountriesAnalysisCard } from "../components/trade-countries-analysis-card";
+import { stripClassificationCode } from "../../lib/strip-classification-label";
 
 type Classification = "HS1" | "BEC" | "SITC";
 
@@ -251,14 +250,9 @@ export function DiagnosePage() {
   };
 
   const getCategoryName = (category: typeof categories[0]) => {
-    switch (classification) {
-      case "HS1":
-        return category.hs1;
-      case "BEC":
-        return category.bec;
-      case "SITC":
-        return category.sitc;
-    }
+    const raw =
+      classification === "HS1" ? category.hs1 : classification === "BEC" ? category.bec : category.sitc;
+    return stripClassificationCode(raw);
   };
 
   const getRiskBadgeColor = (riskLevel: string) => {
@@ -282,11 +276,6 @@ export function DiagnosePage() {
 
   return (
     <div className="space-y-6">
-      <TradeCountriesAnalysisCard />
-
-      {/* UAE Trade Distribution Map */}
-      <UAETradeMap />
-
       {/* Category Analysis Table */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">

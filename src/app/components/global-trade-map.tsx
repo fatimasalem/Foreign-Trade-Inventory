@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup, Line, Marker } from "react-simple-maps";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ZoomIn, ZoomOut, MapPinned } from "lucide-react";
+import { ZoomIn, ZoomOut, MapPinned, TrendingUp, Target, ArrowUpRight } from "lucide-react";
 import { Button } from "./ui/button";
 import { SectionIcon } from "./section-icon";
 import { Badge } from "./ui/badge";
+import { stripClassificationCode } from "../../lib/strip-classification-label";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -57,7 +67,18 @@ function resolveTradeDataKey(geoName: string, trade: Record<string, number>): st
   return mapped && trade[mapped] !== undefined ? mapped : undefined;
 }
 
-type ViewType = "country" | "continent";
+type ViewType = "country" | "continent" | "gcc";
+type GccComparisonCategory = "imports" | "exports" | "reexports" | "nettrade";
+type MapClassification = "HS" | "BEC" | "SITC";
+type ProductCategoryId =
+  | "all"
+  | "precious"
+  | "vehicles"
+  | "aluminum"
+  | "machinery"
+  | "plastics"
+  | "pharma"
+  | "mineral";
 
 interface CategoryData {
   HS: { name: string; value: string }[];
@@ -83,9 +104,39 @@ interface ContinentTooltipData {
   topCategories: CategoryData;
 }
 
+const GCC_COMPARISON_MULT: Record<GccComparisonCategory, number> = {
+  imports: 0.92,
+  exports: 1,
+  reexports: 0.88,
+  nettrade: 0.95,
+};
+
+const PRODUCT_CATEGORY_MULT: Record<ProductCategoryId, number> = {
+  all: 1,
+  precious: 0.92,
+  vehicles: 1.08,
+  aluminum: 1.05,
+  machinery: 1.02,
+  plastics: 0.96,
+  pharma: 0.9,
+  mineral: 1.04,
+};
+
+const GCC_BAR_DATA_BASE = [
+  { country: "Saudi Arabia", value: 44.2 },
+  { country: "Abu Dhabi", value: 28.7 },
+  { country: "Qatar", value: 26.5 },
+  { country: "Kuwait", value: 19.2 },
+  { country: "Oman", value: 13.1 },
+  { country: "Bahrain", value: 8.7 },
+];
+
 export function GlobalTradeMap() {
   const [viewType, setViewType] = useState<ViewType>("country");
   const [tradeType, setTradeType] = useState("all");
+  const [mapClassification, setMapClassification] = useState<MapClassification>("HS");
+  const [productCategory, setProductCategory] = useState<ProductCategoryId>("all");
+  const [gccComparison, setGccComparison] = useState<GccComparisonCategory>("exports");
   const [month, setMonth] = useState("March");
   const [year, setYear] = useState("2026");
   const [tooltipContent, setTooltipContent] = useState<CountryTooltipData | ContinentTooltipData | null>(null);
@@ -610,6 +661,45 @@ export function GlobalTradeMap() {
     }
   };
 
+  const gccBarData = useMemo(() => {
+    const m = PRODUCT_CATEGORY_MULT[productCategory] * GCC_COMPARISON_MULT[gccComparison];
+    return GCC_BAR_DATA_BASE.map((row) => ({
+      ...row,
+      value: Number((row.value * m).toFixed(1)),
+    }));
+  }, [productCategory, gccComparison]);
+
+  const gccInsights = useMemo(
+    () => [
+      {
+        title: "Top trade partner",
+        value: "Saudi Arabia",
+        description: "Leading trade partner with Abu Dhabi Emirate in the GCC region",
+        icon: Target,
+      },
+      {
+        title: "Growth rate",
+        value: "+12.3%",
+        description: "Outpacing GCC average growth in the selected period",
+        icon: TrendingUp,
+      },
+      {
+        title: "Market share",
+        value: "18.2%",
+        description: "Abu Dhabi's share of total GCC non-oil trade in this view",
+        icon: ArrowUpRight,
+      },
+    ],
+    [],
+  );
+
+  const gccComparisonLabel = {
+    imports: "Non-Oil Imports",
+    exports: "Non-Oil Exports",
+    reexports: "Non-Oil Re-Exports",
+    nettrade: "Net trade",
+  }[gccComparison];
+
   const maxTradeValue = Math.max(...Object.values(countryTradeData), 1e-6);
   const maxContinentValue = Math.max(...Object.values(continentTradeData));
 
@@ -622,12 +712,12 @@ export function GlobalTradeMap() {
 
   return (
     <div className="bg-white rounded-lg p-6 border border-gray-200">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center gap-3">
           <SectionIcon icon={MapPinned} tone="sky" size="md" />
           <h2 className="font-semibold text-lg text-gray-900 leading-snug m-0">Global Trade Distribution</h2>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-end gap-3">
           <div>
             <label className="text-xs font-medium text-gray-700 mb-1 block">Trade Type</label>
             <Select value={tradeType} onValueChange={setTradeType}>
@@ -645,15 +735,63 @@ export function GlobalTradeMap() {
           <div>
             <label className="text-xs font-medium text-gray-700 mb-1 block">View</label>
             <Select value={viewType} onValueChange={(value) => setViewType(value as ViewType)}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="country">By Country</SelectItem>
-                <SelectItem value="continent">By Continent</SelectItem>
+                <SelectItem value="country">By country</SelectItem>
+                <SelectItem value="continent">By continent</SelectItem>
+                <SelectItem value="gcc">GCC</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <label className="text-xs font-medium text-gray-700 mb-1 block">Classification</label>
+            <Select value={mapClassification} onValueChange={(v) => setMapClassification(v as MapClassification)}>
+              <SelectTrigger className="w-[100px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="HS">HS</SelectItem>
+                <SelectItem value="BEC">BEC</SelectItem>
+                <SelectItem value="SITC">SITC</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-700 mb-1 block">Category</label>
+            <Select value={productCategory} onValueChange={(v) => setProductCategory(v as ProductCategoryId)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                <SelectItem value="precious">Precious stones, metals</SelectItem>
+                <SelectItem value="vehicles">Vehicles, parts</SelectItem>
+                <SelectItem value="aluminum">Aluminum, articles</SelectItem>
+                <SelectItem value="machinery">Machinery</SelectItem>
+                <SelectItem value="plastics">Plastics</SelectItem>
+                <SelectItem value="pharma">Pharmaceutical products</SelectItem>
+                <SelectItem value="mineral">Mineral fuels, oils</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {viewType === "gcc" && (
+            <div>
+              <label className="text-xs font-medium text-gray-700 mb-1 block">Comparison</label>
+              <Select value={gccComparison} onValueChange={(v) => setGccComparison(v as GccComparisonCategory)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="imports">Non-oil imports</SelectItem>
+                  <SelectItem value="exports">Non-oil exports</SelectItem>
+                  <SelectItem value="reexports">Non-oil re-exports</SelectItem>
+                  <SelectItem value="nettrade">Net trade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <label className="text-xs font-medium text-gray-700 mb-1 block">Month</label>
             <Select value={month} onValueChange={setMonth}>
@@ -694,6 +832,62 @@ export function GlobalTradeMap() {
         </div>
       </div>
 
+      {viewType === "gcc" ? (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <h3 className="font-medium text-gray-900 mb-4">
+              {gccComparisonLabel} · {mapClassification}
+              {productCategory !== "all" && (
+                <span className="text-gray-600">
+                  {" "}
+                  (
+                  {productCategory === "precious"
+                    ? "Precious stones, metals"
+                    : productCategory === "vehicles"
+                      ? "Vehicles, parts"
+                      : productCategory === "aluminum"
+                        ? "Aluminum, articles"
+                        : productCategory === "machinery"
+                          ? "Machinery"
+                          : productCategory === "plastics"
+                            ? "Plastics"
+                            : productCategory === "pharma"
+                              ? "Pharmaceutical products"
+                              : "Mineral fuels, oils"}
+                  )
+                </span>
+              )}
+            </h3>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={gccBarData} layout="vertical" margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" label={{ value: "AED billions", position: "bottom" }} />
+                <YAxis dataKey="country" type="category" width={120} />
+                <RechartsTooltip />
+                <Bar dataKey="value" fill={MAP_ACCENT} radius={[0, 8, 8, 0]} name="AED B" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg text-gray-900">Key insights</h3>
+            {gccInsights.map((insight, index) => {
+              const Icon = insight.icon;
+              return (
+                <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-start gap-3">
+                    <SectionIcon icon={Icon} tone="blue" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-gray-600 mb-1">{insight.title}</div>
+                      <div className="text-xl font-semibold text-gray-900 mb-1">{insight.value}</div>
+                      <div className="text-xs text-gray-600 leading-snug">{insight.description}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Map */}
         <div className="lg:col-span-3">
@@ -865,49 +1059,17 @@ export function GlobalTradeMap() {
                   </div>
                 </div>
                 <div className="border-t pt-3">
-                  <p className="text-xs font-semibold text-gray-700 mb-3">Top 3 Categories by Classification:</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {/* HS Classification */}
-                    <div className="bg-gray-50 rounded p-2">
-                      <div className="text-xs font-semibold text-gray-700 mb-2 text-center border-b pb-1">HS</div>
-                      <div className="space-y-1.5">
-                        {tooltipContent.topCategories.HS.map((cat, idx) => (
-                          <div key={idx} className="text-xs">
-                            <div className="text-gray-600 line-clamp-2 mb-0.5" title={cat.name}>
-                              {cat.name}
-                            </div>
-                            <div className="font-medium text-gray-900">{cat.value}</div>
+                  <p className="text-xs font-semibold text-gray-700 mb-3">Top 3 categories ({mapClassification})</p>
+                  <div className="bg-gray-50 rounded p-2">
+                    <div className="space-y-1.5">
+                      {tooltipContent.topCategories[mapClassification].map((cat, idx) => (
+                        <div key={idx} className="text-xs">
+                          <div className="text-gray-600 line-clamp-2 mb-0.5" title={cat.name}>
+                            {stripClassificationCode(cat.name)}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                    {/* BEC Classification */}
-                    <div className="bg-gray-50 rounded p-2">
-                      <div className="text-xs font-semibold text-gray-700 mb-2 text-center border-b pb-1">BEC</div>
-                      <div className="space-y-1.5">
-                        {tooltipContent.topCategories.BEC.map((cat, idx) => (
-                          <div key={idx} className="text-xs">
-                            <div className="text-gray-600 line-clamp-2 mb-0.5" title={cat.name}>
-                              {cat.name}
-                            </div>
-                            <div className="font-medium text-gray-900">{cat.value}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    {/* SITC Classification */}
-                    <div className="bg-gray-50 rounded p-2">
-                      <div className="text-xs font-semibold text-gray-700 mb-2 text-center border-b pb-1">SITC</div>
-                      <div className="space-y-1.5">
-                        {tooltipContent.topCategories.SITC.map((cat, idx) => (
-                          <div key={idx} className="text-xs">
-                            <div className="text-gray-600 line-clamp-2 mb-0.5" title={cat.name}>
-                              {cat.name}
-                            </div>
-                            <div className="font-medium text-gray-900">{cat.value}</div>
-                          </div>
-                        ))}
-                      </div>
+                          <div className="font-medium text-gray-900">{cat.value}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -984,6 +1146,7 @@ export function GlobalTradeMap() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

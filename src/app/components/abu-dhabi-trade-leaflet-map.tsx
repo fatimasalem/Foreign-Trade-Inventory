@@ -19,6 +19,8 @@ type Props = {
   ports: AbuDhabiPortPin[];
   isCritical: boolean;
   onHoverPort: (port: AbuDhabiPortPin | null) => void;
+  onPortClick?: (port: AbuDhabiPortPin) => void;
+  selectedPortId?: string | null;
 };
 
 const DEFAULT_VIEW: [number, number] = [24.22, 53.92];
@@ -62,7 +64,7 @@ function MapBoundsSync({ ports }: { ports: AbuDhabiPortPin[] }) {
   return null;
 }
 
-export function AbuDhabiTradeLeafletMap({ ports, isCritical, onHoverPort }: Props) {
+export function AbuDhabiTradeLeafletMap({ ports, isCritical, onHoverPort, onPortClick, selectedPortId }: Props) {
   return (
     <div className="relative h-full w-full min-h-[360px] overflow-hidden rounded-lg border border-slate-200/80 shadow-inner">
       <MapContainer
@@ -97,7 +99,8 @@ export function AbuDhabiTradeLeafletMap({ ports, isCritical, onHoverPort }: Prop
               : port.transport === "land"
                 ? "#ca8a04"
                 : "#2563eb";
-          const radius = port.transport === "sea" ? 11 : 9;
+          const selected = selectedPortId === port.id;
+          const radius = (port.transport === "sea" ? 11 : 9) + (selected ? 2 : 0);
           return (
             <CircleMarker
               key={port.id}
@@ -105,13 +108,14 @@ export function AbuDhabiTradeLeafletMap({ ports, isCritical, onHoverPort }: Prop
               radius={radius}
               pathOptions={{
                 fillColor: fill,
-                color: "#ffffff",
-                weight: 2,
+                color: selected ? "#1d4ed8" : "#ffffff",
+                weight: selected ? 4 : 2,
                 fillOpacity: 0.92,
               }}
               eventHandlers={{
                 mouseover: () => onHoverPort(port),
                 mouseout: () => onHoverPort(null),
+                click: () => onPortClick?.(port),
               }}
             >
               <Tooltip

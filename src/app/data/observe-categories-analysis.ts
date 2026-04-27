@@ -611,6 +611,25 @@ export function classificationArticleLeavesInOrder(row: CategoryAnalysisRow, kin
     .map((r) => r.metric);
 }
 
+/** Search across the main category row and all nested classification lines for the active kind. */
+export function categoryAnalysisRowMatchesSearch(
+  row: CategoryAnalysisRow,
+  kind: ClassificationKind,
+  q: string,
+): boolean {
+  const t = q.trim().toLowerCase();
+  if (!t) return true;
+  const hay: string[] = [row.category, row.volume, row.risk, row.weight, row.mom, row.yoy, row.type];
+  for (const r of classificationArticleDisplayRows(row, kind)) {
+    if (r.kind === "node") {
+      hay.push(r.label);
+    } else {
+      hay.push(r.metric.label, r.metric.risk, r.metric.weight, r.metric.mom, r.metric.yoy);
+    }
+  }
+  return hay.some((s) => s.toLowerCase().includes(t));
+}
+
 /** HS chapter token (e.g. HS01) from a 6-digit HS leaf label. */
 function hsChapterCodeFromLeafLabel(label: string): string | null {
   const m = /^(HS\d{2})/i.exec(label.trim());

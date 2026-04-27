@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { AlertTriangle, MessageSquare, TrendingUp, Anchor } from "lucide-react";
+import { AlertTriangle, MessageSquare, Anchor } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { SectionIcon } from "./section-icon";
 import { AbuDhabiTradeLeafletMap } from "./abu-dhabi-trade-leaflet-map";
+import { stripClassificationCode } from "../../lib/strip-classification-label";
 
 type TradeFlowKey = "import" | "export" | "re-export";
 
@@ -42,6 +43,7 @@ export function UAETradeMap() {
   const [year, setYear] = useState("2026");
   const [transportType, setTransportType] = useState("all");
   const [selectedPort, setSelectedPort] = useState("all");
+  const [mapSelectedPortId, setMapSelectedPortId] = useState<string | null>(null);
   const [tooltipContent, setTooltipContent] = useState<PortTooltipData | null>(null);
 
   // Check if it's from March 2026 and onwards for critical alert
@@ -251,127 +253,6 @@ export function UAETradeMap() {
     return applyFlowToTotals(raw, foreignTradeType);
   };
 
-  type SidebarTransport = "Sea" | "Air" | "Land";
-
-  const affectedCategories = [
-    {
-      hs: "HS87 - Vehicles & parts",
-      bec: "BEC4 - Transport equipment",
-      sitc: "SITC78 - Road vehicles",
-      tradeType: "Import" as const,
-      transportType: "Sea" as SidebarTransport,
-      impact: "High",
-      value: "-32.5%",
-    },
-    {
-      hs: "HS84 - Machinery",
-      bec: "BEC5 - Capital goods",
-      sitc: "SITC74 - General machinery",
-      tradeType: "Import" as const,
-      transportType: "Sea" as SidebarTransport,
-      impact: "High",
-      value: "-28.3%",
-    },
-    {
-      hs: "HS30 - Pharmaceutical products",
-      bec: "BEC6 - Consumer goods",
-      sitc: "SITC54 - Medicinal products",
-      tradeType: "Import" as const,
-      transportType: "Air" as SidebarTransport,
-      impact: "Medium",
-      value: "-18.5%",
-    },
-    {
-      hs: "HS27 - Mineral fuels",
-      bec: "BEC2 - Industrial supplies",
-      sitc: "SITC33 - Petroleum products",
-      tradeType: "Import" as const,
-      transportType: "Land" as SidebarTransport,
-      impact: "Medium",
-      value: "-12.1%",
-    },
-  ];
-
-  const topPerformingCategories = [
-    {
-      hs: "HS76 - Aluminum & articles",
-      bec: "BEC5 - Capital goods",
-      sitc: "SITC68 - Non-ferrous metals",
-      tradeType: "Export" as const,
-      transportType: "Sea" as SidebarTransport,
-      performance: "Excellent",
-      value: "+45.8%",
-      volume: "8.2B AED",
-    },
-    {
-      hs: "HS71 - Precious metals",
-      bec: "BEC6 - Consumer goods",
-      sitc: "SITC97 - Gold, non-monetary",
-      tradeType: "Export" as const,
-      transportType: "Air" as SidebarTransport,
-      performance: "Excellent",
-      value: "+38.2%",
-      volume: "7.5B AED",
-    },
-    {
-      hs: "HS27 - Mineral fuels",
-      bec: "BEC2 - Industrial supplies",
-      sitc: "SITC33 - Petroleum products",
-      tradeType: "Export" as const,
-      transportType: "Sea" as SidebarTransport,
-      performance: "Good",
-      value: "+28.5%",
-      volume: "6.8B AED",
-    },
-    {
-      hs: "HS39 - Plastics, articles",
-      bec: "BEC2 - Industrial supplies",
-      sitc: "SITC57 - Plastics",
-      tradeType: "Re-Export" as const,
-      transportType: "Land" as SidebarTransport,
-      performance: "Good",
-      value: "+14.2%",
-      volume: "2.1B AED",
-    },
-  ];
-
-  const sidebarCategoryLabel = (row: { hs: string; bec: string; sitc: string }) => {
-    switch (classification) {
-      case "BEC":
-        return row.bec;
-      case "SITC":
-        return row.sitc;
-      default:
-        return row.hs;
-    }
-  };
-
-  const tradeFlowMatchesFilter = (tradeType: string) => {
-    if (foreignTradeType === "all") return true;
-    const map: Record<string, string> = {
-      import: "Import",
-      export: "Export",
-      "re-export": "Re-Export",
-    };
-    return tradeType === map[foreignTradeType];
-  };
-
-  const transportMatchesFilter = (t: SidebarTransport) => {
-    if (transportType === "all") return true;
-    const cap = transportType === "sea" ? "Sea" : transportType === "air" ? "Air" : "Land";
-    return t === cap;
-  };
-
-  const filteredAffectedCategories = useMemo(
-    () => affectedCategories.filter((item) => tradeFlowMatchesFilter(item.tradeType) && transportMatchesFilter(item.transportType)),
-    [foreignTradeType, transportType],
-  );
-
-  const filteredTopPerformingCategories = useMemo(
-    () => topPerformingCategories.filter((item) => tradeFlowMatchesFilter(item.tradeType) && transportMatchesFilter(item.transportType)),
-    [foreignTradeType, transportType],
-  );
-
   const visiblePorts = useMemo(
     () =>
       ports.filter((p) => {
@@ -382,36 +263,10 @@ export function UAETradeMap() {
     [ports, selectedPort, transportType],
   );
 
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case "High":
-        return "bg-red-100 text-red-700";
-      case "Medium":
-        return "bg-yellow-100 text-yellow-700";
-      default:
-        return "bg-blue-100 text-blue-700";
-    }
-  };
-
-  const getPerformanceColor = (performance: string) => {
-    switch (performance) {
-      case "Excellent":
-        return "bg-green-100 text-green-700";
-      case "Good":
-        return "bg-blue-100 text-blue-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
-  const handleAskAI = (
-    category: (typeof affectedCategories)[number] | (typeof topPerformingCategories)[number],
-    isCritical: boolean,
-  ) => {
-    const label = sidebarCategoryLabel(category);
-    const question = isCritical
-      ? `What is the impact of the Strait of Hormuz situation on ${label} ${category.tradeType} through ${category.transportType} transport?`
-      : `What are the key drivers behind the strong performance of ${label} ${category.tradeType} through ${category.transportType} transport?`;
+  const handleAskAIPort = (portName: string, critical: boolean) => {
+    const question = critical
+      ? `What is the impact of the Strait of Hormuz situation on trade and categories at ${portName}?`
+      : `What are the key drivers behind top-performing trade categories at ${portName}?`;
     navigate("/trade-ai", { state: { query: question } });
   };
 
@@ -532,6 +387,10 @@ export function UAETradeMap() {
           <AbuDhabiTradeLeafletMap
             ports={visiblePorts}
             isCritical={isCritical}
+            selectedPortId={mapSelectedPortId}
+            onPortClick={(port) => {
+              setMapSelectedPortId((cur) => (cur === port.id ? null : port.id));
+            }}
             onHoverPort={(port) => {
               if (!port) {
                 setTooltipContent(null);
@@ -590,16 +449,16 @@ export function UAETradeMap() {
                 <div className="space-y-1.5">
                   {isCritical ? (
                     tooltipContent.affectedCategories.map((cat, idx) => (
-                      <div key={idx} className="flex justify-between text-xs">
-                        <span className="text-gray-600">{cat.name}</span>
-                        <span className="font-semibold text-red-600">{cat.impact}</span>
+                      <div key={idx} className="flex justify-between text-xs gap-2">
+                        <span className="text-gray-600">{stripClassificationCode(cat.name)}</span>
+                        <span className="font-semibold text-red-600 shrink-0">{cat.impact}</span>
                       </div>
                     ))
                   ) : (
                     tooltipContent.topCategories.map((cat, idx) => (
-                      <div key={idx} className="flex justify-between text-xs">
-                        <span className="text-gray-600">{cat.name}</span>
-                        <span className="font-medium text-gray-900">{cat.value}</span>
+                      <div key={idx} className="flex justify-between text-xs gap-2">
+                        <span className="text-gray-600">{stripClassificationCode(cat.name)}</span>
+                        <span className="font-medium text-gray-900 shrink-0">{cat.value}</span>
                       </div>
                     ))
                   )}
@@ -609,111 +468,75 @@ export function UAETradeMap() {
           )}
         </div>
 
-        {/* Categories */}
-        <div className="space-y-3">
-          <h4 className="font-semibold text-gray-900">
-            {isCritical ? "Affected Categories" : "Top Performing Categories"}
-          </h4>
-          <div className="space-y-2 max-h-[250px] overflow-y-auto">
-            {isCritical ? (
-              filteredAffectedCategories.length === 0 ? (
-                <p className="text-sm text-gray-500 py-4 text-center border border-dashed border-gray-200 rounded-lg">
-                  No categories match the current filters. Adjust trade type or transport.
-                </p>
-              ) : (
-                filteredAffectedCategories.map((item, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-lg p-3 border border-gray-200"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="text-sm font-medium text-gray-900 flex-1">
-                      {sidebarCategoryLabel(item)}
-                    </div>
-                    <Badge className={`text-xs ${getImpactColor(item.impact)}`}>
-                      {item.impact}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                    <span>Trade Type:</span>
-                    <Badge className={`text-xs ${
-                      item.tradeType === "Import" ? "bg-blue-100 text-blue-700" :
-                      item.tradeType === "Export" ? "bg-green-100 text-green-700" :
-                      "bg-purple-100 text-purple-700"
-                    }`}>
-                      {item.tradeType}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                    <span>Transport:</span>
-                    <span className="font-medium">{item.transportType}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <span className="text-gray-600">Impact:</span>
-                    <span className="font-semibold text-red-600">{item.value}</span>
-                  </div>
-                  <button
-                    onClick={() => handleAskAI(item, true)}
-                    className="w-full flex items-center justify-center gap-1 text-purple-600 hover:text-purple-700 text-xs py-1 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
-                  >
-                    <MessageSquare className="h-3 w-3" />
-                    Ask AI
-                  </button>
-                </div>
-              ))
-              )
+        {/* Categories by port (linked to map selection) */}
+        <div className="space-y-3 min-h-0 flex flex-col">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="font-semibold text-gray-900">
+              {isCritical ? "Affected categories (by port)" : "Top performing (by port)"}
+            </h4>
+            {mapSelectedPortId && (
+              <button
+                type="button"
+                onClick={() => setMapSelectedPortId(null)}
+                className="text-xs text-blue-600 hover:underline shrink-0"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 -mt-1">Click a port on the map or a card to highlight the matching port.</p>
+          <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+            {visiblePorts.length === 0 ? (
+              <p className="text-sm text-gray-500 py-4 text-center border border-dashed border-gray-200 rounded-lg">
+                No facilities match the current port and transport filters.
+              </p>
             ) : (
-              filteredTopPerformingCategories.length === 0 ? (
-                <p className="text-sm text-gray-500 py-4 text-center border border-dashed border-gray-200 rounded-lg">
-                  No categories match the current filters. Adjust trade type or transport.
-                </p>
-              ) : (
-                filteredTopPerformingCategories.map((item, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-lg p-3 border border-gray-200"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="text-sm font-medium text-gray-900 flex-1">
-                      {sidebarCategoryLabel(item)}
-                    </div>
-                    <Badge className={`text-xs ${getPerformanceColor(item.performance)}`}>
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      {item.performance}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                    <span>Trade Type:</span>
-                    <Badge className={`text-xs ${
-                      item.tradeType === "Import" ? "bg-blue-100 text-blue-700" :
-                      item.tradeType === "Export" ? "bg-green-100 text-green-700" :
-                      "bg-purple-100 text-purple-700"
-                    }`}>
-                      {item.tradeType}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                    <span>Transport:</span>
-                    <span className="font-medium">{item.transportType}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                    <span>Volume:</span>
-                    <span className="font-medium">{item.volume}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <span className="text-gray-600">Growth:</span>
-                    <span className="font-semibold text-green-600">{item.value}</span>
-                  </div>
-                  <button
-                    onClick={() => handleAskAI(item, false)}
-                    className="w-full flex items-center justify-center gap-1 text-purple-600 hover:text-purple-700 text-xs py-1 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+              visiblePorts.map((port) => {
+                const base = portTradeDataBase[port.name];
+                if (!base) return null;
+                const active = mapSelectedPortId === port.id;
+                return (
+                  <div
+                    key={port.id}
+                    className={`rounded-lg p-3 border transition-shadow ${
+                      active
+                        ? "ring-2 ring-blue-500 border-blue-400 bg-blue-50/60"
+                        : "border-gray-200 bg-white"
+                    }`}
                   >
-                    <MessageSquare className="h-3 w-3" />
-                    Ask AI
-                  </button>
-                </div>
-              ))
-              )
+                    <button
+                      type="button"
+                      onClick={() => setMapSelectedPortId((id) => (id === port.id ? null : port.id))}
+                      className="w-full text-left"
+                    >
+                      <div className="text-xs font-semibold text-gray-800 mb-2">{port.name}</div>
+                      <div className="space-y-1.5">
+                        {isCritical
+                          ? base.affectedCategories.map((ac, i) => (
+                              <div key={i} className="flex justify-between gap-2 text-xs">
+                                <span className="text-gray-700">{stripClassificationCode(ac.name)}</span>
+                                <span className="font-semibold text-red-600 shrink-0">{ac.impact}</span>
+                              </div>
+                            ))
+                          : base.topCategories.map((row, i) => (
+                              <div key={i} className="flex justify-between gap-2 text-xs">
+                                <span className="text-gray-700">{stripClassificationCode(categoryLabel(row))}</span>
+                                <span className="font-medium text-gray-900 shrink-0">{row.value}</span>
+                              </div>
+                            ))}
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAskAIPort(port.name, isCritical)}
+                      className="mt-2 w-full flex items-center justify-center gap-1 text-purple-600 hover:text-purple-700 text-xs py-1.5 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+                    >
+                      <MessageSquare className="h-3 w-3" />
+                      Ask AI
+                    </button>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

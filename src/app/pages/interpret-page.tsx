@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { DriverSection } from "../components/driver-section";
 import { EventsSection } from "../components/events-section";
 import { GlobalTradeMap } from "../components/global-trade-map";
+import { UAETradeMap } from "../components/uae-trade-map";
 import { FlippableIndicatorCard } from "../components/flippable-indicator-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { SectionIcon } from "../components/section-icon";
@@ -659,6 +660,9 @@ export function InterpretPage() {
 
       {/* Global Trade Map */}
       <GlobalTradeMap />
+
+      {/* UAE Trade Distribution — Abu Dhabi ports */}
+      <UAETradeMap />
 
       {/* Events Section */}
       <EventsSection />

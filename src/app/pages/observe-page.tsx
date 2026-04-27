@@ -42,6 +42,7 @@ import {
 import { SectionIcon } from "../components/section-icon";
 import {
   ALL_CATEGORY_ANALYSIS_ROWS,
+  categoryAnalysisRowMatchesSearch,
   classificationArticleDisplayRows,
   type CategoryAnalysisRow,
   type ClassificationDisplayRow,
@@ -304,13 +305,13 @@ export function ObservePage() {
   ];
 
   const filteredCategoriesData = useMemo(() => {
-    const q = categoryAnalysisSearch.trim().toLowerCase();
+    const cls = tableClassification as ClassificationKind;
     return ALL_CATEGORY_ANALYSIS_ROWS.filter((item) => {
       if (tableTradeType !== "all" && item.type !== tableTradeType) return false;
-      if (q && !item.category.toLowerCase().includes(q)) return false;
+      if (!categoryAnalysisRowMatchesSearch(item, cls, categoryAnalysisSearch)) return false;
       return true;
     });
-  }, [tableTradeType, categoryAnalysisSearch]);
+  }, [tableTradeType, categoryAnalysisSearch, tableClassification]);
 
   const collapseAllCategoryRows = () => {
     setExpandedCategoryKeys(new Set());
@@ -737,7 +738,7 @@ export function ObservePage() {
                   <Input
                     id="category-analysis-search"
                     type="search"
-                    placeholder="Filter by category name…"
+                    placeholder="Search main row and expanded classification lines…"
                     value={categoryAnalysisSearch}
                     onChange={(e) => setCategoryAnalysisSearch(e.target.value)}
                     className="h-9 pl-8 text-sm"
