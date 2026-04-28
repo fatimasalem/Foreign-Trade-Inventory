@@ -416,16 +416,17 @@ function chapterKeyFromHsLabel(label: string): string | null {
   return null;
 }
 
-/** BEC: BEC1_CODE (main) -> BEC2_CODE (subcategory) -> BEC3_CODE (leaf line). */
-function buildBecHierarchyFromNomenclature(articles: ArticleMetric[]): HierarchyTreeNode[] {
+/** BEC expanded rows: BEC2_CODE (subcategory) -> BEC3_CODE (leaf line). Main row already shows BEC1. */
+function buildBecHierarchyFromNomenclature(row: CategoryAnalysisRow, articles: ArticleMetric[]): HierarchyTreeNode[] {
   const roots = getBecNomenclatureRoots();
   if (roots.length === 0) return [];
 
   const metricByLabel = new Map(articles.map((a) => [a.label, a]));
   const usedLabels = new Set<string>();
-
-  const hierarchy: HierarchyTreeNode[] = roots.flatMap((b1) => {
-    const b2Children = b1.bec2
+  const root = roots.find((r) => r.code === row.hs1Code);
+  const rootsToRender = root ? [root] : roots;
+  const hierarchy: HierarchyTreeNode[] = rootsToRender.flatMap((b1) =>
+    b1.bec2
       .map((b2) => ({
         id: `bec-2-${b1.code}-${b2.code}`,
         label: `BEC ${b2.code} — ${b2.desc}`,
@@ -444,17 +445,8 @@ function buildBecHierarchyFromNomenclature(articles: ArticleMetric[]): Hierarchy
           ];
         }),
       }))
-      .filter((node) => node.children.length > 0);
-
-    if (b2Children.length === 0) return [];
-    return [
-      {
-        id: `bec-1-${b1.code}`,
-        label: `BEC ${b1.code} — ${b1.desc}`,
-        children: b2Children,
-      },
-    ];
-  });
+      .filter((node) => node.children.length > 0),
+  );
 
   const orphans = articles.filter((a) => !usedLabels.has(a.label));
   if (orphans.length > 0) {
@@ -603,7 +595,7 @@ export function classificationArticleDisplayRows(
     return flattenHierarchy(buildHsSectionArticlesAndTree(sec).roots);
   }
   if (kind === "BEC") {
-    return flattenHierarchy(buildBecHierarchyFromNomenclature(articles));
+    return flattenHierarchy(buildBecHierarchyFromNomenclature(row, articles));
   }
   return flattenHierarchy(buildSitcHierarchy(articles));
 }
@@ -624,11 +616,17 @@ export function categoryAnalysisRowMatchesSearch(
   const t = q.trim().toLowerCase();
   if (!t) return true;
   const hay: string[] = [row.category, row.volume, row.risk, row.weight, row.mom, row.yoy, row.type];
-  for (const r of classificationArticleDisplayRows(row, kind)) {
-    if (r.kind === "node") {
-      hay.push(r.label);
-    } else {
-      hay.push(r.metric.label, r.metric.risk, r.metric.weight, r.metric.mom, r.metric.yoy);
+  const kinds: ClassificationKind[] = kind === "HS" ? ["HS", "BEC", "SITC"] : [kind, "HS", "BEC", "SITC"];
+  const visitedKinds = new Set<ClassificationKind>();
+  for (const currentKind of kinds) {
+    if (visitedKinds.has(currentKind)) continue;
+    visitedKinds.add(currentKind);
+    for (const r of classificationArticleDisplayRows(row, currentKind)) {
+      if (r.kind === "node") {
+        hay.push(r.label);
+      } else {
+        hay.push(r.metric.label, r.metric.risk, r.metric.weight, r.metric.mom, r.metric.yoy);
+      }
     }
   }
   return hay.some((s) => s.toLowerCase().includes(t));

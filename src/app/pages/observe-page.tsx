@@ -227,6 +227,8 @@ export function ObservePage() {
     if (risk === "Medium") return "bg-yellow-100 text-yellow-800";
     return "bg-green-100 text-green-800";
   };
+  const formatCategoryLabel = (label: string) =>
+    tableClassification === "HS" ? `HS ${label}` : label;
 
   const handleCountryToggle = (country: string) => {
     if (country === "All Countries") {
@@ -918,7 +920,7 @@ export function ObservePage() {
                         </Button>
                       ) : null}
                     </TableCell>
-                    <TableCell className="font-medium text-gray-900">{item.category}</TableCell>
+                    <TableCell className="font-medium text-gray-900">{formatCategoryLabel(item.category)}</TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadgeClass(
@@ -991,7 +993,7 @@ export function ObservePage() {
                               </div>
                             </TableCell>
                             <TableCell colSpan={7} className={`${padClass} py-2`}>
-                              <span className="text-sm font-semibold text-slate-700">{row.label}</span>
+                              <span className="text-sm font-semibold text-slate-700">{formatCategoryLabel(row.label)}</span>
                             </TableCell>
                           </TableRow>
                         );
@@ -1014,7 +1016,7 @@ export function ObservePage() {
                         >
                           <TableCell />
                           <TableCell className={`${padClass} text-sm text-gray-800 font-medium`}>
-                            {article.label}
+                            {formatCategoryLabel(article.label)}
                           </TableCell>
                           <TableCell>
                             <span
