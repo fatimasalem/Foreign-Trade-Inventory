@@ -613,9 +613,15 @@ export function categoryAnalysisRowMatchesSearch(
   kind: ClassificationKind,
   q: string,
 ): boolean {
-  const t = q.trim().toLowerCase();
-  if (!t) return true;
+  const rawQuery = q.trim();
+  if (!rawQuery) return true;
+  const t = rawQuery.toLowerCase();
+  const normalizeForSearch = (v: string) => v.toLowerCase().replace(/[\s\-_—–]+/g, "");
+  const normalizedTerm = normalizeForSearch(rawQuery);
   const hay: string[] = [row.category, row.volume, row.risk, row.weight, row.mom, row.yoy, row.type];
+  if (kind === "HS") {
+    hay.push(`HS ${row.category}`);
+  }
   const kinds: ClassificationKind[] = kind === "HS" ? ["HS", "BEC", "SITC"] : [kind, "HS", "BEC", "SITC"];
   const visitedKinds = new Set<ClassificationKind>();
   for (const currentKind of kinds) {
@@ -624,12 +630,23 @@ export function categoryAnalysisRowMatchesSearch(
     for (const r of classificationArticleDisplayRows(row, currentKind)) {
       if (r.kind === "node") {
         hay.push(r.label);
+        if (currentKind === "HS") {
+          hay.push(`HS ${r.label}`);
+        }
       } else {
         hay.push(r.metric.label, r.metric.risk, r.metric.weight, r.metric.mom, r.metric.yoy);
+        if (currentKind === "HS") {
+          hay.push(`HS ${r.metric.label}`);
+        }
       }
     }
   }
-  return hay.some((s) => s.toLowerCase().includes(t));
+  return hay.some((s) => {
+    const lower = s.toLowerCase();
+    if (lower.includes(t)) return true;
+    if (!normalizedTerm) return false;
+    return normalizeForSearch(s).includes(normalizedTerm);
+  });
 }
 
 /** Two-digit SITC division key for matching partner lines. */
