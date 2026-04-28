@@ -385,15 +385,15 @@ function chapterKeyFromHsLabel(label: string): string | null {
   return null;
 }
 
-/** BEC: nomenclature root -> main category -> subgroup -> product line (leaf). */
-function buildBecHierarchyWrapped(articles: ArticleMetric[]): HierarchyTreeNode[] {
+/** BEC: BEC1_CODE (main) -> BEC2_CODE (subcategory) -> BEC3_CODE (leaf line). */
+function buildBecHierarchyFromNomenclature(articles: ArticleMetric[]): HierarchyTreeNode[] {
   const roots = getBecNomenclatureRoots();
   if (roots.length === 0) return [];
 
   const metricByLabel = new Map(articles.map((a) => [a.label, a]));
   const usedLabels = new Set<string>();
 
-  const children: HierarchyTreeNode[] = roots.map((b1) => ({
+  const hierarchy: HierarchyTreeNode[] = roots.map((b1) => ({
     id: `bec-1-${b1.code}`,
     label: `BEC ${b1.code} — ${b1.desc}`,
     children: b1.bec2.map((b2) => ({
@@ -418,7 +418,7 @@ function buildBecHierarchyWrapped(articles: ArticleMetric[]): HierarchyTreeNode[
 
   const orphans = articles.filter((a) => !usedLabels.has(a.label));
   if (orphans.length > 0) {
-    children.push({
+    hierarchy.push({
       id: "bec-unmapped",
       label: "BEC — Unmapped lines",
       children: orphans.map((a) => ({
@@ -430,13 +430,7 @@ function buildBecHierarchyWrapped(articles: ArticleMetric[]): HierarchyTreeNode[
     });
   }
 
-  return [
-    {
-      id: "bec-nomenclature-root",
-      label: "BEC — Broad Economic Categories",
-      children,
-    },
-  ];
+  return hierarchy;
 }
 
 function sitcGroupCodeFromArticle(div2: string, article: ArticleMetric): string {
@@ -569,7 +563,7 @@ export function classificationArticleDisplayRows(
     return flattenHierarchy(buildHsSectionArticlesAndTree(sec).roots);
   }
   if (kind === "BEC") {
-    return flattenHierarchy(buildBecHierarchyWrapped(articles));
+    return flattenHierarchy(buildBecHierarchyFromNomenclature(articles));
   }
   return flattenHierarchy(buildSitcHierarchy(articles));
 }
