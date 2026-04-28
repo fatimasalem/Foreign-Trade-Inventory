@@ -282,6 +282,14 @@ function sitcArticlesForSection(sec: HsSection): ArticleMetric[] {
   return sitcLabelsForSection(sec).map((label, i) => articleMetrics(sec.number, i, "SITC", label));
 }
 
+function becArticlesForRoot(rootCode: string, sectionSeed: number): ArticleMetric[] {
+  const roots = getBecNomenclatureRoots();
+  const root = roots.find((r) => r.code === rootCode);
+  if (!root) return [];
+  const labels = root.bec2.flatMap((b2) => b2.bec3.map((b3) => becLeafLabel(b3.code, b3.desc)));
+  return labels.map((label, i) => articleMetrics(sectionSeed, i, "BEC", label));
+}
+
 function categoryAggregateMetrics(sectionNum: number, title: string): {
   mom: string;
   yoy: string;
@@ -321,6 +329,29 @@ export function buildAllCategoryAnalysisRows(): CategoryAnalysisRow[] {
       hsArticles: hsArticlesForSection(sec),
       becArticles: becArticlesForSection(sec),
       sitcArticles: sitcArticlesForSection(sec),
+    };
+  });
+}
+
+function buildBecCategoryAnalysisRows(): CategoryAnalysisRow[] {
+  const roots = getBecNomenclatureRoots();
+  return roots.map((root, idx) => {
+    const seed = 101 + idx;
+    const { mom, yoy, volume, risk, weight } = categoryAggregateMetrics(seed, root.desc);
+    const type: "export" | "import" = idx % 2 === 0 ? "export" : "import";
+    return {
+      sectionNumber: idx + 1,
+      category: `BEC ${root.code} — ${root.desc}`,
+      hs1Code: root.code,
+      mom,
+      yoy,
+      volume,
+      type,
+      risk,
+      weight,
+      hsArticles: [],
+      becArticles: becArticlesForRoot(root.code, seed),
+      sitcArticles: [],
     };
   });
 }
@@ -393,28 +424,37 @@ function buildBecHierarchyFromNomenclature(articles: ArticleMetric[]): Hierarchy
   const metricByLabel = new Map(articles.map((a) => [a.label, a]));
   const usedLabels = new Set<string>();
 
-  const hierarchy: HierarchyTreeNode[] = roots.map((b1) => ({
-    id: `bec-1-${b1.code}`,
-    label: `BEC ${b1.code} — ${b1.desc}`,
-    children: b1.bec2.map((b2) => ({
-      id: `bec-2-${b1.code}-${b2.code}`,
-      label: `BEC ${b2.code} — ${b2.desc}`,
-      children: b2.bec3.flatMap((b3) => {
-        const label = becLeafLabel(b3.code, b3.desc);
-        const metric = metricByLabel.get(label);
-        if (!metric) return [];
-        usedLabels.add(label);
-        return [
-          {
-            id: `bec-3-${b1.code}-${b2.code}-${b3.code}`,
-            label,
-            metric,
-            children: [],
-          },
-        ];
-      }),
-    })),
-  }));
+  const hierarchy: HierarchyTreeNode[] = roots.flatMap((b1) => {
+    const b2Children = b1.bec2
+      .map((b2) => ({
+        id: `bec-2-${b1.code}-${b2.code}`,
+        label: `BEC ${b2.code} — ${b2.desc}`,
+        children: b2.bec3.flatMap((b3) => {
+          const label = becLeafLabel(b3.code, b3.desc);
+          const metric = metricByLabel.get(label);
+          if (!metric) return [];
+          usedLabels.add(label);
+          return [
+            {
+              id: `bec-3-${b1.code}-${b2.code}-${b3.code}`,
+              label,
+              metric,
+              children: [],
+            },
+          ];
+        }),
+      }))
+      .filter((node) => node.children.length > 0);
+
+    if (b2Children.length === 0) return [];
+    return [
+      {
+        id: `bec-1-${b1.code}`,
+        label: `BEC ${b1.code} — ${b1.desc}`,
+        children: b2Children,
+      },
+    ];
+  });
 
   const orphans = articles.filter((a) => !usedLabels.has(a.label));
   if (orphans.length > 0) {
@@ -679,7 +719,16 @@ export function parseClassificationParam(v: string | null): ClassificationKind {
 }
 
 export const ALL_CATEGORY_ANALYSIS_ROWS = buildAllCategoryAnalysisRows();
+export const BEC_CATEGORY_ANALYSIS_ROWS = buildBecCategoryAnalysisRows();
 
-export function findCategoryAnalysisRowByName(name: string): CategoryAnalysisRow | undefined {
-  return ALL_CATEGORY_ANALYSIS_ROWS.find((r) => r.category === name);
+export function categoryAnalysisRowsForClassification(kind: ClassificationKind): CategoryAnalysisRow[] {
+  if (kind === "BEC") return BEC_CATEGORY_ANALYSIS_ROWS;
+  return ALL_CATEGORY_ANALYSIS_ROWS;
+}
+
+export function findCategoryAnalysisRowByName(
+  name: string,
+  kind: ClassificationKind = "HS",
+): CategoryAnalysisRow | undefined {
+  return categoryAnalysisRowsForClassification(kind).find((r) => r.category === name);
 }

@@ -38,7 +38,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popove
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { SectionIcon } from "../components/section-icon";
 import {
-  ALL_CATEGORY_ANALYSIS_ROWS,
+  categoryAnalysisRowsForClassification,
   classificationArticleLeavesInOrder,
   findCategoryAnalysisRowByName,
   goodsLeavesForArticleFilter,
@@ -112,10 +112,6 @@ function iconForCategoryName(name: string): LucideIcon {
   if (n.includes("nuclear")) return Atom;
   if (n.includes("pharmaceutical")) return Pill;
   return Package;
-}
-
-function getRelatedCategories(current: string): string[] {
-  return ALL_CATEGORY_ANALYSIS_ROWS.map((r) => r.category).filter((c) => c !== current).slice(0, 4);
 }
 
 type TradeKind = "import" | "export" | "reexport";
@@ -193,7 +189,7 @@ export function CategoryTradeDetailPage() {
 
   const cls = parseClassificationParam(searchParams.get("cls"));
 
-  const categoryRow = useMemo(() => findCategoryAnalysisRowByName(categoryName), [categoryName]);
+  const categoryRow = useMemo(() => findCategoryAnalysisRowByName(categoryName, cls), [categoryName, cls]);
   const articleOptions = useMemo(
     () => (categoryRow ? classificationArticleLeavesInOrder(categoryRow, cls) : []),
     [categoryRow, cls],
@@ -279,7 +275,14 @@ export function CategoryTradeDetailPage() {
     [categoryName, articleName, month, year, cls, trendCountries, goodsFilterToken],
   );
 
-  const related = useMemo(() => getRelatedCategories(categoryName), [categoryName]);
+  const related = useMemo(
+    () =>
+      categoryAnalysisRowsForClassification(cls)
+        .map((r) => r.category)
+        .filter((c) => c !== categoryName)
+        .slice(0, 4),
+    [categoryName, cls],
+  );
 
   const handleTrendCountryToggle = (country: string) => {
     if (country === "All Countries") {

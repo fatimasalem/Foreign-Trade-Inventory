@@ -41,7 +41,7 @@ import {
 } from "../components/ui/table";
 import { SectionIcon } from "../components/section-icon";
 import {
-  ALL_CATEGORY_ANALYSIS_ROWS,
+  categoryAnalysisRowsForClassification,
   categoryAnalysisRowMatchesSearch,
   classificationArticleDisplayRows,
   type CategoryAnalysisRow,
@@ -306,7 +306,7 @@ export function ObservePage() {
 
   const filteredCategoriesData = useMemo(() => {
     const cls = tableClassification as ClassificationKind;
-    return ALL_CATEGORY_ANALYSIS_ROWS.filter((item) => {
+    return categoryAnalysisRowsForClassification(cls).filter((item) => {
       if (tableTradeType !== "all" && item.type !== tableTradeType) return false;
       if (!categoryAnalysisRowMatchesSearch(item, cls, categoryAnalysisSearch)) return false;
       return true;
