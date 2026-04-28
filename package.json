@@ -7,7 +7,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "build:hs": "node scripts/build-hs-nomenclature.mjs"
+    "build:hs": "node scripts/build-hs-nomenclature.mjs",
+    "build:bec": "node scripts/build-bec-nomenclature.mjs"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

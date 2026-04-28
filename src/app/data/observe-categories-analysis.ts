@@ -1,4 +1,5 @@
 import { HS_SECTIONS, type HsSection } from "../../lib/hs-sections";
+import { getBecNomenclatureLeaves, getBecNomenclatureRoots } from "./bec-nomenclature-data";
 import { getHsNomenclatureForSectionNumber } from "./hs-nomenclature-data";
 
 export type ClassificationKind = "HS" | "BEC" | "SITC";
@@ -151,8 +152,8 @@ function hsArticlesForSection(sec: HsSection): ArticleMetric[] {
   return buildHsSectionArticlesAndTree(sec).articles;
 }
 
-/** BEC (Broad Economic Categories) style lines aligned to each HS1 theme from the HS list. */
-function becLabelsForSection(sec: HsSection): string[] {
+/** Fallback BEC labels if the nomenclature JSON is unavailable. */
+function becFallbackLabelsForSection(sec: HsSection): string[] {
   const t = sectionThemeText(sec).toLowerCase();
   const n = sec.number;
   const lines: string[] = [];
@@ -265,8 +266,16 @@ function sitcLabelsForSection(sec: HsSection): string[] {
   return lines.slice(0, Math.min(6, Math.max(4, sec.chapterCodes.length)));
 }
 
+function becLeafLabel(code: string, desc: string): string {
+  return `BEC${code} — ${desc}`;
+}
+
 function becArticlesForSection(sec: HsSection): ArticleMetric[] {
-  return becLabelsForSection(sec).map((label, i) => articleMetrics(sec.number, i, "BEC", label));
+  const leaves = getBecNomenclatureLeaves();
+  if (leaves.length === 0) {
+    return becFallbackLabelsForSection(sec).map((label, i) => articleMetrics(sec.number, i, "BEC", label));
+  }
+  return leaves.map((leaf, i) => articleMetrics(sec.number, i, "BEC", becLeafLabel(leaf.code, leaf.desc)));
 }
 
 function sitcArticlesForSection(sec: HsSection): ArticleMetric[] {
@@ -338,32 +347,6 @@ type HierarchyTreeNode = {
   children: HierarchyTreeNode[];
 };
 
-const BEC_MAIN_LABEL: Record<string, string> = {
-  "1": "BEC 1 — Food, beverages and tobacco",
-  "2": "BEC 2 — Industrial supplies not elsewhere specified",
-  "3": "BEC 3 — Fuels and lubricants",
-  "4": "BEC 4 — Capital goods (except transport equipment)",
-  "5": "BEC 5 — Transport equipment",
-  "6": "BEC 6 — Consumer goods",
-};
-
-/** BEC 2-digit subgroup titles (UN BEC structure). */
-const BEC_SUBGROUP_LABEL: Record<string, string> = {
-  "11": "BEC 11 — Primary food and beverages, mainly for industry",
-  "12": "BEC 12 — Processed food and beverages, mainly for industry",
-  "21": "BEC 21 — Primary industrial supplies n.e.s.",
-  "22": "BEC 22 — Processed industrial supplies n.e.s.",
-  "31": "BEC 31 — Primary fuels and lubricants",
-  "32": "BEC 32 — Processed fuels and lubricants",
-  "41": "BEC 41 — Capital goods (except transport equipment)",
-  "42": "BEC 42 — Parts and accessories of capital goods",
-  "51": "BEC 51 — Transport equipment",
-  "52": "BEC 52 — Parts and accessories of transport equipment",
-  "61": "BEC 61 — Durable consumer goods",
-  "62": "BEC 62 — Semi-durable consumer goods",
-  "63": "BEC 63 — Non-durable consumer goods",
-};
-
 const SITC_SECTION_TITLE: Record<number, string> = {
   0: "Food and live animals",
   1: "Beverages and tobacco",
@@ -402,83 +385,56 @@ function chapterKeyFromHsLabel(label: string): string | null {
   return null;
 }
 
-function ensureChild(nodes: HierarchyTreeNode[], id: string, label: string): HierarchyTreeNode {
-  let n = nodes.find((c) => c.id === id);
-  if (!n) {
-    n = { id, label, children: [] };
-    nodes.push(n);
-  }
-  return n;
-}
+/** BEC: nomenclature root -> main category -> subgroup -> product line (leaf). */
+function buildBecHierarchyWrapped(articles: ArticleMetric[]): HierarchyTreeNode[] {
+  const roots = getBecNomenclatureRoots();
+  if (roots.length === 0) return [];
 
-function sortBecTree(nodes: HierarchyTreeNode[]): HierarchyTreeNode[] {
-  const key = (id: string) => {
-    const m = /(\d+)$/.exec(id);
-    return m ? parseInt(m[1], 10) : 0;
-  };
-  return [...nodes]
-    .sort((a, b) => key(a.id) - key(b.id))
-    .map((n) => ({
-      ...n,
-      children: sortBecTree(n.children),
-    }));
-}
+  const metricByLabel = new Map(articles.map((a) => [a.label, a]));
+  const usedLabels = new Set<string>();
 
-function buildBecHierarchy(articles: ArticleMetric[]): HierarchyTreeNode[] {
-  const roots: HierarchyTreeNode[] = [];
-  const orphans: ArticleMetric[] = [];
+  const children: HierarchyTreeNode[] = roots.map((b1) => ({
+    id: `bec-1-${b1.code}`,
+    label: `BEC ${b1.code} — ${b1.desc}`,
+    children: b1.bec2.map((b2) => ({
+      id: `bec-2-${b1.code}-${b2.code}`,
+      label: `BEC ${b2.code} — ${b2.desc}`,
+      children: b2.bec3.flatMap((b3) => {
+        const label = becLeafLabel(b3.code, b3.desc);
+        const metric = metricByLabel.get(label);
+        if (!metric) return [];
+        usedLabels.add(label);
+        return [
+          {
+            id: `bec-3-${b1.code}-${b2.code}-${b3.code}`,
+            label,
+            metric,
+            children: [],
+          },
+        ];
+      }),
+    })),
+  }));
 
-  for (const article of articles) {
-    const digits = parseBecDigits(article.label);
-    if (!digits) {
-      orphans.push(article);
-      continue;
-    }
-    const d1 = digits[0];
-    const mainLabel = BEC_MAIN_LABEL[d1] ?? `BEC ${d1} — BEC category`;
-    const root = ensureChild(roots, `bec-${d1}`, mainLabel);
-
-    if (digits.length === 2) {
-      root.children.push({
-        id: `bec-${digits}-leaf-${strSeed(article.label)}`,
-        label: article.label,
-        metric: article,
+  const orphans = articles.filter((a) => !usedLabels.has(a.label));
+  if (orphans.length > 0) {
+    children.push({
+      id: "bec-unmapped",
+      label: "BEC — Unmapped lines",
+      children: orphans.map((a) => ({
+        id: `bec-orphan-${strSeed(a.label)}`,
+        label: a.label,
+        metric: a,
         children: [],
-      });
-    } else {
-      const d2 = digits.slice(0, 2);
-      const midLabel = BEC_SUBGROUP_LABEL[d2] ?? `BEC ${d2} — BEC subgroup`;
-      const mid = ensureChild(root.children, `bec-${d1}-${d2}`, midLabel);
-      mid.children.push({
-        id: `bec-${digits}-leaf-${strSeed(article.label)}`,
-        label: article.label,
-        metric: article,
-        children: [],
-      });
-    }
-  }
-
-  const sorted = sortBecTree(roots);
-  for (const a of orphans) {
-    sorted.push({
-      id: `bec-orphan-${strSeed(a.label)}`,
-      label: a.label,
-      metric: a,
-      children: [],
+      })),
     });
   }
-  return sorted;
-}
 
-/** BEC: nomenclature root → main category → subgroup → product line (leaf). */
-function buildBecHierarchyWrapped(articles: ArticleMetric[]): HierarchyTreeNode[] {
-  const inner = buildBecHierarchy(articles);
-  if (inner.length === 0) return [];
   return [
     {
       id: "bec-nomenclature-root",
-      label: "BEC — Broad Economic Categories (Rev.4)",
-      children: inner,
+      label: "BEC — Broad Economic Categories",
+      children,
     },
   ];
 }
