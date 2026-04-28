@@ -627,6 +627,12 @@ export function categoryAnalysisRowMatchesSearch(
   for (const currentKind of kinds) {
     if (visitedKinds.has(currentKind)) continue;
     visitedKinds.add(currentKind);
+    for (const article of getArticlesRaw(row, currentKind)) {
+      hay.push(article.label, article.risk, article.weight, article.mom, article.yoy);
+      if (currentKind === "HS") {
+        hay.push(`HS ${article.label}`);
+      }
+    }
     for (const r of classificationArticleDisplayRows(row, currentKind)) {
       if (r.kind === "node") {
         hay.push(r.label);
