@@ -794,8 +794,8 @@ export function GlobalTradeMap() {
         <div className="flex items-center gap-3">
           <SectionIcon icon={MapPinned} tone="sky" size="md" />
           <div>
-            <h2 className="m-0 text-lg font-semibold leading-snug text-slate-100">Global Trade Distribution</h2>
-            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+            <h2 className="m-0 text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Global Trade Distribution</h2>
+            <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
               Partner flows and corridor intensity
             </p>
           </div>

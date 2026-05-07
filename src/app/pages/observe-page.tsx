@@ -120,18 +120,20 @@ function FlippableCard({ icon, label, value, change, subtitle, unit, insight }: 
       >
         {/* Front */}
         <div
-          className="absolute w-full h-full backface-hidden bg-white rounded-lg p-6 border border-gray-200 flex flex-col"
+          className="absolute w-full h-full backface-hidden rounded-xl border border-[#335175] bg-[#112d4c] p-4 flex flex-col"
           style={{ backfaceVisibility: "hidden" }}
         >
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2">
             {icon}
-            <span className="text-sm text-gray-600">{label}</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">{label}</span>
           </div>
-          <div className="text-2xl font-semibold text-gray-900">{value}</div>
-          <div className={`text-sm mt-1 ${isPositive ? "text-green-600" : "text-gray-600"}`}>{change}</div>
-          <div className="text-xs text-gray-400 mt-1">{unit}</div>
-          <div className="mt-auto pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="mt-3 text-2xl font-semibold text-white">{value}</div>
+          <div className={`mt-1 text-sm font-semibold ${isPositive ? "text-emerald-300" : "text-slate-300"}`}>
+            {change}
+          </div>
+          <div className="mt-1 text-xs text-slate-400">{unit}</div>
+          <div className="mt-auto pt-3 border-t border-[#2f4b70]">
+            <div className="flex items-center gap-1 text-xs text-slate-400">
               <Lightbulb className="h-3 w-3" />
               <span>Click to see insights</span>
             </div>
@@ -140,18 +142,18 @@ function FlippableCard({ icon, label, value, change, subtitle, unit, insight }: 
 
         {/* Back */}
         <div 
-          className="absolute w-full h-full backface-hidden bg-blue-50 rounded-lg p-4 border border-blue-200"
+          className="absolute w-full h-full backface-hidden rounded-xl border border-[#3d5b80] bg-[#0f2745] p-4"
           style={{ 
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)"
           }}
         >
           <div className="flex flex-col h-full">
-            <div className="text-xs font-medium text-blue-900 mb-2">Insight</div>
-            <p className="text-xs text-blue-800 leading-relaxed flex-1">
+            <div className="mb-2 text-[10px] font-medium uppercase tracking-wide text-cyan-300">Insight</div>
+            <p className="flex-1 text-xs leading-relaxed text-slate-300">
               {insight}
             </p>
-            <div className="text-xs text-blue-600 mt-2">Click to flip back</div>
+            <div className="mt-2 text-xs text-slate-400">Click to flip back</div>
           </div>
         </div>
       </div>
@@ -381,24 +383,27 @@ export function ObservePage() {
       </div>
 
       {/* Monthly Trend */}
-      <div className="bg-white rounded-lg p-6 border border-gray-200">
+      <div className="rounded-xl border border-[#335175] bg-[#112d4c] p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <SectionIcon icon={Activity} tone="slate" />
             <div>
-              <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Monthly Trade Trend</h3>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+              <h3 className="text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Monthly Trade Trend</h3>
+              <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
                 Time-series trade movement
               </p>
-              <p className="text-xs text-gray-500 mt-1">All amounts displayed in billions AED</p>
+              <p className="text-xs text-slate-400 mt-1">All amounts displayed in billions AED</p>
             </div>
           </div>
           <div className="flex gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Country</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Country</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-[180px] justify-between text-sm">
+                  <Button
+                    variant="outline"
+                    className="w-[180px] justify-between border-[#3b5b82] bg-[#112d4c] text-sm text-slate-100 hover:bg-[#143252] hover:text-slate-100"
+                  >
                     {selectedCountries.length === 1
                       ? selectedCountries[0]
                       : `${selectedCountries.length} countries selected`}
@@ -426,9 +431,9 @@ export function ObservePage() {
               </Popover>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Month</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Month</label>
               <Select value={month} onValueChange={setMonth}>
-                <SelectTrigger className="w-[120px]">
+                <SelectTrigger className="w-[120px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -440,9 +445,9 @@ export function ObservePage() {
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Year</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Year</label>
               <Select value={year} onValueChange={setYear}>
-                <SelectTrigger className="w-[100px]">
+                <SelectTrigger className="w-[100px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -457,15 +462,22 @@ export function ObservePage() {
         </div>
         <ResponsiveContainer width="100%" height={350}>
           <LineChart data={monthlyTrend}>
-            <CartesianGrid strokeDasharray="3 3" key="grid" />
-            <XAxis dataKey="month" key="xaxis" />
-            <YAxis label={{ value: 'AED Billions', angle: -90, position: 'insideLeft' }} key="yaxis" />
+            <CartesianGrid stroke="#2f4b70" strokeDasharray="3 3" key="grid" />
+            <XAxis dataKey="month" tick={{ fill: "#cbd5e1", fontSize: 12 }} axisLine={{ stroke: "#3b5b82" }} tickLine={{ stroke: "#3b5b82" }} key="xaxis" />
+            <YAxis
+              tick={{ fill: "#cbd5e1", fontSize: 12 }}
+              axisLine={{ stroke: "#3b5b82" }}
+              tickLine={{ stroke: "#3b5b82" }}
+              label={{ value: "AED Billions", angle: -90, position: "insideLeft", fill: "#94a3b8" }}
+              key="yaxis"
+            />
             <Tooltip
               key="tooltip"
               formatter={(value: number) => `${value.toFixed(1)}B AED`}
-              contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb' }}
+              contentStyle={{ backgroundColor: "#0f2745", border: "1px solid #3b5b82", color: "#e2e8f0" }}
+              labelStyle={{ color: "#e2e8f0" }}
             />
-            <Legend key="legend" />
+            <Legend key="legend" wrapperStyle={{ color: "#cbd5e1" }} />
             <Line
               type="monotone"
               dataKey="imports"
@@ -499,24 +511,27 @@ export function ObservePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Export Categories */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <div className="rounded-xl border border-[#335175] bg-[#112d4c] p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <SectionIcon icon={TrendingUp} tone="green" />
               <div>
-                <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Top Export Categories</h3>
-                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                <h3 className="text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Top Export Categories</h3>
+                <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
                   Leading outbound product groups
                 </p>
-                <p className="text-xs text-gray-500 mt-1">All amounts displayed in billions AED</p>
+                <p className="text-xs text-slate-400 mt-1">All amounts displayed in billions AED</p>
               </div>
             </div>
             <div className="flex flex-wrap items-end gap-2">
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Country</label>
+                <label className="mb-1 block text-xs font-medium text-slate-300">Country</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[160px] justify-between text-sm">
+                    <Button
+                      variant="outline"
+                      className="w-[160px] justify-between border-[#3b5b82] bg-[#112d4c] text-sm text-slate-100 hover:bg-[#143252] hover:text-slate-100"
+                    >
                       {exportSelectedCountries.length === 1
                         ? exportSelectedCountries[0]
                         : `${exportSelectedCountries.length} countries selected`}
@@ -545,7 +560,7 @@ export function ObservePage() {
               </div>
               <div>
                 <Select value={exportClassification} onValueChange={setExportClassification}>
-                  <SelectTrigger className="w-[90px]">
+                  <SelectTrigger className="w-[90px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -557,7 +572,7 @@ export function ObservePage() {
               </div>
               <div>
                 <Select value={exportMonth} onValueChange={setExportMonth}>
-                  <SelectTrigger className="w-[110px]">
+                  <SelectTrigger className="w-[110px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -570,7 +585,7 @@ export function ObservePage() {
               </div>
               <div>
                 <Select value={exportYear} onValueChange={setExportYear}>
-                  <SelectTrigger className="w-[90px]">
+                  <SelectTrigger className="w-[90px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -589,11 +604,11 @@ export function ObservePage() {
               return (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900 text-sm">{item.category}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">AED {item.value}B</div>
+                    <div className="text-sm font-medium text-slate-100">{item.category}</div>
+                    <div className="mt-0.5 text-xs text-slate-400">AED {item.value}B</div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div className="h-2 w-32 rounded-full bg-[#2f4b70]">
                       <div
                         className={`h-2 rounded-full ${isPositive ? "bg-green-600" : "bg-red-600"}`}
                         style={{ width: `${(item.value / 10) * 100}%` }}
@@ -614,24 +629,27 @@ export function ObservePage() {
         </div>
 
         {/* Top Import Categories */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <div className="rounded-xl border border-[#335175] bg-[#112d4c] p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <SectionIcon icon={Package} tone="red" />
               <div>
-                <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Top Import Categories</h3>
-                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                <h3 className="text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Top Import Categories</h3>
+                <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
                   Leading inbound product groups
                 </p>
-                <p className="text-xs text-gray-500 mt-1">All amounts displayed in billions AED</p>
+                <p className="text-xs text-slate-400 mt-1">All amounts displayed in billions AED</p>
               </div>
             </div>
             <div className="flex flex-wrap items-end gap-2">
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Country</label>
+                <label className="mb-1 block text-xs font-medium text-slate-300">Country</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[160px] justify-between text-sm">
+                    <Button
+                      variant="outline"
+                      className="w-[160px] justify-between border-[#3b5b82] bg-[#112d4c] text-sm text-slate-100 hover:bg-[#143252] hover:text-slate-100"
+                    >
                       {importSelectedCountries.length === 1
                         ? importSelectedCountries[0]
                         : `${importSelectedCountries.length} countries selected`}
@@ -660,7 +678,7 @@ export function ObservePage() {
               </div>
               <div>
                 <Select value={importClassification} onValueChange={setImportClassification}>
-                  <SelectTrigger className="w-[90px]">
+                  <SelectTrigger className="w-[90px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -672,7 +690,7 @@ export function ObservePage() {
               </div>
               <div>
                 <Select value={importMonth} onValueChange={setImportMonth}>
-                  <SelectTrigger className="w-[110px]">
+                  <SelectTrigger className="w-[110px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -685,7 +703,7 @@ export function ObservePage() {
               </div>
               <div>
                 <Select value={importYear} onValueChange={setImportYear}>
-                  <SelectTrigger className="w-[90px]">
+                  <SelectTrigger className="w-[90px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -702,11 +720,11 @@ export function ObservePage() {
             {topImportCategories.map((item, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900 text-sm">{item.category}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">AED {item.value}B</div>
+                  <div className="text-sm font-medium text-slate-100">{item.category}</div>
+                  <div className="mt-0.5 text-xs text-slate-400">AED {item.value}B</div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div className="h-2 w-32 rounded-full bg-[#2f4b70]">
                     <div
                       className="h-2 rounded-full bg-green-600"
                       style={{ width: `${(item.value / 15) * 100}%` }}
@@ -727,21 +745,21 @@ export function ObservePage() {
             <div className="flex items-center gap-2">
               <SectionIcon icon={BarChart3} tone="slate" />
               <div>
-                <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Categories Analysis</h3>
-                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                <h3 className="text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Categories Analysis</h3>
+                <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
                   Deep-dive category diagnostics
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Detailed breakdown of trade categories</p>
+                <p className="text-xs text-slate-400 mt-1">Detailed breakdown of trade categories</p>
               </div>
             </div>
             <div className="flex flex-wrap items-end gap-2">
               <div className="w-full min-w-0 sm:w-56 sm:min-w-[14rem]">
-                <label className="text-xs font-medium text-gray-700 mb-1 block" htmlFor="category-analysis-search">
+                <label className="mb-1 block text-xs font-medium text-slate-300" htmlFor="category-analysis-search">
                   Search
                 </label>
                 <div className="relative">
                   <Search
-                    className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                    className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
                     aria-hidden
                   />
                   <Input
@@ -750,15 +768,15 @@ export function ObservePage() {
                     placeholder="Search main row and expanded classification lines…"
                     value={categoryAnalysisSearch}
                     onChange={(e) => setCategoryAnalysisSearch(e.target.value)}
-                    className="h-9 pl-8 text-sm"
+                    className="h-9 border-[#3b5b82] bg-[#112d4c] pl-8 text-sm text-slate-100 placeholder:text-slate-500"
                     aria-label="Search categories in the analysis table"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Trade Type</label>
+                <label className="mb-1 block text-xs font-medium text-slate-300">Trade Type</label>
                 <Select value={tableTradeType} onValueChange={setTableTradeType}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-[140px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -769,9 +787,9 @@ export function ObservePage() {
                 </Select>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Classification</label>
+                <label className="mb-1 block text-xs font-medium text-slate-300">Classification</label>
                 <Select value={tableClassification} onValueChange={setTableClassification}>
-                  <SelectTrigger className="w-[90px]">
+                  <SelectTrigger className="w-[90px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -782,10 +800,13 @@ export function ObservePage() {
                 </Select>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Country</label>
+                <label className="mb-1 block text-xs font-medium text-slate-300">Country</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[140px] justify-between text-sm">
+                    <Button
+                      variant="outline"
+                      className="w-[140px] justify-between border-[#3b5b82] bg-[#112d4c] text-sm text-slate-100 hover:bg-[#143252] hover:text-slate-100"
+                    >
                       {tableSelectedCountries.length === 1
                         ? tableSelectedCountries[0]
                         : `${tableSelectedCountries.length} selected`}
@@ -813,9 +834,9 @@ export function ObservePage() {
                 </Popover>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Month</label>
+                <label className="mb-1 block text-xs font-medium text-slate-300">Month</label>
                 <Select value={tableMonth} onValueChange={setTableMonth}>
-                  <SelectTrigger className="w-[110px]">
+                  <SelectTrigger className="w-[110px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -827,9 +848,9 @@ export function ObservePage() {
                 </Select>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Year</label>
+                <label className="mb-1 block text-xs font-medium text-slate-300">Year</label>
                 <Select value={tableYear} onValueChange={setTableYear}>
-                  <SelectTrigger className="w-[90px]">
+                  <SelectTrigger className="w-[90px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -872,10 +893,7 @@ export function ObservePage() {
           <TableBody>
             {filteredCategoriesData.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="h-24 text-center text-sm text-gray-500"
-                >
+                <TableCell colSpan={7} className="text-center text-sm text-gray-500 py-10">
                   No categories match your search. Try a different term or clear the search.
                 </TableCell>
               </TableRow>
@@ -906,7 +924,7 @@ export function ObservePage() {
 
               return (
                 <Fragment key={rowKey}>
-                  <TableRow className="hover:bg-gray-50/80">
+                  <TableRow className="cursor-pointer hover:bg-gray-50 transition-colors">
                     <TableCell className="w-10 p-1 align-middle">
                       {displayRows.length > 0 ? (
                         <Button
@@ -926,7 +944,7 @@ export function ObservePage() {
                         </Button>
                       ) : null}
                     </TableCell>
-                    <TableCell className="font-medium text-gray-900">{formatCategoryLabel(item.category)}</TableCell>
+                    <TableCell className="font-medium">{formatCategoryLabel(item.category)}</TableCell>
                     <TableCell className="text-right tabular-nums">{item.weight}</TableCell>
                     <TableCell className={`text-right font-medium tabular-nums ${momPositive ? "text-green-600" : "text-red-600"}`}>
                       {item.mom}
@@ -935,12 +953,12 @@ export function ObservePage() {
                       {item.yoy}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{item.volume}</TableCell>
-                    <TableCell className="p-2 w-[8%] text-right align-middle">
+                    <TableCell className="text-right">
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 ml-auto text-gray-400 hover:text-slate-800 hover:bg-slate-100"
+                        className="h-8 w-8 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                         onClick={goToCategoryDetail}
                         aria-label={`Open details for ${item.category}`}
                       >
@@ -967,7 +985,7 @@ export function ObservePage() {
                         return (
                           <TableRow
                             key={`${rowKey}-hdr-${nestedKey}`}
-                            className="cursor-pointer bg-slate-50/50 hover:bg-slate-100/80"
+                            className="cursor-pointer hover:bg-gray-50 transition-colors"
                             onClick={() => toggleNestedCollapsed(nestedKey)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
@@ -990,7 +1008,7 @@ export function ObservePage() {
                               </div>
                             </TableCell>
                             <TableCell colSpan={6} className={`${padClass} py-2`}>
-                              <span className="text-sm font-semibold text-slate-700">{formatCategoryLabel(row.label)}</span>
+                              <span className="text-sm font-semibold text-gray-800">{formatCategoryLabel(row.label)}</span>
                             </TableCell>
                           </TableRow>
                         );
@@ -1000,7 +1018,7 @@ export function ObservePage() {
                       return (
                         <TableRow
                           key={`${rowKey}-${nestedKey}-${article.label}`}
-                          className="cursor-pointer bg-slate-50/80 hover:bg-slate-100/90"
+                          className="cursor-pointer hover:bg-gray-50 transition-colors"
                           onClick={() => goToArticle(article.label)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Bot, LineChart as LineChartIcon, PieChart } from "lucide-react";
+import { Bot, ChevronDown, LineChart as LineChartIcon, PieChart } from "lucide-react";
 import { SectionIcon } from "../components/section-icon";
 import { useAIAssistant } from "../contexts/ai-assistant-context";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -409,14 +409,20 @@ export function DiagnosePage() {
   const getRiskBadgeColor = (riskLevel: string) => {
     switch (riskLevel) {
       case "critical":
-        return "bg-red-100 text-red-800";
+        return "border border-rose-500/50 bg-rose-500/15 text-rose-300";
       case "warning":
-        return "bg-yellow-100 text-yellow-800";
+        return "border border-amber-500/50 bg-amber-500/15 text-amber-300";
       case "watch":
-        return "bg-blue-100 text-blue-800";
+        return "border border-cyan-500/50 bg-cyan-500/15 text-cyan-300";
       default:
-        return "bg-green-100 text-green-800";
+        return "border border-emerald-500/50 bg-emerald-500/15 text-emerald-300";
     }
+  };
+
+  const getDialogChangeColor = (value: string) => {
+    if (value.startsWith("+")) return "text-emerald-300";
+    if (value.startsWith("-")) return "text-rose-300";
+    return "text-slate-300";
   };
 
   const getChangeColor = (value: string) => {
@@ -641,8 +647,8 @@ export function DiagnosePage() {
             <div className="flex items-center gap-2">
               <SectionIcon icon={PieChart} tone="slate" />
               <div>
-                <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Category Analysis</h3>
-                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                <h3 className="m-0 text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Category Analysis</h3>
+                <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
                   Risk and performance diagnostics
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
@@ -651,11 +657,11 @@ export function DiagnosePage() {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Classification</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Classification</label>
               <Select value={classification} onValueChange={(value) => setClassification(value as Classification)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -666,9 +672,9 @@ export function DiagnosePage() {
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Foreign Trade Type</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Foreign Trade Type</label>
               <Select value={foreignTradeType} onValueChange={setForeignTradeType}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -680,14 +686,18 @@ export function DiagnosePage() {
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Country</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Country</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between text-sm">
+                  <button
+                    type="button"
+                    className="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-[#3b5b82] bg-[#112d4c] px-3 py-2 text-sm whitespace-nowrap text-slate-100 transition-[color,box-shadow] outline-none hover:bg-[#143252] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  >
                     {selectedCountries.length === 1
                       ? selectedCountries[0]
                       : `${selectedCountries.length} countries selected`}
-                  </Button>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[200px] p-3">
                   <div className="space-y-2">
@@ -711,9 +721,9 @@ export function DiagnosePage() {
               </Popover>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Trade Type</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Trade Type</label>
               <Select value={tradeType} onValueChange={setTradeType}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -725,9 +735,9 @@ export function DiagnosePage() {
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Month</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Month</label>
               <Select value={month} onValueChange={setMonth}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -739,9 +749,9 @@ export function DiagnosePage() {
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Year</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Year</label>
               <Select value={year} onValueChange={setYear}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -814,23 +824,23 @@ export function DiagnosePage() {
 
       {/* Trend Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-[min(94vw,56rem)] max-w-5xl sm:max-w-5xl">
+        <DialogContent className="w-[min(94vw,56rem)] max-w-5xl border-[#2a3d5f] bg-[#0a1d35] text-slate-100 sm:max-w-5xl">
           <DialogHeader>
-            <DialogTitle className="text-xl">
+            <DialogTitle className="text-2xl font-semibold tracking-tight text-cyan-300">
               {selectedCategory && getCategoryName(selectedCategory)}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-slate-300">
               Trade trend analysis and risk assessment for this category
             </DialogDescription>
           </DialogHeader>
           {selectedCategory && (
             <div className="space-y-4">
               {/* Risk Information */}
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="rounded-xl border border-[#335175] bg-[#112d4c] p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-medium text-gray-700">Risk Level:</span>
+                      <span className="text-sm font-medium text-slate-300">Risk Level:</span>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskBadgeColor(
                           selectedCategory.riskLevel
@@ -839,15 +849,15 @@ export function DiagnosePage() {
                         {selectedCategory.risk}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Cause:</span> {selectedCategory.riskCause}
+                    <p className="text-sm text-slate-300">
+                      <span className="font-medium text-slate-100">Cause:</span> {selectedCategory.riskCause}
                     </p>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleAskAI}
-                    className="gap-2 shrink-0 text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
+                    className="gap-2 shrink-0 border-[#3d5b80] bg-[#0f2745] text-cyan-200 hover:bg-[#143252] hover:text-cyan-100"
                   >
                     <Bot className="h-4 w-4" />
                     Ask AI
@@ -856,25 +866,35 @@ export function DiagnosePage() {
               </div>
 
               {/* Trend Chart */}
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Trade Trend (Last 6 Months)</h4>
+              <div className="rounded-xl border border-[#335175] bg-[#112d4c] p-4">
+                <h4 className="mb-3 font-semibold text-white">Trade Trend (Last 6 Months)</h4>
                 <ResponsiveContainer width="100%" height={350}>
                   <LineChart
                     data={generateTrendData(selectedCategory)}
                     id="category-trend-chart"
                   >
-                    <CartesianGrid strokeDasharray="3 3" key="grid" />
-                    <XAxis dataKey="month" key="xaxis" />
+                    <CartesianGrid stroke="#2f4b70" strokeDasharray="3 3" key="grid" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fill: "#cbd5e1", fontSize: 12 }}
+                      axisLine={{ stroke: "#3b5b82" }}
+                      tickLine={{ stroke: "#3b5b82" }}
+                      key="xaxis"
+                    />
                     <YAxis
                       key="yaxis"
-                      label={{ value: 'AED Billions', angle: -90, position: 'insideLeft' }}
+                      tick={{ fill: "#cbd5e1", fontSize: 12 }}
+                      axisLine={{ stroke: "#3b5b82" }}
+                      tickLine={{ stroke: "#3b5b82" }}
+                      label={{ value: "AED Billions", angle: -90, position: "insideLeft", fill: "#94a3b8" }}
                     />
                     <Tooltip
                       key="tooltip"
                       formatter={(value: number) => `${value.toFixed(1)}B AED`}
-                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb' }}
+                      contentStyle={{ backgroundColor: "#0f2745", border: "1px solid #3b5b82", color: "#e2e8f0" }}
+                      labelStyle={{ color: "#e2e8f0" }}
                     />
-                    <Legend key="legend" />
+                    <Legend key="legend" wrapperStyle={{ color: "#cbd5e1" }} />
                     <Line
                       key="line-import"
                       type="monotone"
@@ -908,15 +928,15 @@ export function DiagnosePage() {
 
               {/* Statistics */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <div className="text-xs text-blue-600 mb-1">Month-over-Month</div>
-                  <div className={`text-xl font-semibold ${getChangeColor(selectedCategory.mom)}`}>
+                <div className="rounded-xl border border-[#335175] bg-[#112d4c] p-4">
+                  <div className="mb-1 text-xs text-slate-400">Month-over-Month</div>
+                  <div className={`text-xl font-semibold ${getDialogChangeColor(selectedCategory.mom)}`}>
                     {selectedCategory.mom}
                   </div>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                  <div className="text-xs text-purple-600 mb-1">Year-over-Year</div>
-                  <div className={`text-xl font-semibold ${getChangeColor(selectedCategory.yoy)}`}>
+                <div className="rounded-xl border border-[#335175] bg-[#112d4c] p-4">
+                  <div className="mb-1 text-xs text-slate-400">Year-over-Year</div>
+                  <div className={`text-xl font-semibold ${getDialogChangeColor(selectedCategory.yoy)}`}>
                     {selectedCategory.yoy}
                   </div>
                 </div>

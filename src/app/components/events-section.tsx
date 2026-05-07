@@ -51,8 +51,8 @@ export function EventsSection() {
         <div className="flex items-center gap-3">
           <SectionIcon icon={Newspaper} tone="violet" size="md" />
           <div>
-            <h3 className="m-0 text-lg font-semibold leading-snug text-slate-100">Events & Impact</h3>
-            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+            <h3 className="m-0 text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Events & Impact</h3>
+            <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
               Geopolitical and policy developments
             </p>
           </div>

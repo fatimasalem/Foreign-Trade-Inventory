@@ -32,6 +32,7 @@ const TRADE_SCOPE_KIND_OPTIONS: { value: TradeScopeKind; label: string }[] = [
 const CONTINENT_TARGETS = ["All", "Asia", "Europe", "Africa", "Americas", "Oceania", "Middle East"] as const;
 
 const COUNTRY_TARGETS = [
+  "All",
   "India",
   "China",
   "USA",
@@ -220,6 +221,8 @@ export function GlobeTradePerformanceSection({
   const scopeHeadingSuffix =
     tradeScopeKind === "continent" && tradeScopeTarget === "All"
       ? "All continents"
+      : tradeScopeKind === "country" && tradeScopeTarget === "All"
+        ? "All countries"
       : tradeScopeKind === "gcc" && tradeScopeTarget === "All"
         ? "All GCC"
         : tradeScopeTarget;
@@ -242,6 +245,14 @@ export function GlobeTradePerformanceSection({
       };
     }
     if (tradeScopeKind === "country") {
+      if (tradeScopeTarget === "All") {
+        return {
+          hero: "trade across all partner countries",
+          card: "all country-level partner corridors",
+          labelDest: "Top destinations",
+          labelSources: "Source countries",
+        };
+      }
       return {
         hero: `bilateral trade with ${tradeScopeTarget}`,
         card: `bilateral flows with ${tradeScopeTarget}`,

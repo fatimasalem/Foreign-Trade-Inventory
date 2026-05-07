@@ -285,10 +285,10 @@ export function UAETradeMap() {
           <div className="flex items-center gap-2 mb-2">
             <SectionIcon icon={Anchor} tone="sky" />
             <div>
-              <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">
+              <h3 className="m-0 text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">
                 UAE Trade Distribution - Abu Dhabi Ports
               </h3>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+              <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
                 Port-level corridor performance
               </p>
             </div>
@@ -305,11 +305,11 @@ export function UAETradeMap() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-6 md:grid-cols-3 lg:grid-cols-6">
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Classification</label>
+          <label className="mb-1 block text-xs font-medium text-slate-300">Classification</label>
           <Select value={classification} onValueChange={setClassification}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -320,9 +320,9 @@ export function UAETradeMap() {
           </Select>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Foreign Trade Type</label>
+          <label className="mb-1 block text-xs font-medium text-slate-300">Foreign Trade Type</label>
           <Select value={foreignTradeType} onValueChange={setForeignTradeType}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -334,9 +334,9 @@ export function UAETradeMap() {
           </Select>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Port</label>
+          <label className="mb-1 block text-xs font-medium text-slate-300">Port</label>
           <Select value={selectedPort} onValueChange={setSelectedPort}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -353,9 +353,9 @@ export function UAETradeMap() {
           </Select>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Transport Type</label>
+          <label className="mb-1 block text-xs font-medium text-slate-300">Transport Type</label>
           <Select value={transportType} onValueChange={setTransportType}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -367,9 +367,9 @@ export function UAETradeMap() {
           </Select>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Month</label>
+          <label className="mb-1 block text-xs font-medium text-slate-300">Month</label>
           <Select value={month} onValueChange={setMonth}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -381,9 +381,9 @@ export function UAETradeMap() {
           </Select>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-700 mb-1 block">Year</label>
+          <label className="mb-1 block text-xs font-medium text-slate-300">Year</label>
           <Select value={year} onValueChange={setYear}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full border-[#3b5b82] bg-[#112d4c] text-slate-100">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -516,10 +516,10 @@ export function UAETradeMap() {
                     ref={(el) => {
                       portCardRefs.current[port.id] = el;
                     }}
-                    className={`scroll-mt-1 rounded-lg border-2 p-3 transition-[box-shadow,background-color] ${
+                    className={`scroll-mt-1 rounded-lg border p-3 transition-[box-shadow,background-color,border-color] ${
                       active
-                        ? "border-blue-600 bg-sky-50/95 shadow-md"
-                        : "border-gray-200 bg-white shadow-sm"
+                        ? "border-cyan-400/70 bg-[#17385b] shadow-[0_8px_20px_rgba(7,24,46,0.45)]"
+                        : "border-[#355279] bg-[#112d4c] shadow-sm"
                     }`}
                   >
                     <button
@@ -527,19 +527,19 @@ export function UAETradeMap() {
                       onClick={() => setMapSelectedPortId((id) => (id === port.id ? null : port.id))}
                       className="w-full text-left"
                     >
-                      <div className="text-xs font-semibold text-gray-800 mb-2">{port.name}</div>
+                      <div className="mb-2 text-xs font-semibold text-slate-100">{port.name}</div>
                       <div className="space-y-1.5">
                         {isCritical
                           ? base.affectedCategories.map((ac, i) => (
                               <div key={i} className="flex justify-between gap-2 text-xs">
-                                <span className="text-gray-700">{stripClassificationCode(ac.name)}</span>
+                                <span className="text-slate-300">{stripClassificationCode(ac.name)}</span>
                                 <span className="font-semibold text-red-600 shrink-0">{ac.impact}</span>
                               </div>
                             ))
                           : base.topCategories.map((row, i) => (
                               <div key={i} className="flex justify-between gap-2 text-xs">
-                                <span className="text-gray-700">{stripClassificationCode(categoryLabel(row))}</span>
-                                <span className="font-medium text-gray-900 shrink-0">{row.value}</span>
+                                <span className="text-slate-300">{stripClassificationCode(categoryLabel(row))}</span>
+                                <span className="font-medium text-slate-100 shrink-0">{row.value}</span>
                               </div>
                             ))}
                       </div>
@@ -547,7 +547,7 @@ export function UAETradeMap() {
                     <button
                       type="button"
                       onClick={() => handleAskAIPort(port.name, isCritical)}
-                      className="mt-2 w-full flex items-center justify-center gap-1 text-purple-600 hover:text-purple-700 text-xs py-1.5 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+                      className="mt-2 flex w-full items-center justify-center gap-1 rounded border border-[#3d5b80] bg-[#0f2745] py-1.5 text-xs text-cyan-200 transition-colors hover:bg-[#143252] hover:text-cyan-100"
                     >
                       <MessageSquare className="h-3 w-3" />
                       Ask AI
