@@ -40,18 +40,18 @@ export function DriverSection({ title, drivers }: DriverSectionProps) {
   const getImpactColor = (impact: Driver["impact"]) => {
     switch (impact) {
       case "positive":
-        return "bg-green-50 border-green-200";
+        return "bg-[#123453] border-[#2f5f86]";
       case "negative":
-        return "bg-red-50 border-red-200";
+        return "bg-[#3d2438] border-[#75476d]";
       case "neutral":
-        return "bg-gray-50 border-gray-200";
+        return "bg-[#1a314d] border-[#3b5d82]";
     }
   };
 
   const isGlobal = title === "Global Drivers";
 
   return (
-    <div className="bg-white rounded-lg p-6 border border-gray-200">
+    <div className="rounded-xl border border-[#2e4567] bg-[#0c213b] p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           {isGlobal ? (
@@ -59,12 +59,17 @@ export function DriverSection({ title, drivers }: DriverSectionProps) {
           ) : (
             <SectionIcon icon={Factory} tone="amber" size="md" />
           )}
-          <h3 className="font-semibold text-lg text-gray-900 leading-snug m-0">{title}</h3>
+          <div>
+            <h3 className="m-0 text-lg font-semibold leading-snug text-slate-100">{title}</h3>
+            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+              {isGlobal ? "External macro signals" : "Domestic market signals"}
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <div>
             <Select value={month} onValueChange={setMonth}>
-              <SelectTrigger className="w-[110px]">
+              <SelectTrigger className="w-[110px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -85,7 +90,7 @@ export function DriverSection({ title, drivers }: DriverSectionProps) {
           </div>
           <div>
             <Select value={year} onValueChange={setYear}>
-              <SelectTrigger className="w-[90px]">
+              <SelectTrigger className="w-[90px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -103,19 +108,19 @@ export function DriverSection({ title, drivers }: DriverSectionProps) {
         {drivers.map((driver, index) => (
           <div
             key={index}
-            className={`p-3 rounded-lg border ${getImpactColor(driver.impact)}`}
+            className={`rounded-lg border p-3 ${getImpactColor(driver.impact)}`}
           >
             <div className="flex items-start gap-3">
               <div className="mt-0.5">{getImpactIcon(driver.impact)}</div>
               <div className="flex-1">
-                <div className="font-medium text-gray-900 mb-1">{driver.name}</div>
-                <div className="text-sm text-gray-600">{driver.description}</div>
+                <div className="mb-1 font-medium text-slate-100">{driver.name}</div>
+                <div className="text-sm text-slate-300">{driver.description}</div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleAskAI(driver)}
-                className="shrink-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                className="shrink-0 text-cyan-300 hover:bg-[#1c3e63] hover:text-cyan-200"
               >
                 <MessageSquare className="h-4 w-4" />
               </Button>

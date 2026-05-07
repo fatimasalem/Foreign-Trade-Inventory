@@ -23,8 +23,8 @@ export function FlippableIndicatorCard({ name, value, change, changeType, insigh
   const isPositive = change.startsWith("+");
 
   const getTrendIcon = () => {
-    if (isPositive) return <TrendingUp className="h-5 w-5 text-green-600" />;
-    return <TrendingDown className="h-5 w-5 text-red-600" />;
+    if (isPositive) return <TrendingUp className="h-5 w-5 text-emerald-300" />;
+    return <TrendingDown className="h-5 w-5 text-rose-300" />;
   };
 
   const handleAskAI = (e: React.MouseEvent) => {
@@ -49,29 +49,29 @@ export function FlippableIndicatorCard({ name, value, change, changeType, insigh
       >
         {/* Front */}
         <div
-          className="absolute w-full h-full backface-hidden bg-white border border-gray-200 rounded-lg p-4 overflow-hidden"
+          className="absolute h-full w-full overflow-hidden rounded-xl border border-[#335175] bg-[#112d4c] p-4 backface-hidden"
           style={{ backfaceVisibility: "hidden" }}
         >
           <div className="flex flex-col h-full">
-            <div className="text-sm text-gray-600 mb-2">{name}</div>
+            <div className="mb-2 text-sm text-slate-300">{name}</div>
             <div className="flex items-center justify-between mb-1">
-              <div className="text-2xl font-semibold text-gray-900">{value}</div>
+              <div className="text-2xl font-semibold text-white">{value}</div>
               <div className="flex items-center gap-1">
                 {getTrendIcon()}
               </div>
             </div>
-            <div className={`text-sm font-semibold mb-2 ${isPositive ? "text-green-600" : "text-red-600"}`}>
+            <div className={`mb-2 text-sm font-semibold ${isPositive ? "text-emerald-300" : "text-rose-300"}`}>
               {change} {changeType}
             </div>
 
             {topItems && topItems.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-gray-100 flex-1">
-                <div className="text-xs font-medium text-gray-700 mb-2">Top 2 Items:</div>
+              <div className="mt-2 flex-1 border-t border-[#2f4b70] pt-2">
+                <div className="mb-2 text-xs font-medium text-slate-300">Top 2 Items:</div>
                 <div className="space-y-2">
                   {topItems.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600 truncate flex-1 pr-2">{item.name}</span>
-                      <span className="font-medium text-gray-900 shrink-0">{item.value}</span>
+                      <span className="flex-1 truncate pr-2 text-slate-300">{item.name}</span>
+                      <span className="shrink-0 font-medium text-white">{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -79,25 +79,25 @@ export function FlippableIndicatorCard({ name, value, change, changeType, insigh
             )}
 
             {comparisonText && !topItems && (
-              <div className="mt-2 pt-2 border-t border-gray-100 flex-1">
-                <div className="text-xs font-medium text-gray-700 mb-2">Comparison:</div>
+              <div className="mt-2 flex-1 border-t border-[#2f4b70] pt-2">
+                <div className="mb-2 text-xs font-medium text-slate-300">Comparison:</div>
                 <div
-                  className="text-xs text-gray-600 leading-relaxed"
+                  className="text-xs leading-relaxed text-slate-300"
                   dangerouslySetInnerHTML={{ __html: comparisonText }}
                 />
               </div>
             )}
 
-            <div className="mt-auto pt-2 border-t border-gray-100">
+            <div className="mt-auto border-t border-[#2f4b70] pt-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 text-xs text-gray-500">
+                <div className="flex items-center gap-1 text-xs text-slate-400">
                   <Lightbulb className="h-3 w-3" />
                   <span>Click to see insights</span>
                 </div>
                 {((topItems && topItems.length > 0) || comparisonText) && (
                   <button
                     onClick={handleAskAI}
-                    className="flex items-center gap-1 text-purple-600 hover:text-purple-700 text-xs"
+                    className="flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200"
                     title="Ask Trade AI"
                   >
                     <MessageSquare className="h-3 w-3" />
@@ -110,18 +110,18 @@ export function FlippableIndicatorCard({ name, value, change, changeType, insigh
 
         {/* Back */}
         <div 
-          className="absolute w-full h-full backface-hidden bg-blue-50 border border-blue-200 rounded-lg p-6"
+          className="absolute h-full w-full rounded-xl border border-[#2f4b70] bg-[#0f2745] p-6 backface-hidden"
           style={{ 
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)"
           }}
         >
           <div className="flex flex-col h-full">
-            <div className="text-xs font-medium text-blue-900 mb-2">Insight</div>
-            <p className="text-xs text-blue-800 leading-relaxed flex-1">
+            <div className="mb-2 text-xs font-medium text-cyan-300">Insight</div>
+            <p className="flex-1 text-xs leading-relaxed text-slate-200">
               {insight}
             </p>
-            <div className="text-xs text-blue-600 mt-2">Click to flip back</div>
+            <div className="mt-2 text-xs text-cyan-300">Click to flip back</div>
           </div>
         </div>
       </div>

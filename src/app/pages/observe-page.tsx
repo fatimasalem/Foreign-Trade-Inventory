@@ -222,11 +222,6 @@ export function ObservePage() {
     });
   };
 
-  const riskBadgeClass = (risk: string) => {
-    if (risk === "High") return "bg-red-100 text-red-800";
-    if (risk === "Medium") return "bg-yellow-100 text-yellow-800";
-    return "bg-green-100 text-green-800";
-  };
   const formatCategoryLabel = (label: string) =>
     tableClassification === "HS" ? `HS ${label}` : label;
 
@@ -391,7 +386,10 @@ export function ObservePage() {
           <div className="flex items-center gap-2">
             <SectionIcon icon={Activity} tone="slate" />
             <div>
-              <h3 className="font-semibold text-lg text-gray-900">Monthly Trade Trend</h3>
+              <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Monthly Trade Trend</h3>
+              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                Time-series trade movement
+              </p>
               <p className="text-xs text-gray-500 mt-1">All amounts displayed in billions AED</p>
             </div>
           </div>
@@ -506,7 +504,10 @@ export function ObservePage() {
             <div className="flex items-center gap-2">
               <SectionIcon icon={TrendingUp} tone="green" />
               <div>
-                <h3 className="font-semibold text-lg text-gray-900">Top Export Categories</h3>
+                <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Top Export Categories</h3>
+                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                  Leading outbound product groups
+                </p>
                 <p className="text-xs text-gray-500 mt-1">All amounts displayed in billions AED</p>
               </div>
             </div>
@@ -618,7 +619,10 @@ export function ObservePage() {
             <div className="flex items-center gap-2">
               <SectionIcon icon={Package} tone="red" />
               <div>
-                <h3 className="font-semibold text-lg text-gray-900">Top Import Categories</h3>
+                <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Top Import Categories</h3>
+                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                  Leading inbound product groups
+                </p>
                 <p className="text-xs text-gray-500 mt-1">All amounts displayed in billions AED</p>
               </div>
             </div>
@@ -723,7 +727,10 @@ export function ObservePage() {
             <div className="flex items-center gap-2">
               <SectionIcon icon={BarChart3} tone="slate" />
               <div>
-                <h3 className="font-semibold text-lg text-gray-900">Categories Analysis</h3>
+                <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Categories Analysis</h3>
+                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                  Deep-dive category diagnostics
+                </p>
                 <p className="text-xs text-gray-500 mt-1">Detailed breakdown of trade categories</p>
               </div>
             </div>
@@ -843,7 +850,6 @@ export function ObservePage() {
                 <span className="sr-only">Expand classification articles</span>
               </TableHead>
               <TableHead className="w-[28%]">Category</TableHead>
-              <TableHead className="w-[12%]">Risk</TableHead>
               <TableHead className="w-[10%] text-right">Weight</TableHead>
               <TableHead className="w-[10%] text-right">M/M %</TableHead>
               <TableHead className="w-[10%] text-right">Y/Y %</TableHead>
@@ -867,7 +873,7 @@ export function ObservePage() {
             {filteredCategoriesData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={7}
                   className="h-24 text-center text-sm text-gray-500"
                 >
                   No categories match your search. Try a different term or clear the search.
@@ -921,15 +927,6 @@ export function ObservePage() {
                       ) : null}
                     </TableCell>
                     <TableCell className="font-medium text-gray-900">{formatCategoryLabel(item.category)}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadgeClass(
-                          item.risk
-                        )}`}
-                      >
-                        {item.risk}
-                      </span>
-                    </TableCell>
                     <TableCell className="text-right tabular-nums">{item.weight}</TableCell>
                     <TableCell className={`text-right font-medium tabular-nums ${momPositive ? "text-green-600" : "text-red-600"}`}>
                       {item.mom}
@@ -992,7 +989,7 @@ export function ObservePage() {
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell colSpan={7} className={`${padClass} py-2`}>
+                            <TableCell colSpan={6} className={`${padClass} py-2`}>
                               <span className="text-sm font-semibold text-slate-700">{formatCategoryLabel(row.label)}</span>
                             </TableCell>
                           </TableRow>
@@ -1017,15 +1014,6 @@ export function ObservePage() {
                           <TableCell />
                           <TableCell className={`${padClass} text-sm text-gray-800 font-medium`}>
                             {formatCategoryLabel(article.label)}
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${riskBadgeClass(
-                                article.risk
-                              )}`}
-                            >
-                              {article.risk}
-                            </span>
                           </TableCell>
                           <TableCell className="text-right text-sm tabular-nums">{article.weight}</TableCell>
                           <TableCell className={`text-right text-sm font-medium tabular-nums ${changeClass(article.mom)}`}>

@@ -14,12 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import {
-  Tooltip as UITooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../components/ui/tooltip";
 import { Checkbox } from "../components/ui/checkbox";
 import {
   Popover,
@@ -29,12 +23,68 @@ import {
 import { stripClassificationCode } from "../../lib/strip-classification-label";
 
 type Classification = "HS1" | "BEC" | "SITC";
+type CompetitivenessRegionType = "continent" | "country" | "gcc";
+const DIAGNOSE_REGIONS = ["Abu Dhabi Emirate", "Abu Dhabi Region", "Al Ain Region", "Al Dhafra Region"] as const;
+
+function MiniSparkline({
+  values,
+  strokeClass,
+  fillClass,
+  formatPoint,
+}: {
+  values: number[];
+  strokeClass: string;
+  fillClass: string;
+  formatPoint: (value: number, index: number) => string;
+}) {
+  const w = 168;
+  const h = 46;
+  const padX = 8;
+  const padY = 7;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const step = values.length > 1 ? (w - 2 * padX) / (values.length - 1) : 0;
+
+  const pts = values.map((v, i) => ({
+    x: padX + i * step,
+    y: padY + (1 - (v - min) / span) * (h - 2 * padY),
+    v,
+    i,
+  }));
+
+  const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      className="w-full max-w-[220px] text-slate-100"
+      height={h}
+      preserveAspectRatio="xMidYMid meet"
+      role="img"
+      aria-label="Trend over recent periods"
+    >
+      <path d={d} fill="none" className={strokeClass} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {pts.map((p) => (
+        <g key={p.i}>
+          <circle cx={p.x} cy={p.y} r="8" fill="transparent">
+            <title>{formatPoint(p.v, p.i)}</title>
+          </circle>
+          <circle cx={p.x} cy={p.y} r="3" className={fillClass} />
+        </g>
+      ))}
+    </svg>
+  );
+}
 
 export function DiagnosePage() {
   const { openAIAssistant } = useAIAssistant();
   const [classification, setClassification] = useState<Classification>("HS1");
   const [foreignTradeType, setForeignTradeType] = useState("all");
   const [selectedCountries, setSelectedCountries] = useState<string[]>(["All Countries"]);
+  const [competitivenessRegionType, setCompetitivenessRegionType] = useState<CompetitivenessRegionType>("country");
+  const [selectedCompetitivenessFilter, setSelectedCompetitivenessFilter] = useState("All Countries");
+  const [competitivenessRegion, setCompetitivenessRegion] = useState<(typeof DIAGNOSE_REGIONS)[number]>("Abu Dhabi Emirate");
   const [tradeType, setTradeType] = useState("all");
   const [month, setMonth] = useState("March");
   const [year, setYear] = useState("2026");
@@ -42,6 +92,8 @@ export function DiagnosePage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const countries = ["All Countries", "China", "India", "USA", "Saudi Arabia"];
+  const continentFilters = ["Asia", "Europe", "Africa", "Americas"];
+  const gccFilters = ["GCC Aggregate", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "UAE"];
 
   const handleCountryToggle = (country: string) => {
     if (country === "All Countries") {
@@ -60,6 +112,7 @@ export function DiagnosePage() {
       bec: "BEC5 - Capital goods",
       sitc: "SITC67 - Iron & steel",
       risk: "High",
+      totalTradeVolume: "AED 22.4B",
       weight: "18.5%",
       mom: "+45.2%",
       yoy: "+128.5%",
@@ -74,6 +127,7 @@ export function DiagnosePage() {
       bec: "BEC4 - Transport equipment",
       sitc: "SITC78 - Road vehicles",
       risk: "High",
+      totalTradeVolume: "AED 14.9B",
       weight: "12.3%",
       mom: "-18.5%",
       yoy: "-8.2%",
@@ -88,6 +142,7 @@ export function DiagnosePage() {
       bec: "BEC6 - Consumer goods",
       sitc: "SITC54 - Medicinal products",
       risk: "Medium",
+      totalTradeVolume: "AED 7.1B",
       weight: "5.8%",
       mom: "-12.3%",
       yoy: "+3.5%",
@@ -102,6 +157,7 @@ export function DiagnosePage() {
       bec: "BEC2 - Industrial supplies",
       sitc: "SITC68 - Non-ferrous metals",
       risk: "Low",
+      totalTradeVolume: "AED 9.8B",
       weight: "8.2%",
       mom: "+32.8%",
       yoy: "+45.2%",
@@ -116,6 +172,7 @@ export function DiagnosePage() {
       bec: "BEC5 - Capital goods",
       sitc: "SITC77 - Electrical machinery",
       risk: "Medium",
+      totalTradeVolume: "AED 11.5B",
       weight: "9.5%",
       mom: "-12.3%",
       yoy: "+5.8%",
@@ -130,6 +187,7 @@ export function DiagnosePage() {
       bec: "BEC2 - Industrial supplies",
       sitc: "SITC57 - Plastics",
       risk: "Low",
+      totalTradeVolume: "AED 7.9B",
       weight: "6.5%",
       mom: "+2.1%",
       yoy: "+8.5%",
@@ -144,6 +202,7 @@ export function DiagnosePage() {
       bec: "BEC2 - Industrial supplies",
       sitc: "SITC67 - Iron & steel",
       risk: "Low",
+      totalTradeVolume: "AED 8.6B",
       weight: "7.2%",
       mom: "+1.5%",
       yoy: "+4.2%",
@@ -158,6 +217,7 @@ export function DiagnosePage() {
       bec: "BEC2 - Industrial supplies",
       sitc: "SITC51 - Organic chemicals",
       risk: "Low",
+      totalTradeVolume: "AED 5.9B",
       weight: "4.8%",
       mom: "-0.8%",
       yoy: "+2.1%",
@@ -172,6 +232,7 @@ export function DiagnosePage() {
       bec: "BEC5 - Capital goods",
       sitc: "SITC74 - General machinery",
       risk: "Medium",
+      totalTradeVolume: "AED 12.4B",
       weight: "10.2%",
       mom: "+8.5%",
       yoy: "+15.3%",
@@ -186,6 +247,7 @@ export function DiagnosePage() {
       bec: "BEC2 - Industrial supplies",
       sitc: "SITC33 - Petroleum products",
       risk: "Low",
+      totalTradeVolume: "AED 4.3B",
       weight: "3.5%",
       mom: "+1.2%",
       yoy: "+3.8%",
@@ -198,6 +260,95 @@ export function DiagnosePage() {
   ];
 
   const monthOrderFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  const competitivenessFilterOptions = useMemo(() => {
+    if (competitivenessRegionType === "continent") {
+      return continentFilters;
+    }
+    if (competitivenessRegionType === "gcc") {
+      return gccFilters;
+    }
+    return countries;
+  }, [competitivenessRegionType]);
+
+  const selectedCompetitivenessContext = useMemo(() => {
+    if (competitivenessRegionType === "continent") {
+      return `${selectedCompetitivenessFilter} continent`;
+    }
+    if (competitivenessRegionType === "gcc") {
+      return selectedCompetitivenessFilter === "GCC Aggregate" ? "the GCC bloc" : selectedCompetitivenessFilter;
+    }
+    return selectedCompetitivenessFilter;
+  }, [competitivenessRegionType, selectedCompetitivenessFilter]);
+
+  const reerChange = useMemo(() => {
+    const monthIndex = Math.max(0, monthOrderFull.indexOf(month));
+    const yearOffset = parseInt(year, 10) - 2024;
+    const scopeOffset =
+      competitivenessRegionType === "continent" ? -0.7 : competitivenessRegionType === "gcc" ? 0.5 : 0;
+    const targetOffset = (selectedCompetitivenessFilter.length % 5) * 0.22 - 0.4;
+    const regionOffset = (competitivenessRegion.length % 6) * 0.08 - 0.2;
+    const value = ((monthIndex - 4) * 0.55 - yearOffset * 0.35) + scopeOffset + targetOffset + regionOffset;
+    return Number(value.toFixed(1));
+  }, [month, year, competitivenessRegionType, selectedCompetitivenessFilter, competitivenessRegion]);
+
+  const competitivenessSectionSubheading = useMemo(() => {
+    const movement = reerChange < 0 ? "decreased" : "increased";
+    const competitivenessSignal = reerChange < 0
+      ? "increased export price competitiveness"
+      : "reduced export price competitiveness";
+    return `In ${month} ${year}, ${competitivenessRegion}'s real effective exchange rate ${movement} by ${Math.abs(reerChange).toFixed(1)}%, indicating ${competitivenessSignal} against ${selectedCompetitivenessContext}.`;
+  }, [month, year, reerChange, selectedCompetitivenessContext, competitivenessRegion]);
+
+  const reerCardSubheading = useMemo(() => {
+    if (reerChange < 0) {
+      return `REER moved down ${Math.abs(reerChange).toFixed(1)}% as softer currency pressure outweighed domestic inflation, improving price positioning for exporters in ${selectedCompetitivenessContext}.`;
+    }
+    return `REER moved up ${Math.abs(reerChange).toFixed(1)}% as currency appreciation combined with domestic inflation, lifting relative export prices in ${selectedCompetitivenessContext}.`;
+  }, [reerChange, selectedCompetitivenessContext]);
+
+  const exportCompetitivenessSubheading = useMemo(() => {
+    if (reerChange < 0) {
+      return `Local goods became more price-competitive internationally versus last month, supporting stronger export conversion opportunities across ${selectedCompetitivenessContext}.`;
+    }
+    return `Local goods became less price-competitive internationally versus last month, increasing margin pressure in key export markets tied to ${selectedCompetitivenessContext}.`;
+  }, [reerChange, selectedCompetitivenessContext]);
+
+  const currencyInflationSubheading = useMemo(() => {
+    if (reerChange < 0) {
+      return `Exchange rate easing offset part of domestic inflation, resulting in a net REER decline and a favorable competitiveness impulse for the current period.`;
+    }
+    return `Exchange rate firmness and domestic inflation jointly pushed REER higher, signaling rising export price pressure for the current period.`;
+  }, [reerChange]);
+
+  const competitivenessFilterLine = `${
+    competitivenessRegionType === "continent"
+      ? "Continents"
+      : competitivenessRegionType === "country"
+        ? "Countries"
+        : "GCC"
+  } · ${selectedCompetitivenessFilter} · ${competitivenessRegion}`;
+
+  const reerTrendSeries = useMemo(() => {
+    const base = 100 + reerChange * 0.35;
+    return Array.from({ length: 7 }, (_, i) =>
+      Number((base + (i - 3) * 0.28 + Math.sin(i * 0.9) * 0.35).toFixed(2)),
+    );
+  }, [reerChange]);
+
+  const exportCompetitivenessSeries = useMemo(() => {
+    const base = reerChange <= 0 ? 61 + Math.abs(reerChange) * 1.8 : 58 - reerChange * 1.2;
+    return Array.from({ length: 7 }, (_, i) =>
+      Number((base + Math.cos(i * 0.8) * 2.6 + (i - 3) * (reerChange <= 0 ? 0.45 : -0.3)).toFixed(2)),
+    );
+  }, [reerChange]);
+
+  const fxInflationImpactSeries = useMemo(() => {
+    const fxBase = reerChange <= 0 ? -0.4 : 0.45;
+    return Array.from({ length: 7 }, (_, i) =>
+      Number((fxBase + (i - 3) * 0.07 + Math.sin(i * 1.05) * 0.18).toFixed(2)),
+    );
+  }, [reerChange]);
 
   const generateTrendData = (_category: typeof categories[0]) => {
     const y = parseInt(year, 10);
@@ -276,6 +427,213 @@ export function DiagnosePage() {
 
   return (
     <div className="space-y-6">
+      <section className="rounded-2xl border border-[#2a3d5f] bg-[#0a1d35] px-4 py-5 shadow-[0_14px_38px_rgba(2,8,25,0.45)]">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-2">
+            <SectionIcon icon={LineChartIcon} tone="slate" />
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">
+                Trade Competitiveness Index
+              </h2>
+              <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+                {competitivenessFilterLine}
+              </p>
+              <p className="mt-3 max-w-4xl text-sm leading-[1.65] text-slate-300 md:text-base">
+                {competitivenessSectionSubheading}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex w-full min-w-0 flex-wrap items-end gap-3 lg:w-auto">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Partner view</label>
+              <Select
+                value={competitivenessRegionType}
+                onValueChange={(value) => {
+                  const nextType = value as CompetitivenessRegionType;
+                  setCompetitivenessRegionType(nextType);
+                  if (nextType === "continent") {
+                    setSelectedCompetitivenessFilter(continentFilters[0]);
+                  } else if (nextType === "gcc") {
+                    setSelectedCompetitivenessFilter(gccFilters[0]);
+                  } else {
+                    setSelectedCompetitivenessFilter(countries[0]);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-[130px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="continent">Continent</SelectItem>
+                  <SelectItem value="country">Country</SelectItem>
+                  <SelectItem value="gcc">GCC</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-300">
+                {competitivenessRegionType === "continent"
+                  ? "Continent"
+                  : competitivenessRegionType === "country"
+                    ? "Country"
+                    : "GCC focus"}
+              </label>
+              <Select value={selectedCompetitivenessFilter} onValueChange={setSelectedCompetitivenessFilter}>
+                <SelectTrigger className="min-w-[160px] max-w-[220px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {competitivenessFilterOptions.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Region</label>
+              <Select value={competitivenessRegion} onValueChange={(value) => setCompetitivenessRegion(value as (typeof DIAGNOSE_REGIONS)[number])}>
+                <SelectTrigger className="min-w-[200px] max-w-[260px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DIAGNOSE_REGIONS.map((region) => (
+                    <SelectItem key={region} value={region}>
+                      {region}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Month</label>
+              <Select value={month} onValueChange={setMonth}>
+                <SelectTrigger className="w-[120px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOrderFull.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Year</label>
+              <Select value={year} onValueChange={setYear}>
+                <SelectTrigger className="w-[100px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["2026", "2025", "2024", "2023", "2022"].map((y) => (
+                    <SelectItem key={y} value={y}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch">
+          <article className="flex min-h-0 flex-col rounded-xl border border-[#335175] bg-[#112d4c] p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Real Effective Exchange Rate</h3>
+                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                  Core competitiveness signal
+                </p>
+              </div>
+              <span
+                className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                  reerChange <= 0
+                    ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-300"
+                    : "border-rose-500/50 bg-rose-500/15 text-rose-300"
+                }`}
+              >
+                {reerChange <= 0 ? "Improving" : "Pressured"}
+              </span>
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">{reerCardSubheading}</p>
+            <div className="mt-4">
+              <p className="text-xs text-slate-400">Current change</p>
+              <p className={`text-xl font-semibold ${reerChange <= 0 ? "text-emerald-300" : "text-rose-300"}`}>
+                {reerChange > 0 ? "+" : ""}
+                {reerChange.toFixed(1)}%
+              </p>
+            </div>
+            <div className="mt-3">
+              <p className="mb-1 text-xs text-slate-400">REER trend</p>
+              <MiniSparkline
+                values={reerTrendSeries}
+                strokeClass={reerChange <= 0 ? "stroke-emerald-300/95" : "stroke-rose-300/95"}
+                fillClass={reerChange <= 0 ? "fill-emerald-300/90" : "fill-rose-300/90"}
+                formatPoint={(value, index) => {
+                  const latest = index === reerTrendSeries.length - 1 ? " (latest)" : "";
+                  return `Period ${index + 1}: REER ${value.toFixed(2)}${latest}`;
+                }}
+              />
+              <p className="mt-1 text-[10px] text-slate-500">Hover points for values.</p>
+            </div>
+          </article>
+
+          <article className="flex min-h-0 flex-col rounded-xl border border-[#335175] bg-[#112d4c] p-4">
+            <h3 className="text-lg font-semibold text-white">Export Price Competitiveness</h3>
+            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">Market positioning</p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">{exportCompetitivenessSubheading}</p>
+            <div className="mt-4">
+              <p className="text-xs text-slate-400">Outlook signal</p>
+              <p className={`text-sm font-semibold ${reerChange <= 0 ? "text-emerald-300" : "text-amber-300"}`}>
+                {reerChange <= 0 ? "Higher conversion potential in priority markets" : "Margin compression risk in price-sensitive markets"}
+              </p>
+            </div>
+            <div className="mt-3">
+              <p className="mb-1 text-xs text-slate-400">Competitiveness momentum</p>
+              <MiniSparkline
+                values={exportCompetitivenessSeries}
+                strokeClass={reerChange <= 0 ? "stroke-cyan-300/95" : "stroke-orange-300/95"}
+                fillClass={reerChange <= 0 ? "fill-cyan-300/90" : "fill-orange-300/90"}
+                formatPoint={(value, index) => {
+                  const latest = index === exportCompetitivenessSeries.length - 1 ? " (latest)" : "";
+                  return `Period ${index + 1}: Index ${value.toFixed(2)}${latest}`;
+                }}
+              />
+              <p className="mt-1 text-[10px] text-slate-500">Hover points for values.</p>
+            </div>
+          </article>
+
+          <article className="flex min-h-0 flex-col rounded-xl border border-[#335175] bg-[#112d4c] p-4">
+            <h3 className="text-lg font-semibold text-white">Currency &amp; Inflation Impact</h3>
+            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">Macro transmission</p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">{currencyInflationSubheading}</p>
+            <div className="mt-4">
+              <p className="text-xs text-slate-400">Policy watch</p>
+              <p className="text-sm font-semibold text-cyan-200">
+                Monitor FX pass-through and domestic cost trends through next reporting cycle.
+              </p>
+            </div>
+            <div className="mt-3">
+              <p className="mb-1 text-xs text-slate-400">FX-inflation pressure trend</p>
+              <MiniSparkline
+                values={fxInflationImpactSeries}
+                strokeClass={reerChange <= 0 ? "stroke-violet-300/95" : "stroke-amber-300/95"}
+                fillClass={reerChange <= 0 ? "fill-violet-300/90" : "fill-amber-300/90"}
+                formatPoint={(value, index) => {
+                  const latest = index === fxInflationImpactSeries.length - 1 ? " (latest)" : "";
+                  return `Period ${index + 1}: Net pressure ${value.toFixed(2)}%${latest}`;
+                }}
+              />
+              <p className="mt-1 text-[10px] text-slate-500">Hover points for values.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
       {/* Category Analysis Table */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
@@ -283,7 +641,10 @@ export function DiagnosePage() {
             <div className="flex items-center gap-2">
               <SectionIcon icon={PieChart} tone="slate" />
               <div>
-                <h3 className="font-semibold text-lg text-gray-900">Category Analysis</h3>
+                <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">Category Analysis</h3>
+                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                  Risk and performance diagnostics
+                </p>
                 <p className="text-sm text-gray-600 mt-1">
                   Detailed breakdown of trade categories by risk level and performance
                 </p>
@@ -397,7 +758,7 @@ export function DiagnosePage() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[32%]">Category</TableHead>
-              <TableHead className="w-[15%]">Risk</TableHead>
+              <TableHead className="w-[13%] text-right">Total Trade Volume</TableHead>
               <TableHead className="w-[12%] text-right">Weight</TableHead>
               <TableHead className="w-[12%] text-right">MoM</TableHead>
               <TableHead className="w-[16%] text-right">YoY</TableHead>
@@ -407,8 +768,7 @@ export function DiagnosePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TooltipProvider>
-              {filteredCategories.length === 0 ? (
+            {filteredCategories.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-sm text-gray-500 py-10">
                     No categories match the selected filters. Try widening country, trade mode, or foreign trade type.
@@ -422,22 +782,7 @@ export function DiagnosePage() {
                     onClick={() => handleRowClick(category)}
                   >
                     <TableCell className="font-medium">{getCategoryName(category)}</TableCell>
-                    <TableCell>
-                      <UITooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getRiskBadgeColor(
-                              category.riskLevel
-                            )}`}
-                          >
-                            {category.risk}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p className="text-xs">{category.riskCause}</p>
-                        </TooltipContent>
-                      </UITooltip>
-                    </TableCell>
+                    <TableCell className="text-right">{category.totalTradeVolume}</TableCell>
                     <TableCell className="text-right">{category.weight}</TableCell>
                     <TableCell className={`text-right font-medium ${getChangeColor(category.mom)}`}>
                       {category.mom}
@@ -463,7 +808,6 @@ export function DiagnosePage() {
                   </TableRow>
                 ))
               )}
-            </TooltipProvider>
           </TableBody>
         </Table>
       </div>

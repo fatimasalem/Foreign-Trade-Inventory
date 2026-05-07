@@ -46,16 +46,21 @@ export function EventsSection() {
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 border border-gray-200">
+    <div className="rounded-xl border border-[#2e4567] bg-[#0c213b] p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <SectionIcon icon={Newspaper} tone="violet" size="md" />
-          <h3 className="font-semibold text-lg text-gray-900 leading-snug m-0">Events & Impact on Foreign Trade</h3>
+          <div>
+            <h3 className="m-0 text-lg font-semibold leading-snug text-slate-100">Events & Impact</h3>
+            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+              Geopolitical and policy developments
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <div>
             <Select value={month} onValueChange={setMonth}>
-              <SelectTrigger className="w-[110px]">
+              <SelectTrigger className="w-[110px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -76,7 +81,7 @@ export function EventsSection() {
           </div>
           <div>
             <Select value={year} onValueChange={setYear}>
-              <SelectTrigger className="w-[90px]">
+              <SelectTrigger className="w-[90px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -92,24 +97,24 @@ export function EventsSection() {
       </div>
       <div className="space-y-4">
         {events.map((event, index) => (
-          <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
+          <div key={index} className="rounded-lg border border-[#355279] bg-[#112d4c] px-4 py-3">
             <div className="flex items-start gap-3">
-              <Calendar className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+              <Calendar className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm text-gray-500">{event.date}</span>
+                  <span className="text-sm text-slate-300">{event.date}</span>
                   {event.effect === "positive" ? (
-                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <TrendingUp className="h-4 w-4 text-emerald-300" />
                   ) : (
-                    <TrendingDown className="h-4 w-4 text-red-600" />
+                    <TrendingDown className="h-4 w-4 text-rose-300" />
                   )}
                 </div>
-                <div className="font-medium text-gray-900 mb-1">{event.title}</div>
-                <div className="text-sm text-gray-600 mb-3">{event.impact}</div>
+                <div className="mb-1 font-medium text-slate-100">{event.title}</div>
+                <div className="mb-3 text-sm text-slate-300">{event.impact}</div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
+                  className="gap-2 border-[#3f628c] bg-[#153457] text-cyan-300 hover:bg-[#1f446c] hover:text-cyan-200"
                   onClick={() => handleLearnMore(event.aiQuery)}
                 >
                   <MessageSquare className="h-3.5 w-3.5" />

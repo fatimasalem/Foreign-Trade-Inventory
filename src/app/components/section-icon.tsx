@@ -2,18 +2,18 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "./ui/utils";
 
 const toneClass = {
-  slate: "bg-slate-100 text-slate-700",
-  muted: "bg-muted/80 text-foreground",
-  blue: "bg-blue-50 text-blue-600",
-  green: "bg-emerald-50 text-emerald-600",
-  violet: "bg-violet-100 text-violet-700",
-  purple: "bg-purple-50 text-purple-600",
-  amber: "bg-amber-50 text-amber-700",
-  yellow: "bg-yellow-50 text-yellow-700",
-  red: "bg-red-50 text-red-600",
-  emerald: "bg-emerald-50 text-emerald-600",
-  sky: "bg-sky-50 text-sky-600",
-  primary: "bg-primary/10 text-primary",
+  slate: "bg-[#163454] text-slate-200",
+  muted: "bg-[#163454] text-slate-200",
+  blue: "bg-[#173a63] text-cyan-200",
+  green: "bg-[#174a4a] text-emerald-200",
+  violet: "bg-[#3f2c5e] text-violet-200",
+  purple: "bg-[#3f2c5e] text-violet-200",
+  amber: "bg-[#5a441e] text-amber-200",
+  yellow: "bg-[#5a441e] text-amber-200",
+  red: "bg-[#5e2a3f] text-rose-200",
+  emerald: "bg-[#174a4a] text-emerald-200",
+  sky: "bg-[#173a63] text-cyan-200",
+  primary: "bg-[#173a63] text-cyan-200",
 } as const;
 
 export type SectionIconTone = keyof typeof toneClass;

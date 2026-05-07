@@ -1,3 +1,6 @@
+# Publishes the Vite `dist/` output. In the repo: Settings → Pages →
+# Build and deployment → Source must be "GitHub Actions", not "Deploy from a branch".
+# Branch/root hosting serves this repo’s dev `index.html` (`/src/main.tsx`) and the app will be blank.
 name: Deploy to GitHub Pages
 
 on:

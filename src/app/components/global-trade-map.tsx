@@ -789,17 +789,22 @@ export function GlobalTradeMap() {
   const maxMapTradeValue = viewType === "gcc" ? maxGccTradeValue : maxTradeValue;
 
   return (
-    <div className="bg-white rounded-lg p-6 border border-gray-200">
+    <div className="rounded-xl border border-[#2e4567] bg-[#0c213b] p-5">
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center gap-3">
           <SectionIcon icon={MapPinned} tone="sky" size="md" />
-          <h2 className="font-semibold text-lg text-gray-900 leading-snug m-0">Global Trade Distribution</h2>
+          <div>
+            <h2 className="m-0 text-lg font-semibold leading-snug text-slate-100">Global Trade Distribution</h2>
+            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+              Partner flows and corridor intensity
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">Trade Type</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">Trade Type</label>
             <Select value={tradeType} onValueChange={setTradeType}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[150px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -811,9 +816,9 @@ export function GlobalTradeMap() {
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">View</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">View</label>
             <Select value={viewType} onValueChange={(value) => setViewType(value as ViewType)}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[150px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -824,9 +829,9 @@ export function GlobalTradeMap() {
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">Classification</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">Classification</label>
             <Select value={mapClassification} onValueChange={(v) => setMapClassification(v as MapClassification)}>
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-[100px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -837,9 +842,9 @@ export function GlobalTradeMap() {
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">Category</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">Category</label>
             <Select value={productCategory} onValueChange={(v) => setProductCategory(v as ProductCategoryId)}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -856,9 +861,9 @@ export function GlobalTradeMap() {
           </div>
           {viewType === "gcc" && (
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Comparison</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Comparison</label>
               <Select value={gccComparison} onValueChange={(v) => setGccComparison(v as GccComparisonCategory)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -871,9 +876,9 @@ export function GlobalTradeMap() {
             </div>
           )}
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">Month</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">Month</label>
             <Select value={month} onValueChange={setMonth}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="w-[120px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -893,9 +898,9 @@ export function GlobalTradeMap() {
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">Year</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">Year</label>
             <Select value={year} onValueChange={setYear}>
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-[100px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -912,14 +917,14 @@ export function GlobalTradeMap() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
-          <div className="bg-white rounded-lg p-4 border border-gray-200 relative">
+          <div className="relative rounded-lg border border-[#355279] bg-[#102742] p-4">
             {/* Zoom Controls */}
             <div className="absolute top-6 right-6 z-10 flex flex-col gap-2">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleZoomIn}
-                className="bg-white hover:bg-gray-100"
+                className="border-[#486a95] bg-[#163558] text-slate-100 hover:bg-[#21476f]"
               >
                 <ZoomIn className="h-4 w-4" />
               </Button>
@@ -927,7 +932,7 @@ export function GlobalTradeMap() {
                 size="sm"
                 variant="outline"
                 onClick={handleZoomOut}
-                className="bg-white hover:bg-gray-100"
+                className="border-[#486a95] bg-[#163558] text-slate-100 hover:bg-[#21476f]"
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
@@ -1024,7 +1029,7 @@ export function GlobalTradeMap() {
                             textAnchor="middle"
                             y={-r - 4}
                             fontSize={9}
-                            fill="#111827"
+                            fill="#f8fafc"
                             className="select-none"
                           >
                             {name}
@@ -1038,7 +1043,7 @@ export function GlobalTradeMap() {
                   <Marker coordinates={BAHRAIN_HUB}>
                     <g pointerEvents="none">
                       <circle r={10} fill={MAP_ACCENT} stroke="#ffffff" strokeWidth={1.5} />
-                      <text textAnchor="middle" y={-16} fontSize={9} fontWeight={600} fill="#111827" className="select-none">
+                      <text textAnchor="middle" y={-16} fontSize={9} fontWeight={600} fill="#f8fafc" className="select-none">
                         Kingdom of Bahrain
                       </text>
                     </g>
@@ -1049,7 +1054,7 @@ export function GlobalTradeMap() {
 
             {/* Custom Tooltip (country / GCC / continent views) */}
             {tooltipContent && (
-              <div className="absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 p-4 pointer-events-none"
+              <div className="pointer-events-none absolute z-50 rounded-lg border border-[#476a96] bg-[#143456] p-4 shadow-lg"
                 style={{
                   left: "50%",
                   top: "50%",
@@ -1059,43 +1064,43 @@ export function GlobalTradeMap() {
                   overflowY: "auto",
                 }}
               >
-                <h4 className="font-semibold text-gray-900 mb-3">{tooltipContent.name}</h4>
-                <div className="space-y-2 mb-3">
+                <h4 className="mb-3 font-semibold text-slate-100">{tooltipContent.name}</h4>
+                <div className="mb-3 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Non-Oil Imports:</span>
-                    <span className="font-medium text-gray-900">{tooltipContent.imports.toFixed(1)}B AED</span>
+                    <span className="text-slate-300">Non-Oil Imports:</span>
+                    <span className="font-medium text-slate-100">{tooltipContent.imports.toFixed(1)}B AED</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Non-Oil Exports:</span>
-                    <span className="font-medium text-gray-900">{tooltipContent.exports.toFixed(1)}B AED</span>
+                    <span className="text-slate-300">Non-Oil Exports:</span>
+                    <span className="font-medium text-slate-100">{tooltipContent.exports.toFixed(1)}B AED</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Non-Oil Re-Exports:</span>
-                    <span className="font-medium text-gray-900">{tooltipContent.reExports.toFixed(1)}B AED</span>
+                    <span className="text-slate-300">Non-Oil Re-Exports:</span>
+                    <span className="font-medium text-slate-100">{tooltipContent.reExports.toFixed(1)}B AED</span>
                   </div>
                   <div className="flex justify-between text-sm border-t pt-2">
-                    <span className="text-gray-600 font-medium">Net Trade:</span>
+                    <span className="font-medium text-slate-300">Net Trade:</span>
                     <span
                       className={
                         tooltipContent.netTrade >= 0
-                          ? "font-semibold text-green-600"
-                          : "font-semibold text-red-600"
+                          ? "font-semibold text-emerald-300"
+                          : "font-semibold text-rose-300"
                       }
                     >
                       {tooltipContent.netTrade.toFixed(1)}B AED
                     </span>
                   </div>
                 </div>
-                <div className="border-t pt-3">
-                  <p className="text-xs font-semibold text-gray-700 mb-3">Top 3 categories ({mapClassification})</p>
-                  <div className="bg-gray-50 rounded p-2">
+                <div className="border-t border-[#335173] pt-3">
+                  <p className="mb-3 text-xs font-semibold text-slate-200">Top 3 categories ({mapClassification})</p>
+                  <div className="rounded bg-[#102c49] p-2">
                     <div className="space-y-1.5">
                       {tooltipContent.topCategories[mapClassification].map((cat, idx) => (
                         <div key={idx} className="text-xs">
-                          <div className="text-gray-600 line-clamp-2 mb-0.5" title={cat.name}>
+                          <div className="mb-0.5 line-clamp-2 text-slate-300" title={cat.name}>
                             {stripClassificationCode(cat.name)}
                           </div>
-                          <div className="font-medium text-gray-900">{cat.value}</div>
+                          <div className="font-medium text-slate-100">{cat.value}</div>
                         </div>
                       ))}
                     </div>
@@ -1105,7 +1110,7 @@ export function GlobalTradeMap() {
             )}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-300">
             <span>
               {viewType === "gcc" ? "GCC — " : ""}Flows from Kingdom of Bahrain · dot size = trade amount (AED billions)
             </span>
@@ -1119,7 +1124,7 @@ export function GlobalTradeMap() {
         </div>
 
         <div className="flex h-full flex-col">
-          <h3 className="mb-3 font-medium text-gray-900">
+          <h3 className="mb-3 font-medium text-slate-100">
             {viewType === "gcc" ? "GCC countries" : isCountryLike ? "Top Countries" : "By Continent"}
           </h3>
           <div className="max-h-[400px] space-y-2 overflow-y-auto pr-2">
@@ -1127,18 +1132,18 @@ export function GlobalTradeMap() {
               ? topCountries.map(([country, value], index) => {
                   const tradeTypeInfo = getTradeTypeInfo();
                   return (
-                    <div key={country} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <div key={country} className="rounded-lg border border-[#355279] bg-[#112d4c] p-3">
                       <div className="mb-2 flex items-start justify-between gap-2">
-                        <span className="flex-1 text-sm font-medium text-gray-900">
+                        <span className="flex-1 text-sm font-medium text-slate-100">
                           {index + 1}. {country}
                         </span>
                         <Badge className={`h-5 shrink-0 px-1.5 py-0.5 text-[10px] ${tradeTypeInfo.className}`}>
                           {tradeTypeInfo.label}
                         </Badge>
                       </div>
-                      <div className="mb-0.5 text-xs text-gray-500">{tradeTypeInfo.description}</div>
-                      <div className="mb-2 text-sm font-semibold text-gray-900">{value.toFixed(1)}B AED</div>
-                      <div className="h-1.5 w-full rounded-full bg-gray-200">
+                      <div className="mb-0.5 text-xs text-slate-300">{tradeTypeInfo.description}</div>
+                      <div className="mb-2 text-sm font-semibold text-slate-100">{value.toFixed(1)}B AED</div>
+                      <div className="h-1.5 w-full rounded-full bg-[#2a466a]">
                         <div
                           className="h-1.5 rounded-full bg-blue-600"
                           style={{ width: `${(value / maxTradeValueForList) * 100}%` }}
@@ -1150,18 +1155,18 @@ export function GlobalTradeMap() {
               : topContinents.map(([continent, value], index) => {
                   const tradeTypeInfo = getTradeTypeInfo();
                   return (
-                    <div key={continent} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <div key={continent} className="rounded-lg border border-[#355279] bg-[#112d4c] p-3">
                       <div className="mb-2 flex items-start justify-between gap-2">
-                        <span className="flex-1 text-sm font-medium text-gray-900">
+                        <span className="flex-1 text-sm font-medium text-slate-100">
                           {index + 1}. {continent}
                         </span>
                         <Badge className={`h-5 shrink-0 px-1.5 py-0.5 text-[10px] ${tradeTypeInfo.className}`}>
                           {tradeTypeInfo.label}
                         </Badge>
                       </div>
-                      <div className="mb-0.5 text-xs text-gray-500">{tradeTypeInfo.description}</div>
-                      <div className="mb-2 text-sm font-semibold text-gray-900">{value.toFixed(1)}B AED</div>
-                      <div className="h-1.5 w-full rounded-full bg-gray-200">
+                      <div className="mb-0.5 text-xs text-slate-300">{tradeTypeInfo.description}</div>
+                      <div className="mb-2 text-sm font-semibold text-slate-100">{value.toFixed(1)}B AED</div>
+                      <div className="h-1.5 w-full rounded-full bg-[#2a466a]">
                         <div
                           className="h-1.5 rounded-full bg-blue-600"
                           style={{ width: `${(value / maxContinentValue) * 100}%` }}

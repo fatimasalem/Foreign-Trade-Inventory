@@ -1,34 +1,33 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { DriverSection } from "../components/driver-section";
 import { EventsSection } from "../components/events-section";
 import { GlobalTradeMap } from "../components/global-trade-map";
 import { UAETradeMap } from "../components/uae-trade-map";
 import { FlippableIndicatorCard } from "../components/flippable-indicator-card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { SectionIcon } from "../components/section-icon";
-import { BarChart3, Shield, ArrowUpRight, Plus, Bell, Download, Info, ScrollText, LineChart } from "lucide-react";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../components/ui/tooltip";
-import { Badge } from "../components/ui/badge";
-import { Button } from "../components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
+  GlobeTradePerformanceSection,
+  TRADE_SCOPE_DEFAULTS,
+  type TradeScopeKind,
+} from "../components/globe-trade-performance-section";
+
+const alerts = [
+  { title: "Vehicle & Parts Imports Decline", value: "-28.5%", subtitle: "Month over month", badge: "Critical", tone: "text-rose-400" },
+  { title: "Furniture Imports Down", value: "-12.5%", subtitle: "Month over month", badge: "Warning", tone: "text-red-300" },
+  { title: "Precious Metals Exports Surge", value: "+45.2%", subtitle: "Month over month", badge: "Watch", tone: "text-amber-300" },
+  { title: "Net Trade Balance Improves", value: "+18.5%", subtitle: "Month over month", badge: "Good", tone: "text-emerald-300" },
+];
 
 export function InterpretPage() {
-  const navigate = useNavigate();
-  const [globalMonth, setGlobalMonth] = useState("March");
+  const [globalMonth, setGlobalMonth] = useState("May");
   const [globalYear, setGlobalYear] = useState("2026");
-  const [metricsMonth, setMetricsMonth] = useState("March");
-  const [metricsYear, setMetricsYear] = useState("2026");
+  const [globalRegion, setGlobalRegion] = useState("Abu Dhabi Emirate");
+  const [globalTradeScopeKind, setGlobalTradeScopeKind] = useState<TradeScopeKind>("continent");
+  const [globalTradeScopeTarget, setGlobalTradeScopeTarget] = useState(TRADE_SCOPE_DEFAULTS.continent);
+
+  const handleTradeScopeKindChange = (kind: TradeScopeKind) => {
+    setGlobalTradeScopeKind(kind);
+    setGlobalTradeScopeTarget(TRADE_SCOPE_DEFAULTS[kind]);
+  };
   const overviewIndicators = [
     {
       name: "Non-Oil Imports",
@@ -74,530 +73,38 @@ export function InterpretPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Global Filters */}
-      <div className="flex items-center justify-end">
-        <div className="flex gap-3">
-            <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Month</label>
-              <Select value={globalMonth} onValueChange={setGlobalMonth}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="January">January</SelectItem>
-                  <SelectItem value="February">February</SelectItem>
-                  <SelectItem value="March">March</SelectItem>
-                  <SelectItem value="April">April</SelectItem>
-                  <SelectItem value="May">May</SelectItem>
-                  <SelectItem value="June">June</SelectItem>
-                  <SelectItem value="July">July</SelectItem>
-                  <SelectItem value="August">August</SelectItem>
-                  <SelectItem value="September">September</SelectItem>
-                  <SelectItem value="October">October</SelectItem>
-                  <SelectItem value="November">November</SelectItem>
-                  <SelectItem value="December">December</SelectItem>
-                </SelectContent>
-              </Select>
+    <div className="space-y-6 text-slate-100">
+      <GlobeTradePerformanceSection
+        month={globalMonth}
+        year={globalYear}
+        region={globalRegion}
+        tradeScopeKind={globalTradeScopeKind}
+        tradeScopeTarget={globalTradeScopeTarget}
+        onMonthChange={setGlobalMonth}
+        onYearChange={setGlobalYear}
+        onRegionChange={setGlobalRegion}
+        onTradeScopeKindChange={handleTradeScopeKindChange}
+        onTradeScopeTargetChange={setGlobalTradeScopeTarget}
+      />
+
+      <div className="rounded-2xl border border-[#2a3d5f] bg-[#0a1d35] px-4 py-4 shadow-[0_14px_38px_rgba(2,8,25,0.45)]">
+        <h2 className="mb-3 text-2xl font-semibold text-cyan-300">AI System Insights & Alerts</h2>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {alerts.map((item) => (
+            <div key={item.title} className="rounded-xl border border-[#2e4567] bg-[#102742] p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs text-slate-300">{item.badge}</span>
+                <span className="rounded-full border border-[#3d5b80] px-2 py-0.5 text-[10px] text-slate-200">Live</span>
+              </div>
+              <p className="text-sm text-slate-300">{item.title}</p>
+              <p className={`mt-1 text-4xl font-bold ${item.tone}`}>{item.value}</p>
+              <p className="mt-1 text-xs text-slate-400">{item.subtitle}</p>
             </div>
-            <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Year</label>
-              <Select value={globalYear} onValueChange={setGlobalYear}>
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2026">2026</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2023">2023</SelectItem>
-                  <SelectItem value="2022">2022</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          ))}
         </div>
 
-      {/* Top Indicator Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Non-Oil Imports */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      <SectionIcon icon={BarChart3} tone="slate" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Economy</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      <SectionIcon icon={Shield} tone="blue" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Official Statistics</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="flex items-center gap-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="h-8 w-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-600">
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Add to bookmarks</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="h-8 w-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-600">
-                      <Bell className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Set notification</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => navigate("/official-statistics")}
-                      className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
-                    >
-                      <ArrowUpRight className="h-4 w-4 text-gray-600" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">View in Official Statistics</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-
-          <div className="mb-2">
-            <div className="flex items-baseline gap-1">
-              <div className="text-3xl font-bold text-gray-900">45.2B</div>
-            </div>
-            <div className="text-sm text-gray-600 mb-1">AED billions</div>
-            <div className="text-sm text-gray-600">
-              <span className="text-red-600 font-medium">-2.6B (-5.8%)</span>
-            </div>
-            <div className="text-xs text-gray-500">Comparing to M/M</div>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">Non-Oil Imports</h3>
-          </div>
-
-          <div>
-            <div className="text-xs text-gray-500 mb-2">
-              📅 Updated date: 2026-03-20
-            </div>
-            <div className="flex items-center justify-between">
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1 cursor-help">
-                OPEN
-                <Info className="h-3 w-3" />
-              </Badge>
-              <Button variant="outline" size="icon" className="h-8 w-8">
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Non-Oil Exports */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      <SectionIcon icon={BarChart3} tone="slate" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Economy</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      <SectionIcon icon={Shield} tone="blue" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Official Statistics</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="flex items-center gap-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="h-8 w-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-600">
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Add to bookmarks</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="h-8 w-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-600">
-                      <Bell className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Set notification</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => navigate("/official-statistics")}
-                      className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
-                    >
-                      <ArrowUpRight className="h-4 w-4 text-gray-600" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">View in Official Statistics</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-
-          <div className="mb-2">
-            <div className="flex items-baseline gap-1">
-              <div className="text-3xl font-bold text-gray-900">28.7B</div>
-            </div>
-            <div className="text-sm text-gray-600 mb-1">AED billions</div>
-            <div className="text-sm text-gray-600">
-              <span className="text-green-600 font-medium">+3.1B (+12.3%)</span>
-            </div>
-            <div className="text-xs text-gray-500">Comparing to M/M</div>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">Non-Oil Exports</h3>
-          </div>
-
-          <div>
-            <div className="text-xs text-gray-500 mb-2">
-              📅 Updated date: 2026-03-20
-            </div>
-            <div className="flex items-center justify-between">
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1 cursor-help">
-                OPEN
-                <Info className="h-3 w-3" />
-              </Badge>
-              <Button variant="outline" size="icon" className="h-8 w-8">
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Non-Oil Re-Exports */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      <SectionIcon icon={BarChart3} tone="slate" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Economy</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      <SectionIcon icon={Shield} tone="blue" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Official Statistics</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="flex items-center gap-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="h-8 w-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-600">
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Add to bookmarks</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="h-8 w-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-600">
-                      <Bell className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Set notification</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => navigate("/official-statistics")}
-                      className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
-                    >
-                      <ArrowUpRight className="h-4 w-4 text-gray-600" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">View in Official Statistics</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-
-          <div className="mb-2">
-            <div className="flex items-baseline gap-1">
-              <div className="text-3xl font-bold text-gray-900">31.5B</div>
-            </div>
-            <div className="text-sm text-gray-600 mb-1">AED billions</div>
-            <div className="text-sm text-gray-600">
-              <span className="text-green-600 font-medium">+1.0B (+3.2%)</span>
-            </div>
-            <div className="text-xs text-gray-500">Comparing to M/M</div>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">Non-Oil Re-Exports</h3>
-          </div>
-
-          <div>
-            <div className="text-xs text-gray-500 mb-2">
-              📅 Updated date: 2026-03-20
-            </div>
-            <div className="flex items-center justify-between">
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1 cursor-help">
-                OPEN
-                <Info className="h-3 w-3" />
-              </Badge>
-              <Button variant="outline" size="icon" className="h-8 w-8">
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Net Trade Balance */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      <SectionIcon icon={BarChart3} tone="slate" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Economy</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-help">
-                      <SectionIcon icon={Shield} tone="blue" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Official Statistics</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="flex items-center gap-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="h-8 w-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-600">
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Add to bookmarks</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="h-8 w-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-600">
-                      <Bell className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Set notification</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => navigate("/official-statistics")}
-                      className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
-                    >
-                      <ArrowUpRight className="h-4 w-4 text-gray-600" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">View in Official Statistics</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-
-          <div className="mb-2">
-            <div className="flex items-baseline gap-1">
-              <div className="text-3xl font-bold text-gray-900">15.0B</div>
-            </div>
-            <div className="text-sm text-gray-600 mb-1">AED billions</div>
-            <div className="text-sm text-gray-600">
-              <span className="text-green-600 font-medium">+2.3B (+18.5%)</span>
-            </div>
-            <div className="text-xs text-gray-500">Comparing to M/M</div>
-          </div>
-
-          <div className="mb-4">
-            <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">Net Trade Balance</h3>
-          </div>
-
-          <div>
-            <div className="text-xs text-gray-500 mb-2">
-              📅 Updated date: 2026-03-20
-            </div>
-            <div className="flex items-center justify-between">
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1 cursor-help">
-                OPEN
-                <Info className="h-3 w-3" />
-              </Badge>
-              <Button variant="outline" size="icon" className="h-8 w-8">
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Overview Summary */}
-      <div className="rounded-lg border border-gray-200 bg-white/80 px-4 py-4 sm:px-5">
-        <div className="flex items-center gap-3 mb-3">
-          <SectionIcon icon={ScrollText} tone="primary" size="md" />
-          <h2 className="font-semibold text-lg text-gray-900 leading-snug m-0">Overview Summary</h2>
-        </div>
-        <div className="prose max-w-none prose-p:my-0">
-          <p className="text-gray-700 leading-relaxed text-[15px]">
-            For {globalMonth} {globalYear}, Abu Dhabi's non-oil trade shows mixed performance.
-            <strong className="text-gray-900"> Imports totaled AED 45.2B</strong> (<span className="text-red-600 font-medium">-5.8% MoM</span>),
-            driven by reduced vehicle and pharmaceutical imports.
-            <strong className="text-gray-900"> Exports reached AED 28.7B</strong> (<span className="text-green-600 font-medium">+12.3% MoM</span>),
-            led by aluminum (+32.8%) and precious metals (+45.2%).
-            <strong className="text-gray-900"> Re-exports at AED 31.5B</strong> grew <span className="text-green-600 font-medium">3.2% MoM</span>,
-            while the <strong className="text-gray-900">net trade balance improved to AED 15.0B</strong> (<span className="text-green-600 font-medium">+18.5% MoM</span>).
-          </p>
-        </div>
-      </div>
-
-      {/* Main Trade Metrics */}
-      <div className="bg-white rounded-lg p-6 border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <SectionIcon icon={LineChart} tone="slate" size="md" />
-            <h2 className="font-semibold text-lg text-gray-900 leading-snug m-0">Trade Metrics</h2>
-          </div>
-          <div className="flex gap-2">
-            <div>
-              <Select value={metricsMonth} onValueChange={setMetricsMonth}>
-                <SelectTrigger className="w-[110px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="January">January</SelectItem>
-                  <SelectItem value="February">February</SelectItem>
-                  <SelectItem value="March">March</SelectItem>
-                  <SelectItem value="April">April</SelectItem>
-                  <SelectItem value="May">May</SelectItem>
-                  <SelectItem value="June">June</SelectItem>
-                  <SelectItem value="July">July</SelectItem>
-                  <SelectItem value="August">August</SelectItem>
-                  <SelectItem value="September">September</SelectItem>
-                  <SelectItem value="October">October</SelectItem>
-                  <SelectItem value="November">November</SelectItem>
-                  <SelectItem value="December">December</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Select value={metricsYear} onValueChange={setMetricsYear}>
-                <SelectTrigger className="w-[90px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2026">2026</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2023">2023</SelectItem>
-                  <SelectItem value="2022">2022</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <h3 className="mb-3 mt-5 text-3xl font-semibold text-cyan-300">Highlights</h3>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {overviewIndicators.map((indicator, index) => (
             <FlippableIndicatorCard key={index} {...indicator} />
           ))}

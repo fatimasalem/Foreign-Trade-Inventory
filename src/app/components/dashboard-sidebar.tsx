@@ -48,8 +48,8 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
   return (
     <aside
       className={cn(
-        "fixed z-40 flex border-border bg-card transition-[width] duration-300 ease-out",
-        "bottom-0 left-0 right-0 top-auto h-auto w-full flex-row border-t pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.08)]",
+        "fixed z-40 flex border-[#2a3f61] bg-[#0b1f38] transition-[width] duration-300 ease-out",
+        "bottom-0 left-0 right-0 top-auto h-auto w-full flex-row border-t pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.3)]",
         "md:bottom-auto md:left-0 md:right-auto md:top-[73px] md:h-[calc(100vh-73px)] md:flex-col md:border-r md:border-t-0 md:pb-0 md:shadow-sm",
         isCollapsed ? "md:w-16" : "md:w-64",
       )}
@@ -62,7 +62,7 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
         )}
       >
         {!isCollapsed && (
-          <p className="hidden px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground md:block">
+          <p className="hidden px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 md:block">
             Workspace
           </p>
         )}
@@ -82,11 +82,11 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
                 "md:min-w-0 md:w-full md:flex-row md:items-center md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal md:font-normal",
                 active
                   ? item.color === "purple"
-                    ? "bg-purple-50 text-purple-800 shadow-sm md:font-medium"
-                    : "bg-primary/8 text-primary shadow-sm md:font-medium"
+                    ? "bg-[#3f2c5e] text-violet-200 shadow-sm md:font-medium"
+                    : "bg-[#18365c] text-cyan-200 shadow-sm md:font-medium"
                   : item.color === "purple"
-                    ? "text-purple-800 hover:bg-purple-50/80"
-                    : "text-foreground/90 hover:bg-muted hover:text-foreground",
+                    ? "text-violet-200 hover:bg-[#35214f]"
+                    : "text-slate-300 hover:bg-[#173252] hover:text-white",
               )}
             >
               <SectionIcon
@@ -123,7 +123,7 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
             "md:min-w-0 md:w-full md:flex-row md:items-center md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-sm md:leading-normal",
             publicationsActive
               ? "bg-primary/8 font-medium text-primary shadow-sm"
-              : "text-foreground/90 hover:bg-muted hover:text-foreground",
+              : "text-slate-300 hover:bg-[#173252] hover:text-white",
           )}
         >
           <SectionIcon
@@ -143,11 +143,11 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
         </Link>
       </nav>
 
-      <div className="hidden w-full border-t border-border p-2 md:flex md:justify-start">
+      <div className="hidden w-full border-t border-[#2a3f61] p-2 md:flex md:justify-start">
         <Button
           variant="outline"
           size="icon"
-          className="h-9 w-9 shrink-0 border-border bg-background shadow-sm"
+          className="h-9 w-9 shrink-0 border-[#3b5a83] bg-[#102947] text-slate-200 shadow-sm"
           onClick={onToggleCollapse}
           aria-expanded={!isCollapsed}
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}

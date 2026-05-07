@@ -284,7 +284,14 @@ export function UAETradeMap() {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <SectionIcon icon={Anchor} tone="sky" />
-            <h3 className="font-semibold text-lg text-gray-900">UAE Trade Distribution - Abu Dhabi Ports</h3>
+            <div>
+              <h3 className="m-0 text-lg font-semibold leading-snug text-gray-900">
+                UAE Trade Distribution - Abu Dhabi Ports
+              </h3>
+              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                Port-level corridor performance
+              </p>
+            </div>
             {isCritical && (
               <Badge className="bg-red-100 text-red-700 hover:bg-red-100 gap-1">
                 <AlertTriangle className="h-3 w-3" />
