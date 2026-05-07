@@ -72,7 +72,7 @@ export function DashboardHeader() {
             <img src={bayaanIcon} alt="" className="h-9 w-9 shrink-0" />
             <div className="min-w-0">
               <p className="text-base font-semibold tracking-tight text-slate-100 sm:text-lg">
-                Abu Dhabi Foreign Trade Observatory
+                Abu Dhabi Foreign Trade Inventory
               </p>
               <p className="truncate text-xs text-slate-400 sm:text-sm">{pageTitle}</p>
             </div>
