@@ -342,7 +342,7 @@ export function CategoryTradeDetailPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-2 gap-1 text-gray-600"
+            className="-ml-2 gap-1 text-slate-300 hover:bg-[#143252] hover:text-slate-100"
             onClick={() => navigate("/observe")}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -353,13 +353,13 @@ export function CategoryTradeDetailPage() {
             <div className="min-w-0">
               {articleName ? (
                 <>
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{categoryName}</p>
-                  <h1 className="text-2xl font-semibold text-gray-900">{articleName}</h1>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{categoryName}</p>
+                  <h1 className="text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">{articleName}</h1>
                 </>
               ) : (
-                <h1 className="text-2xl font-semibold text-gray-900">{displayTitle}</h1>
+                <h1 className="text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">{displayTitle}</h1>
               )}
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-slate-400">
                 Non-oil trade partners and trends
                 {articleName ? " for this article" : " for this HS section"}. Article list uses {classificationLabel}{" "}
                 lines ({cls}) from Observe.
@@ -368,11 +368,11 @@ export function CategoryTradeDetailPage() {
           </div>
         </div>
 
-        <div className="flex w-full flex-wrap gap-2">
+        <div className="flex w-full flex-wrap items-end gap-2 rounded-xl border border-[#335175] bg-[#112d4c] p-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">Month</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">Month</label>
             <Select value={month} onValueChange={setMonth}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="w-[120px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -384,9 +384,9 @@ export function CategoryTradeDetailPage() {
             </Select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">Year</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">Year</label>
             <Select value={year} onValueChange={setYear}>
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-[100px] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -398,10 +398,10 @@ export function CategoryTradeDetailPage() {
             </Select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">{classificationFilterLabel}</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">{classificationFilterLabel}</label>
             {cls === "HS" ? (
               <Select value={hsSelectValue ?? "__category__"} onValueChange={navigateHsChapterSelection}>
-                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue placeholder="Choose HS code" />
                 </SelectTrigger>
                 <SelectContent>
@@ -425,7 +425,7 @@ export function CategoryTradeDetailPage() {
                   goToArticle(v);
                 }}
               >
-                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue placeholder="Choose classification line" />
                 </SelectTrigger>
                 <SelectContent>
@@ -441,9 +441,9 @@ export function CategoryTradeDetailPage() {
           </div>
           {cls === "HS" && categoryRow ? (
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700">Filter by Goods</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Filter by Goods</label>
               <Select value={hsSelectValue ?? "__category__"} onValueChange={navigateHsChapterSelection}>
-                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue placeholder="Choose goods" />
                 </SelectTrigger>
                 <SelectContent>
@@ -458,7 +458,7 @@ export function CategoryTradeDetailPage() {
             </div>
           ) : (
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700">Filter by Goods</label>
+              <label className="mb-1 block text-xs font-medium text-slate-300">Filter by Goods</label>
               <Select
                 value={
                   productChoices.some((c) => c.value === selectedProduct)
@@ -467,7 +467,7 @@ export function CategoryTradeDetailPage() {
                 }
                 onValueChange={navigateBecSitcGoodsSelection}
               >
-                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)]">
+                <SelectTrigger className="min-w-[220px] max-w-[min(100vw-2rem,420px)] border-[#3b5b82] bg-[#112d4c] text-slate-100">
                   <SelectValue placeholder="Choose goods" />
                 </SelectTrigger>
                 <SelectContent>
@@ -555,22 +555,25 @@ export function CategoryTradeDetailPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
+      <div className="rounded-xl border border-[#335175] bg-[#112d4c] p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-2">
             <SectionIcon icon={Activity} tone="slate" />
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Foreign trade trend</h3>
-              <p className="mt-1 text-xs text-gray-500">
+              <h3 className="text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Foreign Trade Trend</h3>
+              <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
                 Non-oil import, export, and re-export (billions AED). Filter by partner country for the series below.
               </p>
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">Countries (chart)</label>
+            <label className="mb-1 block text-xs font-medium text-slate-300">Countries (chart)</label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[200px] justify-between text-sm">
+                <Button
+                  variant="outline"
+                  className="w-[200px] justify-between border-[#3b5b82] bg-[#112d4c] text-sm text-slate-100 hover:bg-[#143252] hover:text-slate-100"
+                >
                   {trendCountries.length === 1
                     ? trendCountries[0]
                     : `${trendCountries.length} countries selected`}
@@ -600,14 +603,25 @@ export function CategoryTradeDetailPage() {
         </div>
         <ResponsiveContainer width="100%" height={360}>
           <LineChart data={trendData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis label={{ value: "AED Billions", angle: -90, position: "insideLeft" }} />
+            <CartesianGrid stroke="#2f4b70" strokeDasharray="3 3" />
+            <XAxis
+              dataKey="month"
+              tick={{ fill: "#cbd5e1", fontSize: 12 }}
+              axisLine={{ stroke: "#3b5b82" }}
+              tickLine={{ stroke: "#3b5b82" }}
+            />
+            <YAxis
+              tick={{ fill: "#cbd5e1", fontSize: 12 }}
+              axisLine={{ stroke: "#3b5b82" }}
+              tickLine={{ stroke: "#3b5b82" }}
+              label={{ value: "AED Billions", angle: -90, position: "insideLeft", fill: "#94a3b8" }}
+            />
             <Tooltip
               formatter={(value: number) => `${value.toFixed(1)}B AED`}
-              contentStyle={{ backgroundColor: "white", border: "1px solid #e5e7eb" }}
+              contentStyle={{ backgroundColor: "#0f2745", border: "1px solid #3b5b82", color: "#e2e8f0" }}
+              labelStyle={{ color: "#e2e8f0" }}
             />
-            <Legend />
+            <Legend wrapperStyle={{ color: "#cbd5e1" }} />
             <Line
               type="monotone"
               dataKey="imports"

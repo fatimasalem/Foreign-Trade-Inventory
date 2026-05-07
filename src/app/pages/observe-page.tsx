@@ -318,6 +318,14 @@ export function ObservePage() {
   };
 
   const hasExpandedCategoryRows = expandedCategoryKeys.size > 0;
+  const nestedRowDepthStyles = [
+    "bg-[#193651]/70 text-slate-100",
+    "bg-[#1d3b59]/70 text-slate-100",
+    "bg-[#214161]/70 text-slate-100",
+    "bg-[#254769]/70 text-slate-100",
+    "bg-[#284d71]/70 text-slate-100",
+    "bg-[#2b5279]/70 text-slate-100",
+  ] as const;
 
   const tradePartners = [
     { country: "China", value: 22.5, color: "#ef4444" },
@@ -739,8 +747,8 @@ export function ObservePage() {
       </div>
 
       {/* Categories Analysis Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
+      <div className="rounded-lg border border-[#335175] bg-[#0f2745]">
+        <div className="p-6 border-b border-[#335175]">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <SectionIcon icon={BarChart3} tone="slate" />
@@ -864,18 +872,15 @@ export function ObservePage() {
             </div>
           </div>
         </div>
-        <Table>
+        <Table className="text-slate-100">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10 p-2">
-                <span className="sr-only">Expand classification articles</span>
-              </TableHead>
-              <TableHead className="w-[28%]">Category</TableHead>
-              <TableHead className="w-[10%] text-right">Weight</TableHead>
-              <TableHead className="w-[10%] text-right">M/M %</TableHead>
-              <TableHead className="w-[10%] text-right">Y/Y %</TableHead>
-              <TableHead className="w-[12%] text-right">Total Trade Volume</TableHead>
-              <TableHead className="w-[8%] p-2 text-right align-bottom">
+              <TableHead className="w-[32%] text-slate-200">Category</TableHead>
+              <TableHead className="w-[10%] text-right text-slate-200">Weight</TableHead>
+              <TableHead className="w-[10%] text-right text-slate-200">M/M %</TableHead>
+              <TableHead className="w-[10%] text-right text-slate-200">Y/Y %</TableHead>
+              <TableHead className="w-[12%] text-right text-slate-200">Total Trade Volume</TableHead>
+              <TableHead className="w-[8%] p-2 text-right align-bottom text-slate-200">
                 <Button
                   type="button"
                   variant="outline"
@@ -893,7 +898,7 @@ export function ObservePage() {
           <TableBody>
             {filteredCategoriesData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-sm text-gray-500 py-10">
+                <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-300">
                   No categories match your search. Try a different term or clear the search.
                 </TableCell>
               </TableRow>
@@ -924,35 +929,37 @@ export function ObservePage() {
 
               return (
                 <Fragment key={rowKey}>
-                  <TableRow className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <TableCell className="w-10 p-1 align-middle">
-                      {displayRows.length > 0 ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                          aria-expanded={isExpanded}
-                          aria-label={isExpanded ? "Hide classification details" : "Show classification details"}
-                          onClick={() => toggleCategoryExpanded(rowKey, item)}
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </Button>
-                      ) : null}
+                  <TableRow className="cursor-pointer transition-colors hover:bg-[#173756]">
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-1.5">
+                        {displayRows.length > 0 ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                            aria-expanded={isExpanded}
+                            aria-label={isExpanded ? "Hide classification details" : "Show classification details"}
+                            onClick={() => toggleCategoryExpanded(rowKey, item)}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        ) : null}
+                        <span className="text-slate-100">{formatCategoryLabel(item.category)}</span>
+                      </div>
                     </TableCell>
-                    <TableCell className="font-medium">{formatCategoryLabel(item.category)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{item.weight}</TableCell>
+                    <TableCell className="text-right tabular-nums text-slate-100">{item.weight}</TableCell>
                     <TableCell className={`text-right font-medium tabular-nums ${momPositive ? "text-green-600" : "text-red-600"}`}>
                       {item.mom}
                     </TableCell>
                     <TableCell className={`text-right font-medium tabular-nums ${yoyPositive ? "text-green-600" : "text-red-600"}`}>
                       {item.yoy}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{item.volume}</TableCell>
+                    <TableCell className="text-right tabular-nums text-slate-100">{item.volume}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         type="button"
@@ -971,21 +978,23 @@ export function ObservePage() {
                       const row = nestedEntry.row;
                       const nestedKey = nestedEntry.nestedKey;
                       const depthPad = [
-                        "pl-6",
-                        "pl-10",
-                        "pl-14",
-                        "pl-[4.25rem]",
+                        "pl-3",
+                        "pl-8",
+                        "pl-12",
+                        "pl-16",
                         "pl-20",
                         "pl-24",
                       ] as const;
                       const padClass = depthPad[Math.min(row.depth, depthPad.length - 1)];
+                      const depthTone =
+                        nestedRowDepthStyles[Math.min(row.depth, nestedRowDepthStyles.length - 1)];
 
                       if (row.kind === "node") {
                         const nestedCollapsed = collapsedNestedKeys.has(nestedKey);
                         return (
                           <TableRow
                             key={`${rowKey}-hdr-${nestedKey}`}
-                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                            className={`cursor-pointer transition-colors hover:brightness-[0.98] ${depthTone}`}
                             onClick={() => toggleNestedCollapsed(nestedKey)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
@@ -998,18 +1007,19 @@ export function ObservePage() {
                             aria-expanded={!nestedCollapsed}
                             aria-label={nestedCollapsed ? "Expand nested rows" : "Collapse nested rows"}
                           >
-                            <TableCell className="w-10 p-1 align-middle" aria-hidden>
-                              <div className="inline-flex h-8 w-8 items-center justify-center text-slate-600">
-                                {nestedCollapsed ? (
-                                  <ChevronRight className="h-4 w-4" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4" />
-                                )}
+                            <TableCell className={`${padClass} py-2`}>
+                              <div className="flex items-center gap-1.5">
+                                <span className="inline-flex h-6 w-6 items-center justify-center text-slate-200" aria-hidden>
+                                  {nestedCollapsed ? (
+                                    <ChevronRight className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                  )}
+                                </span>
+                                <span className="text-sm font-semibold text-slate-100">{formatCategoryLabel(row.label)}</span>
                               </div>
                             </TableCell>
-                            <TableCell colSpan={6} className={`${padClass} py-2`}>
-                              <span className="text-sm font-semibold text-gray-800">{formatCategoryLabel(row.label)}</span>
-                            </TableCell>
+                            <TableCell colSpan={5} />
                           </TableRow>
                         );
                       }
@@ -1018,7 +1028,7 @@ export function ObservePage() {
                       return (
                         <TableRow
                           key={`${rowKey}-${nestedKey}-${article.label}`}
-                          className="cursor-pointer hover:bg-gray-50 transition-colors"
+                          className={`cursor-pointer transition-colors hover:brightness-[0.98] ${depthTone}`}
                           onClick={() => goToArticle(article.label)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
@@ -1029,18 +1039,20 @@ export function ObservePage() {
                           role="link"
                           tabIndex={0}
                         >
-                          <TableCell />
-                          <TableCell className={`${padClass} text-sm text-gray-800 font-medium`}>
-                            {formatCategoryLabel(article.label)}
+                          <TableCell className={`${padClass} text-sm font-medium text-slate-100`}>
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-flex h-6 w-6 items-center justify-center text-slate-300" aria-hidden />
+                              <span>{formatCategoryLabel(article.label)}</span>
+                            </div>
                           </TableCell>
-                          <TableCell className="text-right text-sm tabular-nums">{article.weight}</TableCell>
+                          <TableCell className="text-right text-sm tabular-nums text-slate-100">{article.weight}</TableCell>
                           <TableCell className={`text-right text-sm font-medium tabular-nums ${changeClass(article.mom)}`}>
                             {article.mom}
                           </TableCell>
                           <TableCell className={`text-right text-sm font-medium tabular-nums ${changeClass(article.yoy)}`}>
                             {article.yoy}
                           </TableCell>
-                          <TableCell className="text-right text-sm text-gray-500">—</TableCell>
+                          <TableCell className="text-right text-sm text-slate-300">—</TableCell>
                           <TableCell>
                             <ChevronRight className="h-4 w-4 text-gray-400" />
                           </TableCell>
