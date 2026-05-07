@@ -41,7 +41,7 @@ const headerNavItems: HeaderNavItem[] = [
     isActive: (pathname) => pathname.startsWith("/diagnose"),
   },
   {
-    label: "Benchmark",
+    label: "Official Statistics",
     path: "/official-statistics",
     isActive: (pathname) =>
       pathname.startsWith("/official-statistics") ||
@@ -52,6 +52,12 @@ const headerNavItems: HeaderNavItem[] = [
     label: "Observe",
     path: "/observe",
     isActive: (pathname) => pathname.startsWith("/observe"),
+  },
+  {
+    label: "Publications",
+    path: "/publications",
+    isActive: (pathname) =>
+      pathname === "/publications" || pathname.startsWith("/publication/"),
   },
 ];
 
