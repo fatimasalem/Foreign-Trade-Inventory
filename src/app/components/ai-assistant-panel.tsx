@@ -8,6 +8,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "./ui/sheet";
+import { cn } from "./ui/utils";
 
 interface AIAssistantPanelProps {
   isOpen: boolean;
@@ -107,58 +108,80 @@ For more detailed analysis specific to your query, please consult with the trade
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[500px] sm:max-w-[500px]">
-        <SheetHeader>
-          <div className="flex items-center justify-between">
-            <SheetTitle className="flex items-center gap-2">
-              <div className="bg-purple-100 p-2 rounded-lg">
-                <Sparkles className="h-5 w-5 text-purple-600" />
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent
+        className={cn(
+          "flex h-full w-full max-w-[min(100vw,500px)] flex-col gap-0 border-l border-[#2e4567] bg-[#0f2744] p-0 text-slate-100 shadow-xl sm:max-w-[500px]",
+          "[&>button.absolute]:hidden",
+        )}
+      >
+        <SheetHeader className="shrink-0 space-y-0 border-b border-[#2e4567] px-6 py-5 text-left">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <div className="shrink-0 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 p-2 shadow-sm">
+                <Sparkles className="h-5 w-5 text-white" aria-hidden />
               </div>
-              Trade AI Assistant
-            </SheetTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
+              <div className="min-w-0 pt-0.5">
+                <SheetTitle className="text-lg font-semibold leading-tight text-slate-100">
+                  Trade AI Assistant
+                </SheetTitle>
+                <p className="mt-1 text-sm text-slate-400">AI-powered trade insights</p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="shrink-0 text-slate-400 hover:bg-[#163252] hover:text-white"
+              onClick={onClose}
+              aria-label="Close panel"
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>
         </SheetHeader>
 
-        <div className="mt-6 space-y-4">
-          {/* Question */}
-          <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-            <div className="text-xs font-semibold text-purple-900 mb-2">Your Question</div>
-            <p className="text-sm text-purple-800">{question}</p>
-          </div>
-
-          {/* Response */}
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-xs font-semibold text-gray-900 mb-3">AI Analysis</div>
-            {isLoading ? (
-              <div className="space-y-3">
-                <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
-                <div className="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5">
+          <div className="space-y-4">
+            <div className="rounded-lg border border-[#2e4567] bg-[#0b1f38] p-4">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-sky-300/90">
+                Your question
               </div>
-            ) : (
-              <div className="prose prose-sm max-w-none">
-                <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+              <p className="text-sm leading-relaxed text-slate-200">{question}</p>
+            </div>
+
+            <div className="rounded-lg border border-[#2e4567] bg-[#071a2e] p-4">
+              <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                AI analysis
+              </div>
+              {isLoading ? (
+                <div className="space-y-3">
+                  <div className="h-4 animate-pulse rounded bg-[#163252]" />
+                  <div className="h-4 w-5/6 animate-pulse rounded bg-[#163252]" />
+                  <div className="h-4 w-4/6 animate-pulse rounded bg-[#163252]" />
+                </div>
+              ) : (
+                <div className="text-sm leading-relaxed whitespace-pre-line text-slate-300">
                   {response}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-4 border-t">
+        <div className="shrink-0 border-t border-[#2e4567] px-6 py-4">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Button
+              type="button"
               variant="outline"
-              className="flex-1"
+              className="flex-1 border-[#365985] bg-[#0d2747] text-slate-100 hover:bg-[#143359] hover:text-white"
               onClick={onClose}
             >
               Close
             </Button>
             <Button
-              className="flex-1 bg-purple-600 text-white hover:bg-purple-700"
+              type="button"
+              className="flex-1 bg-[#1f4f84] text-white hover:bg-[#29639f]"
               onClick={() => {
                 onClose();
                 navigate("/trade-ai");
