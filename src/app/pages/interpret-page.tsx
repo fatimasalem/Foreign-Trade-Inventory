@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { MapPinned } from "lucide-react";
 import { DriverSection } from "../components/driver-section";
 import { EventsSection } from "../components/events-section";
 import { GlobalTradeMap } from "../components/global-trade-map";
 import { UAETradeMap } from "../components/uae-trade-map";
 import { FlippableIndicatorCard } from "../components/flippable-indicator-card";
+import { SectionIcon } from "../components/section-icon";
 import {
   GlobeTradePerformanceSection,
   TRADE_SCOPE_DEFAULTS,
@@ -28,6 +30,8 @@ export function InterpretPage() {
     setGlobalTradeScopeKind(kind);
     setGlobalTradeScopeTarget(TRADE_SCOPE_DEFAULTS[kind]);
   };
+
+  const [distributionTab, setDistributionTab] = useState<"global" | "uae">("global");
   const overviewIndicators = [
     {
       name: "Non-Oil Imports",
@@ -165,11 +169,52 @@ export function InterpretPage() {
         />
       </div>
 
-      {/* Global Trade Map */}
-      <GlobalTradeMap />
-
-      {/* UAE Trade Distribution — Abu Dhabi ports */}
-      <UAETradeMap />
+      <section className="rounded-2xl border border-[#2a3d5f] bg-[#0a1d35] px-4 py-5 shadow-[0_14px_38px_rgba(2,8,25,0.45)]">
+        <div className="mb-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-2">
+            <SectionIcon icon={MapPinned} tone="sky" />
+            <div className="min-w-0">
+              <h2 className="m-0 text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Trade distribution</h2>
+              <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Global partner flows and Abu Dhabi port corridors
+              </p>
+            </div>
+          </div>
+          <div
+            className="flex shrink-0 self-end rounded-lg border border-[#3b5b82] bg-[#112d4c] p-1 sm:self-auto"
+            role="tablist"
+            aria-label="Trade distribution view"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={distributionTab === "global"}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                distributionTab === "global"
+                  ? "bg-[#1f446c] text-cyan-200 shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              onClick={() => setDistributionTab("global")}
+            >
+              Global
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={distributionTab === "uae"}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                distributionTab === "uae"
+                  ? "bg-[#1f446c] text-cyan-200 shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+              onClick={() => setDistributionTab("uae")}
+            >
+              UAE ports
+            </button>
+          </div>
+        </div>
+        {distributionTab === "global" ? <GlobalTradeMap embedded /> : <UAETradeMap embedded />}
+      </section>
 
       {/* Events Section */}
       <EventsSection />

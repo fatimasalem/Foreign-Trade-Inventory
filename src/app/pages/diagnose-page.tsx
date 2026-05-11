@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Bot, ChevronDown, LineChart as LineChartIcon, PieChart } from "lucide-react";
+import { Bot, ChevronDown, LineChart as LineChartIcon, MessageSquare, PieChart } from "lucide-react";
 import { SectionIcon } from "../components/section-icon";
 import { useAIAssistant } from "../contexts/ai-assistant-context";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -586,6 +586,22 @@ export function DiagnosePage() {
               />
               <p className="mt-1 text-[10px] text-slate-500">Hover points for values.</p>
             </div>
+            <div className="mt-auto pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 border-[#3f628c] bg-[#153457] text-cyan-300 hover:bg-[#1f446c] hover:text-cyan-200"
+                onClick={() =>
+                  openAIAssistant(
+                    `Explain the Real Effective Exchange Rate (REER) trend for Abu Dhabi (${competitivenessRegion}, ${month} ${year}) with partner context ${competitivenessFilterLine}, and what it implies for trade competitiveness.`,
+                  )
+                }
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                Ask Trade AI
+              </Button>
+            </div>
           </article>
 
           <article className="flex min-h-0 flex-col rounded-xl border border-[#335175] bg-[#112d4c] p-4">
@@ -611,6 +627,22 @@ export function DiagnosePage() {
               />
               <p className="mt-1 text-[10px] text-slate-500">Hover points for values.</p>
             </div>
+            <div className="mt-auto pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 border-[#3f628c] bg-[#153457] text-cyan-300 hover:bg-[#1f446c] hover:text-cyan-200"
+                onClick={() =>
+                  openAIAssistant(
+                    `Interpret export price competitiveness for Abu Dhabi (${competitivenessRegion}, ${month} ${year}) given ${competitivenessFilterLine}. What does the momentum signal mean for priority markets?`,
+                  )
+                }
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                Ask Trade AI
+              </Button>
+            </div>
           </article>
 
           <article className="flex min-h-0 flex-col rounded-xl border border-[#335175] bg-[#112d4c] p-4">
@@ -635,6 +667,22 @@ export function DiagnosePage() {
                 }}
               />
               <p className="mt-1 text-[10px] text-slate-500">Hover points for values.</p>
+            </div>
+            <div className="mt-auto pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 border-[#3f628c] bg-[#153457] text-cyan-300 hover:bg-[#1f446c] hover:text-cyan-200"
+                onClick={() =>
+                  openAIAssistant(
+                    `How are currency and inflation dynamics affecting Abu Dhabi's trade competitiveness (${competitivenessRegion}, ${month} ${year}) in the context of ${competitivenessFilterLine}?`,
+                  )
+                }
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                Ask Trade AI
+              </Button>
             </div>
           </article>
         </div>

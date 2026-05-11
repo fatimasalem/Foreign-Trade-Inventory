@@ -95,7 +95,7 @@ export function EventsSection() {
           </div>
         </div>
       </div>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {events.map((event, index) => (
           <div key={index} className="rounded-lg border border-[#355279] bg-[#112d4c] px-4 py-3">
             <div className="flex items-start gap-3">

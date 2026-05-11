@@ -35,7 +35,12 @@ type PortDef = {
   affected: boolean;
 };
 
-export function UAETradeMap() {
+type UAETradeMapProps = {
+  /** When true, omit outer card chrome and section title (for tabbed layout). */
+  embedded?: boolean;
+};
+
+export function UAETradeMap({ embedded = false }: UAETradeMapProps = {}) {
   const navigate = useNavigate();
   const [foreignTradeType, setForeignTradeType] = useState("all");
   const [classification, setClassification] = useState("HS");
@@ -278,34 +283,47 @@ export function UAETradeMap() {
     navigate("/trade-ai", { state: { query: question } });
   };
 
-  return (
-    <div className={`bg-white rounded-lg p-6 border ${isCritical ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <SectionIcon icon={Anchor} tone="sky" />
-            <div>
-              <h3 className="m-0 text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">
-                UAE Trade Distribution - Abu Dhabi Ports
-              </h3>
-              <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
-                Port-level corridor performance
-              </p>
-            </div>
-            {isCritical && (
-              <Badge className="bg-red-100 text-red-700 hover:bg-red-100 gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                Critical - Strait of Hormuz Situation
-              </Badge>
-            )}
-          </div>
-          <p className="text-sm text-gray-600">
-            Port-level trade analysis for Abu Dhabi Emirate
-          </p>
-        </div>
-      </div>
+  const outerShell = embedded
+    ? "space-y-4"
+    : `rounded-lg p-6 border ${isCritical ? "border-red-500 bg-red-50" : "border-gray-200 bg-white"}`;
 
-      <div className="grid grid-cols-2 gap-3 mb-6 md:grid-cols-3 lg:grid-cols-6">
+  return (
+    <div className={outerShell}>
+      {!embedded && (
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <SectionIcon icon={Anchor} tone="sky" />
+              <div>
+                <h3 className="m-0 text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">
+                  UAE Trade Distribution - Abu Dhabi Ports
+                </h3>
+                <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  Port-level corridor performance
+                </p>
+              </div>
+              {isCritical && (
+                <Badge className="bg-red-100 text-red-700 hover:bg-red-100 gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Critical - Strait of Hormuz Situation
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-gray-600">Port-level trade analysis for Abu Dhabi Emirate</p>
+          </div>
+        </div>
+      )}
+
+      {embedded && isCritical && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className="border border-rose-500/50 bg-rose-500/15 text-rose-200 hover:bg-rose-500/20 gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            Critical - Strait of Hormuz Situation
+          </Badge>
+        </div>
+      )}
+
+      <div className={`grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6 ${embedded ? "mb-4" : "mb-6"}`}>
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-300">Classification</label>
           <Select value={classification} onValueChange={setClassification}>
@@ -398,7 +416,13 @@ export function UAETradeMap() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map */}
-        <div className="lg:col-span-2 bg-slate-100/80 rounded-lg p-3 border border-gray-200 relative min-h-[360px] h-[420px]">
+        <div
+          className={`lg:col-span-2 rounded-lg p-3 border relative min-h-[360px] h-[420px] ${
+            embedded
+              ? "border-[#355279] bg-[#102742]"
+              : "border-gray-200 bg-slate-100/80"
+          }`}
+        >
           <AbuDhabiTradeLeafletMap
             ports={visiblePorts}
             isCritical={isCritical}
@@ -417,8 +441,14 @@ export function UAETradeMap() {
           />
 
           {visiblePorts.length === 0 && (
-            <div className="absolute inset-4 flex items-center justify-center rounded-lg bg-white/90 border border-dashed border-gray-300 z-[1100]">
-              <p className="text-sm text-gray-600 px-4 text-center">
+            <div
+              className={`absolute inset-4 flex items-center justify-center rounded-lg border border-dashed z-[1100] px-4 ${
+                embedded
+                  ? "border-[#486a95] bg-[#0a1d35]/95 text-slate-300"
+                  : "border-gray-300 bg-white/90 text-gray-600"
+              }`}
+            >
+              <p className="text-sm text-center">
                 No facilities match the current port and transport filters.
               </p>
             </div>
@@ -486,23 +516,29 @@ export function UAETradeMap() {
         {/* Categories by port (linked to map selection) */}
         <div className="space-y-3 min-h-0 flex flex-col">
           <div className="flex items-center justify-between gap-2">
-            <h4 className="font-semibold text-gray-900">
+            <h4 className={`font-semibold ${embedded ? "text-slate-100" : "text-gray-900"}`}>
               {isCritical ? "Affected categories (by port)" : "Top performing (by port)"}
             </h4>
             {mapSelectedPortId && (
               <button
                 type="button"
                 onClick={() => setMapSelectedPortId(null)}
-                className="text-xs text-blue-600 hover:underline shrink-0"
+                className={`text-xs shrink-0 hover:underline ${embedded ? "text-cyan-300" : "text-blue-600"}`}
               >
                 Clear
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-500 -mt-1">Click a port on the map or a card to highlight the matching port.</p>
+          <p className={`text-xs -mt-1 ${embedded ? "text-slate-500" : "text-gray-500"}`}>
+            Click a port on the map or a card to highlight the matching port.
+          </p>
           <div className="max-h-[420px] space-y-2 overflow-y-auto scroll-smooth py-1 pl-1 pr-2">
             {visiblePorts.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4 text-center border border-dashed border-gray-200 rounded-lg">
+              <p
+                className={`text-sm py-4 text-center border border-dashed rounded-lg ${
+                  embedded ? "border-[#355279] text-slate-400" : "border-gray-200 text-gray-500"
+                }`}
+              >
                 No facilities match the current port and transport filters.
               </p>
             ) : (

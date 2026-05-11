@@ -120,7 +120,12 @@ interface ContinentTooltipData {
   topCategories: CategoryData;
 }
 
-export function GlobalTradeMap() {
+type GlobalTradeMapProps = {
+  /** When true, omit outer card chrome and section title (for tabbed layout). */
+  embedded?: boolean;
+};
+
+export function GlobalTradeMap({ embedded = false }: GlobalTradeMapProps = {}) {
   const [viewType, setViewType] = useState<ViewType>("country");
   const [tradeType, setTradeType] = useState("all");
   const [mapClassification, setMapClassification] = useState<MapClassification>("HS");
@@ -789,17 +794,23 @@ export function GlobalTradeMap() {
   const maxMapTradeValue = viewType === "gcc" ? maxGccTradeValue : maxTradeValue;
 
   return (
-    <div className="rounded-xl border border-[#2e4567] bg-[#0c213b] p-5">
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <SectionIcon icon={MapPinned} tone="sky" size="md" />
-          <div>
-            <h2 className="m-0 text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Global Trade Distribution</h2>
-            <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
-              Partner flows and corridor intensity
-            </p>
+    <div
+      className={
+        embedded ? "space-y-4" : "rounded-xl border border-[#2e4567] bg-[#0c213b] p-5"
+      }
+    >
+      <div className={`flex flex-col gap-4 ${embedded ? "mb-4" : "mb-6"}`}>
+        {!embedded && (
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={MapPinned} tone="sky" size="md" />
+            <div>
+              <h2 className="m-0 text-2xl font-semibold tracking-tight text-cyan-300 md:text-3xl">Global Trade Distribution</h2>
+              <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Partner flows and corridor intensity
+              </p>
+            </div>
           </div>
-        </div>
+        )}
         <div className="flex flex-wrap items-end gap-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-300">Trade Type</label>
